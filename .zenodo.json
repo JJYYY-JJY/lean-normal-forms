@@ -1,0 +1,18 @@
+{
+  "title": "lean-normal-forms",
+  "description": "Executable Hermite and Smith normal forms in Lean 4 over Euclidean domains, with a bridge to mathlib's PID results.",
+  "license": "Apache-2.0",
+  "creators": [
+    {
+      "name": "Ji, Junye",
+      "affiliation": "Independent"
+    }
+  ],
+  "keywords": [
+    "Lean 4",
+    "mathlib",
+    "Hermite normal form",
+    "Smith normal form",
+    "formalized mathematics"
+  ]
+}

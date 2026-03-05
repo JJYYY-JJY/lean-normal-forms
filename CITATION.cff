@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: "lean-normal-forms"
+message: "If you use this repository, please cite it with the metadata below."
+type: software
+authors:
+  - family-names: Ji
+    given-names: Junye
+license: Apache-2.0
+version: 0.1.0
+date-released: 2026-03-05
+abstract: >-
+  Executable Hermite and Smith normal forms in Lean 4 over Euclidean domains,
+  with a bridge to mathlib's PID results.
+keywords:
+  - Lean 4
+  - mathlib
+  - Hermite normal form
+  - Smith normal form
+  - formalized mathematics
