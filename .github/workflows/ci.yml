@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+      - name: Fetch mathlib cache
+        run: lake exe cache get
+      - name: Build project
+        run: lake build
+      - name: Axiom audit smoke check
+        run: lake env lean scripts/AxiomAudit.lean
