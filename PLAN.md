@@ -1,14 +1,14 @@
 # lean-normal-forms Plan
 
-
 ## Local Scaffold Status
 
 - Repository name: `lean-normal-forms`
 - Lean package name: `NormalForms`
 - License: `Apache-2.0`
 - Initial scaffold present for `README`, `LICENSE`, `CITATION.cff`, GitHub Actions, `lake build`, an axiom-audit smoke script, and Zenodo metadata
-- Public Lean APIs are compile-time stubs only; they define shapes, not executable algorithms
-- The current skeleton fixes the planned subsystem boundaries and the first sample matrices for the abelian-group showcase
+- Local environment baseline verified on March 6, 2026 with `lake exe cache get`, `lake build`, and `lake env lean scripts/AxiomAudit.lean`
+- The top-level HNF and SNF public APIs are still compile-time stubs, but the elementary matrix layer is now executable
+- The repository now fixes the planned subsystem boundaries, the first sample matrices for the abelian-group showcase, and basic smoke theorems for elementary row and column operations
 
 ## Summary
 
@@ -61,6 +61,14 @@
 - `NormalForms/Examples/AbelianGroups`
 - `paper/`
 - `artifact/`
+
+## Progress Snapshot
+
+- Current phase status on March 6, 2026: `Phase 1 in progress`
+- Completed in `NormalForms/Matrix/Elementary`: executable row and column `swap` / `add` / `smul`, `applyStep`, `replayLog`, `replayLog_nil`, `replayLog_cons`, and `replayLog_append`
+- Completed in `NormalForms/Examples/AbelianGroups`: `Int`-based smoke theorems for row operations, column operations, and mixed log replay
+- Still pending in Phase 1: unimodularity predicate refinement for algorithm use, `xgcd` helper wrappers, and the standard lemmas needed by HNF/SNF implementations
+- Phases 2 through 5 have not started in the sense of algorithmic or theorem-level content; their current files remain API or theorem scaffolds
 
 ## Phase Plan
 
