@@ -1,3 +1,4 @@
+import NormalForms.Matrix.Hermite.Basic
 import NormalForms.Bridge.MathlibPID
 
 /-!
@@ -5,7 +6,7 @@ import NormalForms.Bridge.MathlibPID
 
 Sample matrices for the future finitely generated abelian-group showcase.
 The current module includes executable smoke checks for elementary matrices,
-mixed log certificates, and the Phase 1 Bezout reduction gadget.
+mixed log certificates, the Phase 1 Bezout reduction gadget, and Phase 2 HNF smoke coverage.
 -/
 
 namespace NormalForms.Examples.AbelianGroups
@@ -13,6 +14,7 @@ namespace NormalForms.Examples.AbelianGroups
 open Polynomial
 open NormalForms.Matrix.Elementary
 open NormalForms.Matrix.Certificates
+open NormalForms.Matrix.Hermite
 
 def zeroMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
   0
@@ -142,6 +144,80 @@ noncomputable def polynomialMatrixQX : _root_.Matrix (Fin 2) (Fin 2) (Polynomial
     | 1, 1 => Polynomial.X ^ 2 + 1
     | _, _ => 0
 
+def fullRankHNFMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![1, 2;
+     0, 0]
+
+def rankDeficientHNFMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![2, 4;
+     0, 0]
+
+def unitBoundaryHNFMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![1, 0;
+     0, 0]
+
+def presentationHNFMatrixZ : _root_.Matrix (Fin 2) (Fin 3) Int :=
+  !![2, 4, 6;
+     0, 0, 0]
+
+noncomputable def fullRankHNFPublic : HNFResult fullRankMatrixZ :=
+  Classical.choose (hermiteNormalForm_exists fullRankMatrixZ)
+theorem zeroMatrixHNFSmoke :
+    (Internal.hermiteNormalFormFin zeroMatrixZ).H = zeroMatrixZ := by
+  decide
+
+theorem fullRankHNFSmoke :
+    (Internal.hermiteNormalFormFin fullRankMatrixZ).H = fullRankHNFMatrixZ := by
+  decide
+
+theorem rankDeficientHNFSmoke :
+    (Internal.hermiteNormalFormFin rankDeficientMatrixZ).H = rankDeficientHNFMatrixZ := by
+  decide
+
+theorem unitBoundaryHNFSmoke :
+    (Internal.hermiteNormalFormFin unitBoundaryMatrixZ).H = unitBoundaryHNFMatrixZ := by
+  decide
+
+theorem presentationHNFSmoke :
+    (Internal.hermiteNormalFormFin presentationMatrixZ).H = presentationHNFMatrixZ := by
+  decide
+
+theorem zeroMatrixHNFExists :
+    ∃ result, hermiteNormalForm zeroMatrixZ = some result :=
+  hermiteNormalForm_exists zeroMatrixZ
+
+theorem fullRankHNFExists :
+    ∃ result, hermiteNormalForm fullRankMatrixZ = some result :=
+  hermiteNormalForm_exists fullRankMatrixZ
+
+theorem rankDeficientHNFExists :
+    ∃ result, hermiteNormalForm rankDeficientMatrixZ = some result :=
+  hermiteNormalForm_exists rankDeficientMatrixZ
+
+theorem unitBoundaryHNFExists :
+    ∃ result, hermiteNormalForm unitBoundaryMatrixZ = some result :=
+  hermiteNormalForm_exists unitBoundaryMatrixZ
+
+theorem fullRankHNFPublicSmoke :
+    hermiteNormalForm fullRankMatrixZ = some fullRankHNFPublic :=
+  Classical.choose_spec (hermiteNormalForm_exists fullRankMatrixZ)
+
+theorem fullRankHNFPublicLeftMulSmoke :
+    fullRankHNFPublic.U * fullRankMatrixZ = fullRankHNFPublic.H :=
+  fullRankHNFPublic.left_mul
+
+theorem fullRankHNFPublicIsHermiteSmoke :
+    IsHermiteNormalForm fullRankHNFPublic.H :=
+  fullRankHNFPublic.isHermite
+
+theorem fullRankHNFPublicCertificateSmoke :
+    (fullRankHNFPublic.toCertificate).U * fullRankMatrixZ =
+      (fullRankHNFPublic.toCertificate).result := by
+  exact (fullRankHNFPublic.toCertificate).equation
+
+theorem fullRankHNFPublicCertificateMatchesResult :
+    (fullRankHNFPublic.toCertificate).result = fullRankHNFPublic.H := by
+  rfl
 theorem fullRankRowSwapSmoke :
     applyRowOperation fullRankMatrixZ (.swap (0 : Fin 2) (1 : Fin 2)) = swappedFullRankMatrixZ := by
   decide
@@ -295,6 +371,8 @@ theorem presentationClassificationRoadmap :
   trivial
 
 end NormalForms.Examples.AbelianGroups
+
+
 
 
 
