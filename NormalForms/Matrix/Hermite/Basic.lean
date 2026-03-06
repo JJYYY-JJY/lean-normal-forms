@@ -311,6 +311,248 @@ structure HNFResult {m n R : Type _}
   left_mul : U * A = H
   isHermite : IsHermiteNormalForm H
 
+theorem firstNonzero?_eq_none {R : Type _} [Zero R] [DecidableEq R] :
+    {n : Nat} -> (row : Fin n -> R) -> firstNonzero? row = none -> ∀ i, row i = 0
+  | 0, _, _, i => Fin.elim0 i
+  | _ + 1, row, hnone, i => by
+      by_cases h0 : row 0 = 0
+      · rw [firstNonzero?, h0] at hnone
+        cases htail : firstNonzero? (fun j => row j.succ) with
+        | none =>
+            cases i using Fin.cases with
+            | zero =>
+                exact h0
+            | succ j =>
+                exact firstNonzero?_eq_none (fun k => row k.succ) htail j
+        | some j =>
+            simp [htail] at hnone
+      · exfalso
+        simp [firstNonzero?, h0] at hnone
+
+
+theorem firstNonzero?_some_ne_zero {R : Type _} [Zero R] [DecidableEq R] :
+    {n : Nat} -> (row : Fin n -> R) -> {i : Fin n} -> firstNonzero? row = some i -> row i ≠ 0
+  | 0, _, i, _ => Fin.elim0 i
+  | _ + 1, row, i, hsome => by
+      by_cases h0 : row 0 = 0
+      · rw [firstNonzero?, h0] at hsome
+        cases i using Fin.cases with
+        | zero =>
+            simp at hsome
+        | succ j =>
+            cases htail : firstNonzero? (fun k => row k.succ) with
+            | none =>
+                simp [htail] at hsome
+            | some j' =>
+                simp [htail] at hsome
+                subst hsome
+                exact firstNonzero?_some_ne_zero (fun k => row k.succ) htail
+      · cases i using Fin.cases with
+        | zero =>
+            exact h0
+        | succ j =>
+            have hsome0 : firstNonzero? row = some (0 : Fin (_ + 1)) := by
+              simp [firstNonzero?, h0]
+            have hzero : (0 : Fin (_ + 1)) = j.succ := by
+              simpa using hsome0.symm.trans hsome
+            have : False := by
+              cases hzero
+            exact False.elim this
+
+
+@[simp] theorem firstNonzero?_zero {n : Nat} {R : Type _} [Zero R] [DecidableEq R] :
+    firstNonzero? (fun _ : Fin n => (0 : R)) = none := by
+  induction n with
+  | zero =>
+      simp [firstNonzero?]
+  | succ n ih =>
+      simp [firstNonzero?, ih]
+
+
+@[simp] theorem tailCols_mul {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    (U : _root_.Matrix (Fin m) (Fin m) R)
+    (A : _root_.Matrix (Fin m) (Fin (n + 1)) R) :
+    tailCols (U * A) = U * tailCols A := by
+  ext i j
+  simp [tailCols, _root_.Matrix.mul_apply]
+
+
+theorem firstCol_zero_mul {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    (U : _root_.Matrix (Fin m) (Fin m) R)
+    (A : _root_.Matrix (Fin m) (Fin (n + 1)) R)
+    (hzero : ∀ i, A i 0 = 0) :
+    ∀ i, (U * A) i 0 = 0 := by
+  intro i
+  simp [_root_.Matrix.mul_apply, hzero]
+
+
+private theorem zeroHermite {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] :
+    IsHermiteNormalFormFin (0 : _root_.Matrix (Fin m) (Fin n) R) := by
+  induction n generalizing m with
+  | zero =>
+      exact IsHermiteNormalFormFin.emptyCols _
+  | succ n ih =>
+      cases m with
+      | zero =>
+          exact IsHermiteNormalFormFin.emptyRows _
+      | succ m =>
+          refine IsHermiteNormalFormFin.zeroCol _ ?_ ?_
+          · intro i
+            simp
+          · simpa [tailCols] using (ih (m := m + 1))
+
+
+namespace Internal
+
+structure FinHNFResult {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) where
+  U : _root_.Matrix (Fin m) (Fin m) R
+  H : _root_.Matrix (Fin m) (Fin n) R
+  left_mul : U * A = H
+  isHermite : IsHermiteNormalFormFin H
+
+
+def pickRowLeftMatrix {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) (i : Fin (m + 1)) :
+    _root_.Matrix (Fin (m + 1)) (Fin (m + 1)) R :=
+  fun r s =>
+    if hr : r = 0 then
+      (((normUnit (A i 0) : R) • (1 : _root_.Matrix (Fin (m + 1)) (Fin (m + 1)) R) i) s)
+    else
+      0
+
+
+def pickRowResultMatrix {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) (i : Fin (m + 1)) :
+    _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R :=
+  fun r c =>
+    if r = 0 then
+      normUnit (A i 0) * A i c
+    else
+      0
+
+
+theorem pickRowLeftMatrix_topRow {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) (i : Fin (m + 1)) :
+    (pickRowLeftMatrix A i * A) 0 = fun c => normUnit (A i 0) * A i c := by
+  ext c
+  simpa [pickRowLeftMatrix, _root_.Matrix.mul_apply, Pi.smul_apply] using
+    congrFun (basisRow_smul_vecMul A i (normUnit (A i 0) : R)) c
+
+
+theorem pickRowLeftMatrix_lowerRow {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) (i : Fin (m + 1)) (k : Fin m) :
+    (pickRowLeftMatrix A i * A) k.succ = 0 := by
+  ext c
+  simp [pickRowLeftMatrix, _root_.Matrix.mul_apply]
+
+
+theorem pickRowLeftMatrix_mul {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) (i : Fin (m + 1)) :
+    pickRowLeftMatrix A i * A = pickRowResultMatrix A i := by
+  ext r c
+  cases r using Fin.cases with
+  | zero =>
+      simpa [pickRowResultMatrix] using congrFun (pickRowLeftMatrix_topRow A i) c
+  | succ k =>
+      simpa [pickRowResultMatrix] using congrFun (pickRowLeftMatrix_lowerRow A i k) c
+
+
+theorem pickRowResultMatrix_topLeft {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) (i : Fin (m + 1)) :
+    pickRowResultMatrix A i 0 0 = normalize (A i 0) := by
+  simpa [pickRowResultMatrix, mul_comm] using (normalize_apply (A i 0)).symm
+
+
+theorem pickRowResultMatrix_topLeft_ne_zero {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) {i : Fin (m + 1)} (hi : A i 0 ≠ 0) :
+    pickRowResultMatrix A i 0 0 ≠ 0 := by
+  rw [pickRowResultMatrix_topLeft]
+  exact mt normalize_eq_zero.mp hi
+
+
+theorem pickRowResultMatrix_below_zero {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) (i : Fin (m + 1)) :
+    ∀ k : Fin m, pickRowResultMatrix A i k.succ 0 = 0 := by
+  intro k
+  simp [pickRowResultMatrix]
+
+
+@[simp] theorem lowerRight_pickRowResultMatrix {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) (i : Fin (m + 1)) :
+    lowerRight (pickRowResultMatrix A i) = 0 := by
+  ext j k
+  simp [pickRowResultMatrix, lowerRight]
+
+
+def hermiteNormalFormFin {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) : FinHNFResult A := by
+  induction n generalizing m with
+  | zero =>
+      refine
+        { U := 1
+          H := A
+          left_mul := by simp
+          isHermite := IsHermiteNormalFormFin.emptyCols _ }
+  | succ n ih =>
+      cases m with
+      | zero =>
+          refine
+            { U := 1
+              H := A
+              left_mul := by simp
+              isHermite := IsHermiteNormalFormFin.emptyRows _ }
+      | succ m =>
+          by_cases hcol : firstNonzero? (fun i : Fin (m + 1) => A i 0) = none
+          · let tailRes := ih (m := m + 1) (tailCols A)
+            refine
+              { U := tailRes.U
+                H := tailRes.U * A
+                left_mul := by rfl
+                isHermite := ?_ }
+            refine IsHermiteNormalFormFin.zeroCol _ ?_ ?_
+            · exact firstCol_zero_mul tailRes.U A (firstNonzero?_eq_none (fun i : Fin (m + 1) => A i 0) hcol)
+            · simpa [tailCols_mul, tailRes.left_mul] using tailRes.isHermite
+          · cases hfirst : firstNonzero? (fun i : Fin (m + 1) => A i 0) with
+            | none =>
+                exact False.elim (hcol hfirst)
+            | some i =>
+                have hi0 : A i 0 ≠ 0 := firstNonzero?_some_ne_zero (fun k : Fin (m + 1) => A k 0) hfirst
+                refine
+                  { U := pickRowLeftMatrix A i
+                    H := pickRowResultMatrix A i
+                    left_mul := pickRowLeftMatrix_mul A i
+                    isHermite := ?_ }
+                refine IsHermiteNormalFormFin.pivot _ ?_ ?_ ?_ ?_ ?_
+                · exact pickRowResultMatrix_topLeft_ne_zero A hi0
+                · rw [pickRowResultMatrix_topLeft, normalize_idem]
+                · intro k
+                  exact pickRowResultMatrix_below_zero A i k
+                · simpa using (zeroHermite (m := m) (n := n) :
+                    IsHermiteNormalFormFin (0 : _root_.Matrix (Fin m) (Fin n) R))
+                · intro k
+                  have hrow : (fun j : Fin n => pickRowResultMatrix A i k.succ j.succ) = fun _ : Fin n => (0 : R) := by
+                    funext j
+                    simp [pickRowResultMatrix]
+                  rw [hrow]
+                  simp
+
+end Internal
+
 
 def HNFResult.toCertificate {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
@@ -322,10 +564,37 @@ def HNFResult.toCertificate {m n R : Type _}
     equation := result.left_mul }
 
 
-def hermiteNormalForm {m n R : Type _}
+noncomputable def hermiteNormalForm {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     (A : _root_.Matrix m n R) : Option (HNFResult A) :=
-  none
+  let em := Fintype.equivFin m
+  let en := Fintype.equivFin n
+  let Afin : _root_.Matrix (Fin (Fintype.card m)) (Fin (Fintype.card n)) R :=
+    _root_.Matrix.reindex em en A
+  let result := Internal.hermiteNormalFormFin Afin
+  some
+    { U := _root_.Matrix.reindex em.symm em.symm result.U
+      H := _root_.Matrix.reindex em.symm en.symm result.H
+      left_mul := by
+        simpa [Matrix.reindexLinearEquiv, Afin] using
+          (Matrix.reindexLinearEquiv_mul R R em.symm em.symm en.symm result.U Afin).trans
+            (by simpa [Matrix.reindexLinearEquiv, Afin] using congrArg (_root_.Matrix.reindex em.symm en.symm) result.left_mul)
+      isHermite := by
+        unfold IsHermiteNormalForm
+        convert result.isHermite using 1
+        ext i j
+        simp [em, en] }
+
+
+theorem hermiteNormalForm_exists {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix m n R) : ∃ result, hermiteNormalForm A = some result := by
+  unfold hermiteNormalForm
+  simp
 
 end NormalForms.Matrix.Hermite
+
+
+
