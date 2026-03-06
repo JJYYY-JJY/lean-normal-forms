@@ -65,7 +65,7 @@ def IsHermiteNormalForm {m n R : Type _}
 
 
 structure RowTransform {m n : Type _} {R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R] [NormalizationMonoid R]
     (A : _root_.Matrix m n R) where
   B : _root_.Matrix m n R
   log : OperationLog R m n
@@ -84,7 +84,7 @@ theorem listForall_append_iff {α : Type _} {p : α -> Prop} (xs ys : List α) :
 
 
 def RowTransform.refl {m n : Type _} {R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R] [NormalizationMonoid R]
     (A : _root_.Matrix m n R) : RowTransform A :=
   { B := A
     log := []
@@ -94,7 +94,7 @@ def RowTransform.refl {m n : Type _} {R : Type _}
 
 
 def RowTransform.singleton {m n : Type _} {R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R] [NormalizationMonoid R]
     (A : _root_.Matrix m n R) (op : RowOperation R m) (hop : UnimodularRowOperation op) :
     RowTransform A :=
   { B := applyRowOperation A op
@@ -106,7 +106,7 @@ def RowTransform.singleton {m n : Type _} {R : Type _}
 
 
 def RowTransform.trans {m n : Type _} {R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R] [NormalizationMonoid R]
     {A : _root_.Matrix m n R} (first : RowTransform A) (second : RowTransform first.B) :
     RowTransform A :=
   { B := second.B
@@ -149,7 +149,7 @@ theorem isRowStep_mapStep {m m' n n' R : Type _} (fm : m -> m') (fn : n -> n')
   cases step <;> rfl
 
 
-theorem unimodularStep_mapStep {m m' n n' R : Type _} [CommRing R]
+theorem unimodularStep_mapStep {m m' n n' R : Type _} [CommRing R] [NormalizationMonoid R]
     {fm : m -> m'} {fn : n -> n'}
     (hfm : Function.Injective fm) (hfn : Function.Injective fn)
     (step : MatrixStep R m n) :
@@ -187,7 +187,7 @@ theorem mapLog_rowLog {m m' n n' R : Type _} (fm : m -> m') (fn : n -> n')
       simp [mapLog, isRowStep_mapStep, hpair.1, ih, hpair.2]
 
 
-theorem mapLog_unimodular {m m' n n' R : Type _} [CommRing R]
+theorem mapLog_unimodular {m m' n n' R : Type _} [CommRing R] [NormalizationMonoid R]
     {fm : m -> m'} {fn : n -> n'}
     (hfm : Function.Injective fm) (hfn : Function.Injective fn)
     (log : OperationLog R m n) (hlog : log.Forall UnimodularStep) :
