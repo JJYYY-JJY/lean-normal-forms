@@ -7,8 +7,8 @@
 - License: `Apache-2.0`
 - Initial scaffold present for `README`, `LICENSE`, `CITATION.cff`, GitHub Actions, `lake build`, an axiom-audit smoke script, and Zenodo metadata
 - Local environment baseline verified on March 6, 2026 with `lake exe cache get`, `lake build`, and `lake env lean scripts/AxiomAudit.lean`
-- The top-level HNF and SNF public APIs are still compile-time stubs, but the elementary matrix layer is now executable
-- The repository now fixes the planned subsystem boundaries, the first sample matrices for the abelian-group showcase, and basic smoke theorems for elementary row and column operations
+- The top-level HNF and SNF public APIs are still compile-time stubs, but the elementary matrix layer is now executable and certificate-safe
+- The repository now fixes the planned subsystem boundaries, mixed-log certificate helpers, a reusable 2x2 Bezout elimination gadget, and smoke theorems over `Int` and `Q[X]`
 
 ## Summary
 
@@ -64,16 +64,16 @@
 
 ## Progress Snapshot
 
-- Current phase status on March 6, 2026: `Phase 1 in progress`
-- Completed in `NormalForms/Matrix/Elementary`: executable row and column `swap` / `add` / `smul`, `applyStep`, `replayLog`, `replayLog_nil`, `replayLog_cons`, and `replayLog_append`
-- Completed in `NormalForms/Examples/AbelianGroups`: `Int`-based smoke theorems for row operations, column operations, and mixed log replay
-- Still pending in Phase 1: unimodularity predicate refinement for algorithm use, `xgcd` helper wrappers, and the standard lemmas needed by HNF/SNF implementations
-- Phases 2 through 5 have not started in the sense of algorithmic or theorem-level content; their current files remain API or theorem scaffolds
+- Current phase status on March 6, 2026: `Phase 2 in progress`
+- Phase 1 is complete in `NormalForms/Matrix/Elementary`: executable row and column `swap` / `add` / `smul`, elementary-matrix realizations of each step, mixed-log left/right accumulators, the theorem `U(log) * A * V(log) = replayLog A log`, and a reusable 2x2 Bezout reduction matrix with determinant and transpose lemmas
+- Phase 1 is complete in `NormalForms/Matrix/Certificates`: `Unimodular` as `IsUnit det`, unimodular step/log closure theorems, row-only and two-sided log-to-certificate helpers, and the executable-versus-certificate boundary for non-unit `smul`
+- Phase 1 is complete in `NormalForms/Examples/AbelianGroups`: `Int`-based matrix-action smoke theorems, mixed-log certificate instantiations, non-unit scaling boundary checks, and Bezout examples over `Int` and `Q[X]`
+- Phases 3 through 5 have not started in the sense of algorithmic or theorem-level content; their current files remain API or theorem scaffolds
 
 ## Phase Plan
 
-- Phase 1, two weeks: elementary row and column operations, unimodularity predicates, operation logs, small-step semantics, `xgcd` helper wrappers, and the standard lemmas needed by the algorithms
-- Phase 2, four weeks: row-style HNF with pivot search, Bezout row reduction, pivot normalization, reduction above pivots, and proofs of correctness, unimodularity, predicate satisfaction, and uniqueness
+- Phase 1, completed: elementary row and column operations, unimodularity predicates, operation logs, small-step semantics, mixed-log certificates, a 2x2 Bezout elimination gadget, and the standard lemmas needed by the algorithms
+- Phase 2, four weeks: row-style HNF consuming the Phase 1 log-certificate and Bezout-elimination layer, with pivot search, pivot normalization, reduction above and below pivots, a real `IsHermiteNormalForm` predicate, and a first correctness/uniqueness proof skeleton
 - Phase 3, six weeks: SNF on top of the HNF layer with column operations, diagonalization, divisibility cleanup between neighboring diagonal entries, and proofs of correctness, Smith-form satisfaction, and uniqueness
 - Phase 4, three weeks: PID bridge theorem aligning the executable invariant factors with mathlib's `Submodule.smithNormalForm...` results up to normalization
 - Phase 5, two weeks: finitely generated abelian groups over `Z` via presentation matrices as the mandatory mathematical showcase
@@ -121,3 +121,6 @@
 - Do not copy unpublished proof text or code text from the existing group repository into this project
 - Frame the first paper around `Lean 4 + executable normal forms + mathlib bridge`, not generic formal linear algebra
 - Do not promise executable algorithms over arbitrary PIDs; executable scope stays with Euclidean domains and PID stays at the bridge and specification layer
+
+
+
