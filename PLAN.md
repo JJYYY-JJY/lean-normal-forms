@@ -65,20 +65,20 @@
 
 ## Progress Snapshot
 
-- Current phase status on March 7, 2026: `Phase 2 recursive HNF landed; remaining work narrowed to proof strengthening`
+- Current phase status on March 7, 2026: `Phase 2 is complete, including public HNF correctness and uniqueness; active development has moved to Phase 3 SNF skeleton and algorithm work`
 - Phase 1 is complete in `NormalForms/Matrix/Elementary`: executable row and column `swap` / `add` / `smul`, elementary-matrix realizations of each step, mixed-log left/right accumulators, the theorem `U(log) * A * V(log) = replayLog A log`, and a reusable 2x2 Bezout reduction matrix with determinant and transpose lemmas
 - Phase 1 is complete in `NormalForms/Matrix/Certificates`: `Unimodular` as `IsUnit det`, unimodular step/log closure theorems, row-only and two-sided log-to-certificate helpers, and the executable-versus-certificate boundary for non-unit `smul`
 - Phase 1 is complete in `NormalForms/Examples/AbelianGroups`: `Int`-based matrix-action smoke theorems, mixed-log certificate instantiations, non-unit scaling boundary checks, and Bezout examples over `Int` and `Q[X]`
-- Phase 2 smoke coverage is now in `NormalForms/Examples/AbelianGroups`: concrete `Int` HNF outputs for zero / full-rank / rank-deficient / unit-boundary inputs, a nontrivial lower-right presentation-matrix smoke check, public `hermiteNormalForm` existence checks, a public unimodularity smoke theorem, and a `HNFResult.toCertificate` example
-- Phase 2 is materially complete in `NormalForms/Matrix/Hermite`: `IsHermiteNormalFormFin` is a real recursive predicate, the public `IsHermiteNormalForm` wrapper is in place, the module contains `RowTransform`, `LeftTransform`, block-lift / Bezout transport lemmas, `tailCols` / `lowerRight` replay transport lemmas, an executable Fin-indexed HNF kernel, and a public `hermiteNormalForm_unimodular` helper theorem
-- The repo narrative is now synchronized with the recursive HNF core: README status text and example coverage reflect the new reality, and the remaining work is correctness strengthening, canonicality/uniqueness, SNF, the PID bridge, and the application layer
+- Phase 2 smoke coverage is now in `NormalForms/Examples/AbelianGroups`: concrete `Int` HNF outputs for zero / full-rank / rank-deficient / unit-boundary inputs, a nontrivial lower-right presentation-matrix smoke check, public `hermiteNormalForm` existence checks, a public HNF correctness smoke theorem, a public uniqueness smoke theorem, a public unimodularity smoke theorem, and a `HNFResult.toCertificate` example
+- Phase 2 is complete in `NormalForms/Matrix/Hermite`: `IsHermiteNormalFormFin` is a real recursive predicate, the public `IsHermiteNormalForm` wrapper is in place, the module contains `RowTransform`, `LeftTransform`, block-lift / Bezout transport lemmas, `tailCols` / `lowerRight` replay transport lemmas, an executable Fin-indexed HNF kernel, the public theorems `hermiteNormalForm_isHermite` and `isHermiteNormalForm_unique_of_left_equiv`, and a public `hermiteNormalForm_unimodular` helper theorem
+- The repo narrative is now synchronized with the completed HNF phase: README status text and example coverage reflect correctness plus uniqueness, and the remaining work is SNF, the PID bridge, and the application layer
 - Phases 3 through 5 have not started in the sense of algorithmic or theorem-level content; their current files remain API or theorem scaffolds
 
 ## Phase Plan
 
 - Phase 1, completed: elementary row and column operations, unimodularity predicates, operation logs, small-step semantics, mixed-log certificates, a 2x2 Bezout elimination gadget, and the standard lemmas needed by the algorithms
-- Phase 2, current focus: recursive row-style HNF on top of the Phase 1 log-certificate and Bezout-elimination layer is now in place; the remaining Phase 2 work is correctness strengthening, canonicality / uniqueness cleanup, and documenting the `CanonicalMod` boundary for certified normality
-- Phase 3, six weeks: SNF on top of the HNF layer with column operations, diagonalization, divisibility cleanup between neighboring diagonal entries, and proofs of correctness, Smith-form satisfaction, and uniqueness
+- Phase 2, completed: recursive row-style HNF on top of the Phase 1 log-certificate and Bezout-elimination layer, together with certified normality, public correctness extraction, uniqueness, and the documented `CanonicalMod` boundary for exact canonical representatives
+- Phase 3, current focus for the next six weeks: SNF abstraction skeleton and executable algorithm on top of the HNF layer, with column operations, diagonalization, divisibility cleanup between neighboring diagonal entries, and proofs of correctness, Smith-form satisfaction, and uniqueness
 - Phase 4, three weeks: PID bridge theorem aligning the executable invariant factors with mathlib's `Submodule.smithNormalForm...` results up to normalization
 - Phase 5, two weeks: finitely generated abelian groups over `Z` via presentation matrices as the mandatory mathematical showcase
 
@@ -125,7 +125,6 @@
 - Do not copy unpublished proof text or code text from the existing group repository into this project
 - Frame the first paper around `Lean 4 + executable normal forms + mathlib bridge`, not generic formal linear algebra
 - Do not promise executable algorithms over arbitrary PIDs; executable scope stays with Euclidean domains and PID stays at the bridge and specification layer
-
 
 
 

@@ -9,11 +9,12 @@ This repository currently contains a buildable `NormalForms` Lean library with a
 - Public API for `IsHermiteNormalForm`, `IsSmithNormalForm`, `HNFResult`, and `SNFResult`
 - Executable recursive row-style HNF over Euclidean domains, with first-column elimination, lower-right recursion, top-row reduction, and `HNFResult.toCertificate`
 - Internal HNF recursion carries explicit unimodular left certificates end-to-end, and the public theorem `hermiteNormalForm_unimodular` exposes that certificate from `hermiteNormalForm`
+- HNF correctness and uniqueness are now proved, via `hermiteNormalForm_isHermite` and `isHermiteNormalForm_unique_of_left_equiv`
 - Elementary row/column operations, mixed-log certificate helpers, and a reusable 2x2 Bezout reduction gadget
 - Smoke examples over `Int` and `Q[X]`, including public HNF certificate checks, plus the local plan in `PLAN.md`
 - GitHub Actions, citation metadata, Zenodo metadata, and an axiom-audit smoke script
 
-The current Lean files now compute recursive HNF and package left certificates. Certified HNF normality currently assumes a canonical remainder mixin `CanonicalMod`; stronger canonicality / uniqueness theorems, Smith normal form, and the PID bridge remain in progress.
+The current Lean files now compute recursive HNF, package left certificates, and prove public HNF correctness and uniqueness. Certified HNF normality still uses the lightweight `CanonicalMod` mixin to isolate canonical Euclidean remainder choices; the active next phase is Smith normal form plus the PID bridge.
 
 ## Build
 
@@ -45,4 +46,3 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 - The initial research application is finitely generated abelian groups over `Z`
 
 For the full roadmap, milestones, and submission strategy, see `PLAN.md`.
-
