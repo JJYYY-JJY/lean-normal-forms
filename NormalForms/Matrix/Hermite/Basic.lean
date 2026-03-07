@@ -1,3 +1,4 @@
+import Mathlib.Data.Int.ModEq
 import NormalForms.Matrix.Certificates
 
 /-!
@@ -15,9 +16,19 @@ open NormalForms.Matrix.Certificates
 /-- A Euclidean domain whose remainder choice is canonical, so `%` is idempotent. -/
 class CanonicalMod (R : Type _) [EuclideanDomain R] : Prop where
   mod_mod : ∀ a b : R, (a % b) % b = a % b
+  reduced_eq_of_dvd_sub :
+    ∀ {a b m : R}, a = a % m -> b = b % m -> m ∣ b - a -> a = b
 
 instance : CanonicalMod Int where
   mod_mod := Int.emod_emod
+  reduced_eq_of_dvd_sub := by
+    intro a b m ha hb hdiv
+    have hmod : a % m = b % m := by
+      simpa using Int.ModEq.eq ((Int.modEq_iff_dvd).2 hdiv)
+    calc
+      a = a % m := ha
+      _ = b % m := hmod
+      _ = b := hb.symm
 
 
 def firstNonzero? {R : Type _} [Zero R] [DecidableEq R] :
