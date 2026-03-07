@@ -1,18 +1,19 @@
 # lean-normal-forms
 
-Executable Hermite and Smith normal forms in Lean 4 over Euclidean domains, with a bridge to mathlib's PID results.
+Executable Hermite and Smith normal forms in Lean 4 over Euclidean domains, with a certified recursive HNF layer and a bridge to mathlib's PID results.
 
 ## Status
 
-This repository currently contains a buildable `NormalForms` Lean library with an executable Hermite layer and scaffolded Smith / PID follow-through.
+This repository currently contains a buildable `NormalForms` Lean library with a real recursive row-style Hermite layer and scaffolded Smith / PID follow-through.
 
 - Public API for `IsHermiteNormalForm`, `IsSmithNormalForm`, `HNFResult`, and `SNFResult`
-- Executable row-style HNF over Euclidean domains, plus `HNFResult.toCertificate`
+- Executable recursive row-style HNF over Euclidean domains, with first-column elimination, lower-right recursion, top-row reduction, and `HNFResult.toCertificate`
+- Internal HNF recursion carries explicit unimodular left certificates end-to-end, and the public theorem `hermiteNormalForm_unimodular` exposes that certificate from `hermiteNormalForm`
 - Elementary row/column operations, mixed-log certificate helpers, and a reusable 2x2 Bezout reduction gadget
-- Smoke examples over `Int` and `Q[X]`, plus the local plan in `PLAN.md`
+- Smoke examples over `Int` and `Q[X]`, including public HNF certificate checks, plus the local plan in `PLAN.md`
 - GitHub Actions, citation metadata, Zenodo metadata, and an axiom-audit smoke script
 
-The current Lean files now compute HNF and package left certificates. Smith normal form, the PID bridge, and stronger correctness / uniqueness layers remain in progress.
+The current Lean files now compute recursive HNF and package left certificates. Certified HNF normality currently assumes a canonical remainder mixin `CanonicalMod`; stronger canonicality / uniqueness theorems, Smith normal form, and the PID bridge remain in progress.
 
 ## Build
 
@@ -20,6 +21,7 @@ The current Lean files now compute HNF and package left certificates. Smith norm
 lake exe cache get
 lake build
 lake env lean scripts/AxiomAudit.lean
+lake env lean NormalForms/Examples/AbelianGroups/Basic.lean
 ```
 
 The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fresh machine, Lake will still need network access the first time it materializes `.lake/packages`.
@@ -38,9 +40,9 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 ## Scope
 
 - Executable algorithms are scoped to `EuclideanDomain`
+- Exact HNF normality statements use a lightweight `CanonicalMod` mixin to capture canonical Euclidean remainders
 - PID-level statements are scoped to specifications and bridge theorems
 - The initial research application is finitely generated abelian groups over `Z`
 
 For the full roadmap, milestones, and submission strategy, see `PLAN.md`.
-
 
