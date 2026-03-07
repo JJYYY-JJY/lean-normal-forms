@@ -12,6 +12,13 @@ open scoped Matrix
 open NormalForms.Matrix.Elementary
 open NormalForms.Matrix.Certificates
 
+/-- A Euclidean domain whose remainder choice is canonical, so `%` is idempotent. -/
+class CanonicalMod (R : Type _) [EuclideanDomain R] : Prop where
+  mod_mod : ∀ a b : R, (a % b) % b = a % b
+
+instance : CanonicalMod Int where
+  mod_mod := Int.emod_emod
+
 
 def firstNonzero? {R : Type _} [Zero R] [DecidableEq R] :
     {n : Nat} -> (Fin n -> R) -> Option (Fin n)
@@ -116,6 +123,79 @@ def RowTransform.trans {m n : Type _} {R : Type _}
       ⟨first.unimodular, second.unimodular⟩
     replay_eq := by
       rw [replayLog_append, first.replay_eq, second.replay_eq] }
+
+
+structure LeftTransform {m n : Type _} {R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    (A : _root_.Matrix m n R) where
+  U : _root_.Matrix m m R
+  B : _root_.Matrix m n R
+  left_mul : U * A = B
+  unimodular : Unimodular U
+
+
+def LeftTransform.refl {m n : Type _} {R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    (A : _root_.Matrix m n R) : LeftTransform A :=
+  { U := 1
+    B := A
+    left_mul := by simp
+    unimodular := unimodular_one }
+
+
+def LeftTransform.trans {m n : Type _} {R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    {A : _root_.Matrix m n R} (first : LeftTransform A) (second : LeftTransform first.B) :
+    LeftTransform A :=
+  { U := second.U * first.U
+    B := second.B
+    left_mul := by
+      calc
+        (second.U * first.U) * A = second.U * (first.U * A) := by
+          rw [Matrix.mul_assoc]
+        _ = second.U * first.B := by rw [first.left_mul]
+        _ = second.B := second.left_mul
+    unimodular := unimodular_mul second.unimodular first.unimodular }
+
+
+def LeftTransform.ofRowTransform {m n : Type _} {R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R] [NormalizationMonoid R]
+    {A : _root_.Matrix m n R} (t : RowTransform A) : LeftTransform A :=
+  { U := leftAccumulator t.log
+    B := t.B
+    left_mul := by
+      have hright := rightAccumulator_eq_one_of_forall_isRow t.log t.rowLog
+      have hmul := replayLog_eq_left_right A t.log
+      simpa [hright, t.replay_eq] using hmul
+    unimodular := leftAccumulator_unimodular_of_forall t.log t.unimodular }
+
+
+def LeftTransform.swap {m n : Type _} {R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    (A : _root_.Matrix m n R) (i j : m) : LeftTransform A :=
+  { U := rowOperationMatrix (.swap i j)
+    B := applyRowOperation A (.swap i j)
+    left_mul := rowOperationMatrix_mul A (.swap i j)
+    unimodular := unimodular_rowOperationMatrix (.swap i j) (by trivial) }
+
+
+def LeftTransform.add {m n : Type _} {R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    (A : _root_.Matrix m n R) (src dst : m) (c : R) (hne : src ≠ dst) :
+    LeftTransform A :=
+  { U := rowOperationMatrix (.add src dst c)
+    B := applyRowOperation A (.add src dst c)
+    left_mul := rowOperationMatrix_mul A (.add src dst c)
+    unimodular := unimodular_rowOperationMatrix (.add src dst c) hne }
+
+
+def LeftTransform.unitSmul {m n : Type _} {R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    (A : _root_.Matrix m n R) (i : m) (c : R) (hc : IsUnit c) : LeftTransform A :=
+  { U := rowOperationMatrix (.smul i c)
+    B := applyRowOperation A (.smul i c)
+    left_mul := rowOperationMatrix_mul A (.smul i c)
+    unimodular := unimodular_rowOperationMatrix (.smul i c) hc }
 
 
 def mapRowOperation {m m' R : Type _} (f : m -> m') : RowOperation R m -> RowOperation R m'
