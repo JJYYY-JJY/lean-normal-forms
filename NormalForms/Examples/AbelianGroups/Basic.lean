@@ -1,4 +1,4 @@
-import NormalForms.Matrix.Hermite.Basic
+import NormalForms.Matrix.Hermite
 import NormalForms.Bridge.MathlibPID
 
 /-!
@@ -162,6 +162,10 @@ def presentationHNFMatrixZ : _root_.Matrix (Fin 2) (Fin 3) Int :=
 
 noncomputable def fullRankHNFPublic : HNFResult fullRankMatrixZ :=
   Classical.choose (NormalForms.Matrix.Hermite.hermiteNormalForm_exists fullRankMatrixZ)
+
+abbrev fullRankHNFInternal :
+    NormalForms.Matrix.Hermite.Internal.FinHNFResult fullRankMatrixZ :=
+  NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin fullRankMatrixZ
 theorem zeroMatrixHNFSmoke :
     (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin zeroMatrixZ).H = zeroMatrixZ := by
   decide
@@ -211,8 +215,20 @@ theorem fullRankHNFPublicLeftMulSmoke :
   fullRankHNFPublic.left_mul
 
 theorem fullRankHNFPublicIsHermiteSmoke :
-    IsHermiteNormalForm fullRankHNFPublic.H :=
-  fullRankHNFPublic.isHermite
+    IsHermiteNormalForm fullRankHNFPublic.H := by
+  exact NormalForms.Matrix.Hermite.hermiteNormalForm_isHermite
+    (A := fullRankMatrixZ)
+    (result := fullRankHNFPublic)
+    (Classical.choose_spec (NormalForms.Matrix.Hermite.hermiteNormalForm_exists fullRankMatrixZ))
+
+theorem fullRankHNFPublicUniqueSmoke :
+    fullRankHNFPublic.H = fullRankHNFPublic.H := by
+  exact NormalForms.Matrix.Hermite.isHermiteNormalForm_unique_of_left_equiv
+    fullRankHNFPublicIsHermiteSmoke
+    fullRankHNFPublicIsHermiteSmoke
+    (U := 1)
+    unimodular_one
+    (by simp)
 
 theorem fullRankHNFPublicUnimodularSmoke :
     Unimodular fullRankHNFPublic.U :=
@@ -382,6 +398,3 @@ theorem presentationClassificationRoadmap :
   trivial
 
 end NormalForms.Examples.AbelianGroups
-
-
-
