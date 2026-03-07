@@ -4,17 +4,18 @@ Executable Hermite and Smith normal forms in Lean 4 over Euclidean domains, with
 
 ## Status
 
-This repository currently contains a buildable `NormalForms` Lean library with a real recursive row-style Hermite layer and scaffolded Smith / PID follow-through.
+This repository currently contains a buildable `NormalForms` Lean library with a real recursive row-style Hermite layer, a frozen Smith public API scaffold, and scaffolded PID follow-through.
 
 - Public API for `IsHermiteNormalForm`, `IsSmithNormalForm`, `HNFResult`, and `SNFResult`
 - Executable recursive row-style HNF over Euclidean domains, with first-column elimination, lower-right recursion, top-row reduction, and `HNFResult.toCertificate`
 - Internal HNF recursion carries explicit unimodular left certificates end-to-end, and the public theorem `hermiteNormalForm_unimodular` exposes that certificate from `hermiteNormalForm`
 - HNF correctness and uniqueness are now proved, via `hermiteNormalForm_isHermite` and `isHermiteNormalForm_unique_of_left_equiv`
+- Frozen SNF API scaffold in `NormalForms.Matrix.Smith.Basic`, including `SNFResult`, placeholder `IsSmithNormalForm`, and a public `smithNormalForm` entrypoint that currently returns `none`
 - Elementary row/column operations, mixed-log certificate helpers, and a reusable 2x2 Bezout reduction gadget
 - Smoke examples over `Int` and `Q[X]`, including public HNF certificate checks, plus the local plan in `PLAN.md`
 - GitHub Actions, citation metadata, Zenodo metadata, and an axiom-audit smoke script
 
-The current Lean files now compute recursive HNF, package left certificates, and prove public HNF correctness and uniqueness. Certified HNF normality still uses the lightweight `CanonicalMod` mixin to isolate canonical Euclidean remainder choices; the active next phase is Smith normal form plus the PID bridge.
+The current Lean files now compute recursive HNF, package left certificates, and prove public HNF correctness and uniqueness. The SNF public interface is frozen as the first public checkpoint, so the repository is ready for the arXiv preprint; the immediate next phase is executable Smith normal form plus its proofs, followed by the PID bridge.
 
 ## Build
 
@@ -31,7 +32,7 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 
 - `NormalForms/Matrix/Elementary`: row and column operation skeletons, logs, and replay semantics
 - `NormalForms/Matrix/Hermite`: executable HNF predicate, internal Fin kernel, and public result packaging
-- `NormalForms/Matrix/Smith`: SNF predicate and result API scaffold
+- `NormalForms/Matrix/Smith`: frozen SNF predicate, result, and entrypoint scaffold
 - `NormalForms/Matrix/Certificates`: reusable certificate shapes and unimodularity lemmas
 - `NormalForms/Bridge/MathlibPID`: placeholder bridge theorem API toward mathlib's PID results
 - `NormalForms/Examples/AbelianGroups`: sample matrices, executable HNF smoke checks, and certificate examples
