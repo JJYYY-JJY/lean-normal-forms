@@ -145,62 +145,66 @@ noncomputable def polynomialMatrixQX : _root_.Matrix (Fin 2) (Fin 2) (Polynomial
     | _, _ => 0
 
 def fullRankHNFMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
-  !![1, 2;
-     0, 0]
+  !![1, 0;
+     0, 1]
 
 def rankDeficientHNFMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
-  !![2, 4;
+  !![1, 2;
      0, 0]
 
 def unitBoundaryHNFMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
   !![1, 0;
-     0, 0]
+     0, 2]
 
 def presentationHNFMatrixZ : _root_.Matrix (Fin 2) (Fin 3) Int :=
   !![2, 4, 6;
-     0, 0, 0]
+     0, 8, 10]
 
 noncomputable def fullRankHNFPublic : HNFResult fullRankMatrixZ :=
-  Classical.choose (hermiteNormalForm_exists fullRankMatrixZ)
+  Classical.choose (NormalForms.Matrix.Hermite.hermiteNormalForm_exists fullRankMatrixZ)
 theorem zeroMatrixHNFSmoke :
-    (Internal.hermiteNormalFormFin zeroMatrixZ).H = zeroMatrixZ := by
+    (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin zeroMatrixZ).H = zeroMatrixZ := by
   decide
 
 theorem fullRankHNFSmoke :
-    (Internal.hermiteNormalFormFin fullRankMatrixZ).H = fullRankHNFMatrixZ := by
-  decide
+    (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin fullRankMatrixZ).H =
+      fullRankHNFMatrixZ := by
+  native_decide
 
 theorem rankDeficientHNFSmoke :
-    (Internal.hermiteNormalFormFin rankDeficientMatrixZ).H = rankDeficientHNFMatrixZ := by
-  decide
+    (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin rankDeficientMatrixZ).H =
+      rankDeficientHNFMatrixZ := by
+  native_decide
 
 theorem unitBoundaryHNFSmoke :
-    (Internal.hermiteNormalFormFin unitBoundaryMatrixZ).H = unitBoundaryHNFMatrixZ := by
-  decide
+    (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin unitBoundaryMatrixZ).H =
+      unitBoundaryHNFMatrixZ := by
+  native_decide
 
 theorem presentationHNFSmoke :
-    (Internal.hermiteNormalFormFin presentationMatrixZ).H = presentationHNFMatrixZ := by
-  decide
+    (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin presentationMatrixZ).H =
+      presentationHNFMatrixZ := by
+  native_decide
 
 theorem zeroMatrixHNFExists :
     ∃ result, hermiteNormalForm zeroMatrixZ = some result :=
-  hermiteNormalForm_exists zeroMatrixZ
+  NormalForms.Matrix.Hermite.hermiteNormalForm_exists zeroMatrixZ
 
 theorem fullRankHNFExists :
     ∃ result, hermiteNormalForm fullRankMatrixZ = some result :=
-  hermiteNormalForm_exists fullRankMatrixZ
+  NormalForms.Matrix.Hermite.hermiteNormalForm_exists fullRankMatrixZ
 
 theorem rankDeficientHNFExists :
     ∃ result, hermiteNormalForm rankDeficientMatrixZ = some result :=
-  hermiteNormalForm_exists rankDeficientMatrixZ
+  NormalForms.Matrix.Hermite.hermiteNormalForm_exists rankDeficientMatrixZ
 
 theorem unitBoundaryHNFExists :
     ∃ result, hermiteNormalForm unitBoundaryMatrixZ = some result :=
-  hermiteNormalForm_exists unitBoundaryMatrixZ
+  NormalForms.Matrix.Hermite.hermiteNormalForm_exists unitBoundaryMatrixZ
 
 theorem fullRankHNFPublicSmoke :
     hermiteNormalForm fullRankMatrixZ = some fullRankHNFPublic :=
-  Classical.choose_spec (hermiteNormalForm_exists fullRankMatrixZ)
+  Classical.choose_spec (NormalForms.Matrix.Hermite.hermiteNormalForm_exists fullRankMatrixZ)
 
 theorem fullRankHNFPublicLeftMulSmoke :
     fullRankHNFPublic.U * fullRankMatrixZ = fullRankHNFPublic.H :=
@@ -209,6 +213,13 @@ theorem fullRankHNFPublicLeftMulSmoke :
 theorem fullRankHNFPublicIsHermiteSmoke :
     IsHermiteNormalForm fullRankHNFPublic.H :=
   fullRankHNFPublic.isHermite
+
+theorem fullRankHNFPublicUnimodularSmoke :
+    Unimodular fullRankHNFPublic.U :=
+  NormalForms.Matrix.Hermite.hermiteNormalForm_unimodular
+    (A := fullRankMatrixZ)
+    (result := fullRankHNFPublic)
+    (Classical.choose_spec (NormalForms.Matrix.Hermite.hermiteNormalForm_exists fullRankMatrixZ))
 
 theorem fullRankHNFPublicCertificateSmoke :
     (fullRankHNFPublic.toCertificate).U * fullRankMatrixZ =
@@ -371,9 +382,6 @@ theorem presentationClassificationRoadmap :
   trivial
 
 end NormalForms.Examples.AbelianGroups
-
-
-
 
 
 
