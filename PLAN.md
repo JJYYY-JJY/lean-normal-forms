@@ -7,7 +7,8 @@
 - License: `Apache-2.0`
 - Initial scaffold present for `README`, `LICENSE`, `CITATION.cff`, GitHub Actions, `lake build`, an axiom-audit smoke script, and Zenodo metadata
 - Local environment baseline re-verified on March 7, 2026 with `lake build`, `lake env lean scripts/AxiomAudit.lean`, and `lake env lean NormalForms/Examples/AbelianGroups/Basic.lean`
-- The top-level SNF public API is still a compile-time stub; the HNF surface now has a real recursive predicate, an executable Fin-indexed kernel under `NormalForms.Matrix.Hermite.Internal`, and a public `hermiteNormalForm` entrypoint that returns `some result`
+- The top-level SNF public API is now frozen as a compile-time scaffold: `IsSmithNormalForm` remains a placeholder predicate, `SNFResult` packages the two-sided equation `U * A * V = S`, and the public `smithNormalForm` entrypoint remains `none` until the later Phase 3 algorithm and proof work lands
+- HNF uniqueness is complete and the SNF interface is frozen; the repository has reached its first public checkpoint and is ready for the arXiv preprint.
 - The HNF kernel now follows the intended three-stage recursion: first-column elimination, lower-right recursion, and top-row reduction, with an explicit unimodular left-certificate invariant carried through the internal transform/result structures
 - The repository now fixes the planned subsystem boundaries, mixed-log certificate helpers, a reusable 2x2 Bezout elimination gadget, and smoke theorems over `Int` and `Q[X]`
 
@@ -65,14 +66,14 @@
 
 ## Progress Snapshot
 
-- Current phase status on March 7, 2026: `Phase 2 is complete, including public HNF correctness and uniqueness; active development has moved to Phase 3 SNF skeleton and algorithm work`
+- Current phase status on March 7, 2026: `Phase 2 is complete, including public HNF correctness and uniqueness; the Phase 3 SNF public API is frozen, and the next work is the executable Smith algorithm plus proofs`
 - Phase 1 is complete in `NormalForms/Matrix/Elementary`: executable row and column `swap` / `add` / `smul`, elementary-matrix realizations of each step, mixed-log left/right accumulators, the theorem `U(log) * A * V(log) = replayLog A log`, and a reusable 2x2 Bezout reduction matrix with determinant and transpose lemmas
 - Phase 1 is complete in `NormalForms/Matrix/Certificates`: `Unimodular` as `IsUnit det`, unimodular step/log closure theorems, row-only and two-sided log-to-certificate helpers, and the executable-versus-certificate boundary for non-unit `smul`
 - Phase 1 is complete in `NormalForms/Examples/AbelianGroups`: `Int`-based matrix-action smoke theorems, mixed-log certificate instantiations, non-unit scaling boundary checks, and Bezout examples over `Int` and `Q[X]`
 - Phase 2 smoke coverage is now in `NormalForms/Examples/AbelianGroups`: concrete `Int` HNF outputs for zero / full-rank / rank-deficient / unit-boundary inputs, a nontrivial lower-right presentation-matrix smoke check, public `hermiteNormalForm` existence checks, a public HNF correctness smoke theorem, a public uniqueness smoke theorem, a public unimodularity smoke theorem, and a `HNFResult.toCertificate` example
 - Phase 2 is complete in `NormalForms/Matrix/Hermite`: `IsHermiteNormalFormFin` is a real recursive predicate, the public `IsHermiteNormalForm` wrapper is in place, the module contains `RowTransform`, `LeftTransform`, block-lift / Bezout transport lemmas, `tailCols` / `lowerRight` replay transport lemmas, an executable Fin-indexed HNF kernel, the public theorems `hermiteNormalForm_isHermite` and `isHermiteNormalForm_unique_of_left_equiv`, and a public `hermiteNormalForm_unimodular` helper theorem
-- The repo narrative is now synchronized with the completed HNF phase: README status text and example coverage reflect correctness plus uniqueness, and the remaining work is SNF, the PID bridge, and the application layer
-- Phases 3 through 5 have not started in the sense of algorithmic or theorem-level content; their current files remain API or theorem scaffolds
+- The repo narrative is now synchronized with the completed HNF phase and frozen SNF interface: README status text and example coverage reflect correctness plus uniqueness, while the remaining implementation work is SNF algorithms and proofs, the PID bridge, and the application layer
+- Phase 3 has now started at the public-interface level: the SNF API is frozen, while the algorithmic and theorem-level content for Phases 3 through 5 remains scaffolded
 
 ## Phase Plan
 
@@ -113,7 +114,7 @@
 
 ## Public Milestones
 
-- First public checkpoint: after HNF uniqueness is stable and the SNF interface is frozen, publish an `arXiv` preprint and give a community-facing talk
+- First public checkpoint, reached on March 7, 2026: HNF uniqueness is stable and the SNF interface is frozen; the repository is ready for an `arXiv` preprint and a community-facing talk
 - `ITP` freeze point: eight weeks before the target submission deadline, all major theorems must already be done and only writing, experiments, and API cleanups remain
 - If SNF uniqueness or the PID bridge is still unstable at the freeze point, do not force an `ITP` regular submission; switch to `arXiv + talk + JAR/LMCS`
 - After submission, use a dedicated `submission-fix` branch for reviewer-blocker changes only
@@ -125,7 +126,6 @@
 - Do not copy unpublished proof text or code text from the existing group repository into this project
 - Frame the first paper around `Lean 4 + executable normal forms + mathlib bridge`, not generic formal linear algebra
 - Do not promise executable algorithms over arbitrary PIDs; executable scope stays with Euclidean domains and PID stays at the bridge and specification layer
-
 
 
 
