@@ -1,16 +1,27 @@
 # paper
 
-This directory is reserved for the archival manuscript, preprint source, and submission-facing notes.
+LaTeX sources for the arXiv preprint on executable Hermite normal form in Lean 4.
 
-- Working title: `Executable Hermite and Smith Normal Forms in Lean 4 over Euclidean Domains, with a PID bridge to mathlib`
-- Primary publication path: `arXiv/CoRR` preprint plus the next viable `ITP` cycle after February 19, 2026
-- Journal fallback: `JAR` or `LMCS`
-- Freeze rule: all main theorems complete eight weeks before the target conference deadline
+Build steps:
 
-Planned paper acceptance checklist:
+```sh
+latexmk -pdf main.tex
+```
 
-- HNF correctness and uniqueness
-- SNF correctness and uniqueness
-- Explicit unimodular certificates
-- PID bridge theorem
-- Abelian-group showcase
+Quick visual check:
+
+```sh
+pdftoppm -png main.pdf preview
+```
+
+Figure workflow:
+
+- The paper now uses TikZ figure sources under `figures/`.
+- `latexmk -pdf main.tex` compiles those figures directly into `main.pdf`.
+- `scripts/generate_figures.py` is retained only as a legacy asset and is no longer
+  part of the build path.
+
+Scope notes:
+
+- The manuscript covers only the completed HNF layer.
+- `NormalForms.Matrix.Smith.Basic` and `NormalForms.Bridge.MathlibPID.Basic` are described only as future work and frozen API boundaries.

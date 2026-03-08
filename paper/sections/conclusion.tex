@@ -1,0 +1,18 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We described a completed \Lean{} development of executable row-style \HNF{} over
+Euclidean domains. The formalization is centered on three ideas: explicit
+proof-facing left certificates, a recursive kernel built from lifted Bezout and
+diagonal block gadgets, and a narrow \code{CanonicalMod} boundary that upgrades
+computational remainders into exact uniqueness statements. The resulting public
+API provides executable HNF, unimodular left certificates, correctness, and
+uniqueness. It does not yet provide executable \SNF{} or a PID bridge, and the
+paper has been written accordingly.
+
+From an engineering perspective, the main lesson is that canonical algebraic
+statements in \Lean{} benefit from separating three concerns that are often
+entangled: replay semantics for elementary operations, matrix-level certificate
+composition, and exact canonical-remainder reasoning. The next stage is to reuse
+the same architecture for Smith normal form and then connect the resulting
+invariant factors to \mathlib{}'s abstract PID theory.

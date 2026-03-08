@@ -1,0 +1,17 @@
+We present a \Lean{} formalization of executable row-style \HNF{} for matrices over Euclidean
+domains. The development isolates computation in a structurally recursive
+\code{Fin}-indexed kernel and exposes a public API over arbitrary finite index
+types. Three technical decisions drive the formalization. First, recursive
+transforms carry explicit left certificates \code{LeftTransform}, whose fields
+record both the transformed matrix and a proof that the left multiplier is
+unimodular. Second, exact uniqueness is separated from Euclidean computation by a
+small Prop-valued mixin \code{CanonicalMod}, which packages idempotence of
+\texttt{\%} together with an equality principle for already-reduced
+representatives. Third, the elimination phase is organized around reusable
+lifted matrix gadgets: a diagonal block lift for recursive calls and a lifted
+\(2 \times 2\) Bezout matrix for first-column elimination. We prove that the
+executable procedure returns a Hermite normal form and that left-equivalent
+Hermite normal forms are equal whenever canonical remainder representatives are
+available. The companion repository also freezes a public \SNF{} interface, but
+neither the executable Smith algorithm nor the PID bridge is implemented yet; in
+this paper they appear only as future work and API design targets.

@@ -1,0 +1,55 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Executable algebra in a proof assistant has to satisfy two incompatible-looking
+requirements. The algorithmic layer wants concrete data: Euclidean division,
+Bezout coefficients, structural recursion on dimensions, and explicit row
+operations. The mathematical layer wants exact statements: canonical pivots,
+unimodular equivalence, and uniqueness stated as literal equality rather than
+``equal up to an unspecified representative.'' Matrix normal forms make this
+tension unusually visible. A practical implementation must compute by local row
+manipulations, but the theorem one wants at the end is a clean canonical object.
+
+This paper reports a completed \HNF{} phase in a standalone \Lean{} repository
+targeted at later integration with \mathlib{} \citep{deMouraUllrich2021Lean4,
+mathlib2020, ji2026normalforms}. The public API is phrased over arbitrary finite
+index types, while the internal executable kernel reindexes to \code{Fin} and
+recurses directly on matrix dimensions. The current code base also contains a
+frozen public API for \SNF{}, but neither the executable \SNF{} algorithm nor its
+proofs are present. Accordingly, this manuscript is intentionally narrow: it
+documents only the completed HNF layer, together with the design decisions that
+made correctness and uniqueness tractable.
+
+That scope matters for novelty. Formalized HNF and SNF are not new in theorem
+proving as such. Executable normal-form developments already exist in
+Isabelle/HOL and Coq \citep{divasonThiemann2022snf, cano2016coq}. Our claim is
+therefore not ``first HNF formalization'' or ``first Smith normal form in a
+proof assistant.'' The Lean-specific contribution is architectural: how to
+combine executable Euclidean elimination, explicit transformation certificates,
+exact canonical-remainder assumptions, and a future path toward existing
+abstract algebra in \mathlib.
+
+The paper makes exactly three completed contributions.
+
+\begin{itemize}
+  \item We introduce a proof-facing certificate layer
+    \code{LeftTransform with fields U, B, left_mul, unimodular}, and we explain why
+    explicitly carrying \code{Unimodular U} is not bookkeeping but the key to
+    composing recursive block lifts and to keeping the uniqueness proof local.
+  \item We formalize an executable three-stage HNF kernel over Euclidean
+    domains: clear the first column, recurse on the lower-right block, and
+    reduce the top row. The implementation is driven by a reusable \(2 \times 2\)
+    Bezout gadget and two block-lift constructions.
+  \item We prove uniqueness by isolating exact canonical remainder behavior in a
+    separate mixin \code{CanonicalMod}. This boundary lets the algorithm compute
+    with Euclidean division while the final uniqueness theorem reasons about
+    exact equality of already-reduced representatives.
+\end{itemize}
+
+The rest of the paper expands these points. Section~\ref{sec:background} introduces the
+Lean representation of matrices, the algebraic typeclass boundary, and the
+recursive HNF specification. Section~\ref{sec:certificates} explains the certificate
+architecture. Section~\ref{sec:algorithm} presents the executable kernel and its lifted
+Bezout machinery. Section~\ref{sec:uniqueness} develops the uniqueness proof and the
+role of canonical remainder representatives. Section~\ref{sec:future} records the
+current \SNF{} and PID-bridge status as future work only.

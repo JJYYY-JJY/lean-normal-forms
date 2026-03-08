@@ -1,0 +1,45 @@
+\section{Future Work: Towards Smith Normal Form and the PID Bridge}
+\label{sec:future}
+
+The companion repository already contains a frozen public interface for
+\SNF{}, but only at the boundary of the API. The module
+\module{NormalForms.Matrix.Smith.Basic} currently defines:
+
+\begin{itemize}
+  \item \code{IsSmithNormalForm}, which is still the placeholder predicate
+    \code{True};
+  \item \code{SNFResult}, which packages matrices \(U\), \(S\), \(V\), the
+    equation \(U A V = S\), and a Smith-form witness;
+  \item \code{smithNormalForm}, whose signature already carries
+    \code{[CanonicalMod R]} but whose current implementation returns
+    \code{none}.
+\end{itemize}
+
+This paper therefore makes \emph{no} claim about executable Smith normal form, no
+claim about Smith-form correctness or uniqueness, and no claim about the final
+classification theorem for finitely generated abelian groups. Those topics remain
+future work.
+
+The current \SNF{} API nevertheless records two design decisions worth making
+explicit. First, \code{SNFResult} deliberately does \emph{not} include
+unimodularity fields for \(U\) and \(V\). The HNF experience showed that
+certificate packaging matters; freezing the public boundary before the proofs are
+written should not over-commit to a final proof object layout. Second,
+\code{CanonicalMod} appears on the executable entrypoint \code{smithNormalForm},
+not on the abstract predicate \code{IsSmithNormalForm}. This mirrors the HNF
+architecture: canonical remainder assumptions belong on executable exactness, not
+on the abstract shape of the normal form itself.
+
+The same caution applies to the PID bridge. The dedicated bridge module currently
+contains only a placeholder agreement predicate together with a trivial theorem
+named \code{executableSNFMatchesPID}. These declarations are markers
+for the intended integration with \mathlib{}'s PID-side structural results, not
+completed mathematics. A realistic next milestone is therefore:
+
+\begin{itemize}
+  \item implement executable \SNF{} on top of the HNF layer;
+  \item prove its correctness and uniqueness with explicit two-sided
+    certificates;
+  \item only then relate the resulting invariant factors to the abstract PID
+    theorems already available in \mathlib.
+\end{itemize}

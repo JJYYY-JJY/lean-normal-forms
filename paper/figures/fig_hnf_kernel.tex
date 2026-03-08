@@ -1,0 +1,27 @@
+\begin{tikzpicture}[x=1cm,y=1cm,font=\small]
+  \node[fig/node plain, minimum width=1.45cm, minimum height=1.35cm] (input) at (0.85,1.55)
+    {\textit{Input}\\$A$};
+  \node[fig/node, minimum width=2.40cm, minimum height=1.35cm, right=0.40cm of input] (clear)
+    {{\ttfamily clearFirstColumn}\\[-0.15ex]{\footnotesize pivot; zeros below}};
+  \node[fig/node, minimum width=2.35cm, minimum height=1.35cm, right=0.40cm of clear] (recurse)
+    {{\ttfamily recurse}\\[-0.15ex]{\footnotesize on $\lowerRight$}};
+  \node[fig/node, minimum width=1.85cm, minimum height=1.35cm, right=0.40cm of recurse] (lift)
+    {{\ttfamily diagLift}\\[-0.15ex]{\footnotesize embed $U$}};
+  \node[fig/node, minimum width=2.40cm, minimum height=1.35cm, right=0.40cm of lift] (reduce)
+    {{\ttfamily reduceTopRow}\\[-0.15ex]{\footnotesize canonical remainders}};
+  \node[fig/node plain, minimum width=1.45cm, minimum height=1.35cm, right=0.40cm of reduce] (output)
+    {\textit{Output}\\$H$};
+
+  \draw[fig/arrow] (input) -- (clear);
+  \draw[fig/arrow] (clear) -- (recurse);
+  \draw[fig/arrow] (recurse) -- (lift);
+  \draw[fig/arrow] (lift) -- (reduce);
+  \draw[fig/arrow] (reduce) -- (output);
+
+  \node[fig/stage] at ($(clear.north)+(0,0.55)$) {Stage 1};
+  \node[fig/stage] at ($(recurse.north)!0.5!(lift.north)+(0,0.55)$) {Stage 2};
+  \node[fig/stage] at ($(reduce.north)+(0,0.55)$) {Stage 3};
+
+  \node[fig/banner, text width=12.6cm, font=\footnotesize] at ($(lift.south)+(0,-1.05)$)
+    {global invariant: unimodular $U$ and $U \cdot A = B$};
+\end{tikzpicture}

@@ -1,0 +1,131 @@
+\section{The HNF Algorithm and Formalization}
+\label{sec:algorithm}
+
+\begin{figure}[t]
+  \centering
+  \input{figures/fig_hnf_kernel}
+  \caption{The three-stage structure of the recursive HNF kernel. A single
+  unimodular left certificate carries the invariant \(U \cdot A = B\)
+  throughout.}
+  \label{fig:hnf-pipeline}
+\end{figure}
+
+The executable kernel is \code{hermiteNormalFormFin}. It returns an internal
+result package containing the left multiplier \(U\), the output matrix \(H\), the
+equation \(U A = H\), a proof that \(U\) is unimodular, and a proof that \(H\) is
+in \code{IsHermiteNormalFormFin}. The recursion follows the three-stage pattern
+shown in Figure~\ref{fig:hnf-pipeline}.
+
+\subsection{Stage 1: clear the first column}
+
+For a nonempty matrix, the kernel first checks whether the entire first column is
+zero. If so, it recurses on \(\tailCols A\). Otherwise it finds the first nonzero
+entry of the first column, swaps that row into the top position, and normalizes
+the new pivot with \code{normUnit}. It then clears the rest of the first column
+by iterating \code{clearFirstColumnStep}.
+
+\begin{lstlisting}[style=leanstyle,caption={The local first-column elimination step.},label={lst:clearstep}]
+def clearFirstColumnStep (i : Fin (m + 1)) (t : LeftTransform A) :
+    LeftTransform A :=
+  if hzero : t.B i.succ 0 = 0 then
+    t
+  else
+    let tSwap := t.trans (LeftTransform.swap t.B i.succ (1 : Fin (m + 2)))
+    let tBez := tSwap.trans (LeftTransform.topBezout tSwap.B)
+    tBez.trans
+      (LeftTransform.unitSmul tBez.B 0 (normUnit (tBez.B 0 0) : R)
+        (normUnit (tBez.B 0 0)).isUnit)
+\end{lstlisting}
+
+This is the canonical micro-step of the algorithm. If the current entry in the
+first column is already zero, nothing happens. Otherwise the target row is moved
+into position \(1\), the first two rows are rewritten by a lifted Bezout matrix,
+and the new pivot is normalized once again. Repeating this step down the column
+accumulates the gcd of all processed first-column entries in the top-left corner
+and forces zeros below it.
+
+The underlying \(2 \times 2\) gadget lives in
+\module{NormalForms.Matrix.Elementary.Basic}. For \(a,b \in R\), the matrix
+\code{bezoutReductionMatrix a b}, abbreviated here by \(B(a,b)\), satisfies
+\[
+  B(a,b) \cdot (a,b)^\mathsf{T}
+  = (\gcd(a,b), 0)^\mathsf{T},
+\]
+with dedicated matrix-vector and determinant lemmas in the elementary layer. The
+HNF layer lifts this gadget to larger
+matrices by \code{topBezoutMatrix}, whose tail block is the identity. The lemmas
+\code{topBezoutMatrix_mul_topLeft} and
+\code{topBezoutMatrix_mul_rowOneFirstCol} transport the gcd computation and the
+new zero to the leading column of the full matrix, while
+\code{Bezout_preserves_zeros} shows that rows below the active \(2 \times 2\)
+window keep their first-column zeros.
+
+\subsection{Stage 2: recurse on the lower-right block}
+
+Once the first column has the desired pivot shape, the kernel recurses on
+\(\lowerRight A\). The result is a left certificate for the smaller matrix. To
+bring it back to the original dimension, the development uses
+\code{diagLiftMatrix U}, the block matrix
+\[
+  \begin{bmatrix}
+    1 & 0 \\
+    0 & U
+  \end{bmatrix}.
+\]
+
+The corresponding constructor \code{LeftTransform.diagLift} is the key example
+of why the recursive state is a \code{LeftTransform} and not merely a row log.
+Its fundamental preservation lemmas are:
+
+\begin{itemize}
+  \item \code{diagLiftMatrix_mul_topRow}: the top row is unchanged;
+  \item \code{lowerRight_diagLiftMatrix_mul}: the lower-right block is updated
+    exactly by multiplication with the recursive certificate;
+  \item \code{unimodular_diagLiftMatrix}: unimodularity is transported through
+    the block lift.
+\end{itemize}
+
+These three facts are enough to splice the recursive call back into the ambient
+matrix without reopening any log semantics. The algorithm composes the current
+certificate with the lifted recursive certificate by \code{LeftTransform.trans}.
+
+\subsection{Stage 3: reduce the top row}
+
+After the lower-right block is itself in HNF, the remaining work is to reduce the
+top row modulo the pivots that now appear in lower rows. This is the purpose of
+\code{reduceTopRowLoop}. For a lower row \(i+1\), the algorithm searches for the
+first nonzero entry in the tail of that row. If it occurs at \(j+1\), it adds a
+multiple of row \(i+1\) to the top row with coefficient
+\[
+  -\,\frac{A_{0,j+1}}{A_{i+1,j+1}}.
+\]
+In code this is \code{topReductionCoeff}. The lemma
+\code{applyRowOperation_reduceTop_pivot} proves that the resulting top entry is
+literally \(A_{0,j+1} \% A_{i+1,j+1}\). The companion lemma
+\code{reduceTopRowStep_current_reduced} then closes the reducedness proof by a
+single call to \code{CanonicalMod.mod_mod}.
+
+Just as importantly, the reduction loop has carefully controlled side effects.
+The lemmas \code{reduceTopRowLoop_lowerRight},
+\code{reduceTopRowLoop_lowerRow}, \code{reduceTopRowLoop_below_zero}, and
+\code{reduceTopRowLoop_topLeft} show that lower rows are unchanged, the
+lower-right block is unchanged, zeros below the top-left pivot are preserved, and
+the pivot itself is not disturbed. The final theorem
+\code{reduceTopRowLoop_reduced_prefix} packages these preservation facts into
+the exact reduction condition needed by the \code{pivot} constructor of
+\code{IsHermiteNormalFormFin}.
+
+\subsection{Public extraction and executable evidence}
+
+The public function \code{hermiteNormalForm} wraps the \code{Fin}-indexed kernel
+and reindexes back to arbitrary finite types. The theorem
+\code{hermiteNormalForm_exists} shows that it always returns \code{some result},
+\code{hermiteNormalForm_unimodular} extracts the unimodularity of the left
+certificate, and \code{hermiteNormalForm_isHermite} proves that the output
+matrix satisfies the public HNF predicate.
+
+The repository currently includes executable HNF smoke theorems over
+\code{Int}, including zero, full-rank, rank-deficient, and presentation-matrix
+examples. It also includes an auxiliary Bezout smoke theorem over
+\(\Poly\), showing that the \(2 \times 2\) elimination gadget itself is not
+integer-specific even though the current \code{CanonicalMod} instance is.

@@ -1,0 +1,124 @@
+\section{Uniqueness via Canonical Representatives}
+\label{sec:uniqueness}
+
+\begin{figure}[t]
+  \centering
+  \input{figures/fig_uniqueness_dag}
+  \caption{Layered dependency structure of the uniqueness proof.}
+  \label{fig:uniqueness-graph}
+\end{figure}
+
+Section~\ref{sec:algorithm} established correctness: the executable procedure returns a
+matrix in HNF. The deeper theorem is that this HNF is unique under left
+equivalence once canonical remainder representatives are available.
+
+\begin{theorem}
+Let \(R\) be a Euclidean domain with \code{NormalizationMonoid},
+decidable equality, and \code{CanonicalMod}. If \(H_1\) and \(H_2\) are matrices
+in \code{IsHermiteNormalFormFin} and \(U\) is unimodular with
+\(U \cdot H_1 = H_2\), then \(H_1 = H_2\).
+\end{theorem}
+
+The internal theorem is
+\code{isHermiteNormalFormFin_unique_of_left_equiv}; the public theorem
+\code{isHermiteNormalForm_unique_of_left_equiv} is obtained by reindexing.
+The proof proceeds by induction on the recursive HNF witness for \(H_1\). The
+empty-row and empty-column cases are immediate. The zero-column/pivot mismatch is
+impossible because left multiplication preserves the property that the whole
+first column is zero. The pivot/pivot case contains the real content and is
+organized exactly as in Figure~\ref{fig:uniqueness-graph}.
+
+\subsection{Lower-left vanishing and recursive descent}
+
+Assume both \(H_1\) and \(H_2\) are in the pivot case. Because both matrices have
+zeros below the first pivot, the equation \(U H_1 = H_2\) at entry \((i+1,0)\)
+reduces to
+\[
+  U_{i+1,0} \cdot (H_1)_{0,0} = 0.
+\]
+Since \((H_1)_{0,0} \neq 0\), every \(U_{i+1,0}\) must be zero. This is the
+lemma \code{lowerLeft_zero_of_mul_eq_pivot}. Once the lower-left block of
+\(U\) vanishes, multiplication respects the block decomposition:
+\[
+  \lowerRight(U H_1) = \lowerRight(U) \cdot \lowerRight(H_1),
+\]
+formalized by \code{lowerRight_mul_of_lowerLeftZero}.
+
+The same lower-left-zero fact also lets the proof transport unimodularity to the
+lower-right block. The lemma \code{lowerRight_unimodular_of_lowerLeftZero}
+builds a right inverse for \(\lowerRight(U)\) by restricting the inverse of
+\(U\). At this point the induction hypothesis applies to the lower-right blocks,
+yielding \(\lowerRight(H_1) = \lowerRight(H_2)\).
+
+\subsection{Locking the pivot}
+
+The next step is to identify the top-left pivot. Apply the same
+lower-left-vanishing argument to \(U^{-1} H_2 = H_1\); this shows that the
+lower-left block of \(U^{-1}\) is also zero. Evaluating
+\code{Matrix.mul_nonsing_inv U hU} and
+\code{Matrix.nonsing_inv_mul U hU} at the \((0,0)\) entry therefore gives
+\[
+  U_{0,0} \cdot (U^{-1})_{0,0} = 1,
+  \qquad
+  (U^{-1})_{0,0} \cdot U_{0,0} = 1.
+\]
+Hence \(U_{0,0}\) is a unit.
+
+Now inspect the top-left entry of \(U H_1 = H_2\). Because the lower rows of
+\(H_1\) are zero in the first column,
+\[
+  (H_2)_{0,0} = U_{0,0} \cdot (H_1)_{0,0}.
+\]
+Thus the two pivots are associated. Both pivots are normalized by the HNF
+predicate, so \code{Associated.eq_of_normalized} yields
+\((H_1)_{0,0} = (H_2)_{0,0}\). Substituting this equality back into the display
+above gives
+\[
+  (U_{0,0} - 1) \cdot (H_1)_{0,0} = 0.
+\]
+Since the pivot is nonzero, \(U_{0,0} = 1\). This is the algebraic reason that
+the top row cannot be rescaled nontrivially.
+
+\subsection{Locking the top row by canonical remainders}
+
+After the pivot is fixed and the lower-right blocks are identified, the first row
+of the equation \(U H_1 = H_2\) becomes
+\[
+  H_2[0,\ast] = H_1[0,\ast] + \sum_i U_{0,i+1} \, H_1[i+1,\ast].
+\]
+All lower rows on the right-hand side are already known to coincide with the
+corresponding lower rows of \(H_2\). The remaining problem is therefore to show
+that every coefficient \(U_{0,i+1}\) is zero, so that the top rows are equal.
+
+This is where \code{CanonicalMod} becomes indispensable. The proof
+\code{topRow_eq_of_eq_add_lowerRows} assumes, for contradiction, that some
+coefficient is nonzero and chooses the least active lower row whose trailing part
+has a pivot. Let that pivot occur at column \(p+1\). Minimality and the HNF zero
+structure imply that all other summands vanish in that column, so the displayed
+equation reduces there to
+\[
+  (H_2)_{0,p+1} = (H_1)_{0,p+1} + c \cdot (H_1)_{i+1,p+1}.
+\]
+Because both matrices are already in HNF, the entries
+\((H_1)_{0,p+1}\) and \((H_2)_{0,p+1}\) are already reduced modulo the common
+pivot \((H_1)_{i+1,p+1}\). Their difference is divisible by that pivot, so
+\code{CanonicalMod.reduced_eq_of_dvd_sub} forces the two entries to be equal.
+The supposedly nonzero coefficient \(c\) is therefore annihilated by a nonzero
+pivot, contradiction.
+
+Two points are worth isolating.
+
+\begin{itemize}
+  \item The single-step reduction proof in the algorithm used only
+    \code{CanonicalMod.mod_mod}. Uniqueness needs the strictly stronger field
+    \code{reduced_eq_of_dvd_sub}.
+  \item \code{NormalizationMonoid} is still essential, but for a different
+    reason. It normalizes pivots up to associates; it does not control exact
+    remainder representatives. The two abstractions are complementary, not
+    redundant.
+\end{itemize}
+
+This separation is the main conceptual payoff of the mixin design. The Euclidean
+algorithm computes with whatever remainder operation the domain provides, while
+the uniqueness theorem imports only the exact canonicality principles it needs to
+state equality rather than equality up to associates.

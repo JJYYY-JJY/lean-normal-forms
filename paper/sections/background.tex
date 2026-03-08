@@ -1,0 +1,90 @@
+\section{Background}
+\label{sec:background}
+
+\subsection{Matrices, indices, and the public/internal split}
+
+In \Lean{}, a matrix is the dependent function type \code{Matrix m n R}. The row
+and column index types are parameters, so the public interface can be stated over
+arbitrary finite types. This generality is convenient for users, but structural
+recursion over an arbitrary finite type is awkward. The repository therefore
+splits the development into two layers.
+
+The public predicate \code{IsHermiteNormalForm} and the public result package
+\code{HNFResult} are stated over arbitrary finite index types. Internally, the
+kernel works over \code{Matrix (Fin m) (Fin n) R} and proves a recursive
+predicate \code{IsHermiteNormalFormFin}. The public wrapper simply reindexes
+along \code{Fintype.equivFin}. This pattern keeps the user-facing API compatible
+with ordinary matrix code in \mathlib{}, while giving the algorithm dimensions
+that can be inspected by recursion.
+
+\subsection{Euclidean computation versus canonical representatives}
+
+The executable HNF layer assumes \code{EuclideanDomain R},
+\code{NormalizationMonoid R}, and decidable equality. The Euclidean structure
+supplies division, remainders, \(\gcd\), and the Bezout coefficients
+\code{gcdA}/\code{gcdB} used in the elimination gadget. The normalization
+structure supplies \code{normalize} and \code{normUnit}, which are enough to
+state that pivots are chosen in a normalized associate class.
+
+What \code{NormalizationMonoid} does \emph{not} provide is exact control over
+the remainder operator \texttt{\%}. The computational interface of
+\code{EuclideanDomain} lets the algorithm reduce entries modulo a pivot, but it
+does not by itself guarantee two facts needed by the mathematical uniqueness
+argument:
+
+\begin{itemize}
+  \item reducing an already reduced element is idempotent;
+  \item two already reduced representatives modulo the same pivot are equal once
+    their difference is divisible by that pivot.
+\end{itemize}
+
+The repository isolates exactly these requirements in the following Prop-valued
+mixin, following the lightweight instance-refinement style common in \mathlib{}
+\citep{baanen2025instance}.
+
+\begin{lstlisting}[style=leanstyle,caption={The \code{CanonicalMod} boundary.},label={lst:canonicalmod}]
+class CanonicalMod (R : Type _) [EuclideanDomain R] : Prop where
+  mod_mod : forall a b : R, (a % b) % b = a % b
+  reduced_eq_of_dvd_sub :
+    forall {a b m : R}, a = a % m -> b = b % m -> m | b - a -> a = b
+\end{lstlisting}
+
+The field \code{mod_mod} closes the single-step reduction proof: when the top
+row is explicitly replaced by a remainder, a second reduction must leave it
+unchanged. The field \code{reduced_eq_of_dvd_sub} is stronger and is used
+only in uniqueness: it upgrades congruence modulo a pivot into literal equality
+once both sides are already canonical representatives. In the current repository
+the only concrete instance is \code{Int}. The HNF development is nevertheless
+parametric in \code{[CanonicalMod R]}, which is precisely the abstraction
+boundary needed by the later \SNF{} layer.
+
+\subsection{The recursive HNF predicate}
+
+The internal specification \code{IsHermiteNormalFormFin} is the real HNF
+definition. It is inductive, with cases for empty rows, empty columns, an all-zero
+first column, and a pivot in the \((0,0)\) position. The pivot case packages the
+usual row-style HNF conditions in a recursive form:
+
+\begin{itemize}
+  \item the top-left entry is nonzero;
+  \item the top-left entry is normalized;
+  \item every entry below the pivot in the first column is zero;
+  \item the lower-right submatrix \(\lowerRight A\) is recursively in HNF;
+  \item if the first nonzero entry of a lower row occurs in column \(j+1\), then
+    the corresponding top-row entry is already the canonical remainder modulo
+    that lower-row pivot.
+\end{itemize}
+
+The last clause is recorded by the field \code{hreduced} in the constructor
+\code{pivot}. It is phrased through the computable search function
+\code{firstNonzero?}, which returns the first nonzero position of a row or
+\code{none}. This is the bridge between the mathematical statement ``entries
+above later pivots are reduced'' and the executable reduction loop that modifies
+only the top row.
+
+This recursive specification is narrower than textbook HNF definitions phrased
+for all rows at once \citep{dummitfoote2004, cohen1993}, but in Lean it has two
+decisive advantages. First, it matches the actual structure of the algorithm:
+first isolate a pivot column, then recurse on a smaller matrix. Second, its
+destructors expose exactly the local zero and reduction information that the
+uniqueness proof needs.

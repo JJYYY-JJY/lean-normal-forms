@@ -11,6 +11,15 @@ Planned contents:
 
 Current status:
 
-- project skeleton only
-- no executable HNF or SNF implementation yet
-- axiom audit is currently a smoke script over placeholder declarations
+- executable row-style HNF is complete, including the recursive kernel,
+  explicit left certificates via `LeftTransform`, and public certificate
+  packaging through `HNFResult.toCertificate`
+- HNF correctness and uniqueness are proved, with exact uniqueness isolated
+  behind the `CanonicalMod` interface for canonical remainder representatives
+- the SNF boundary is frozen but still placeholder-only: `IsSmithNormalForm`
+  remains a placeholder predicate, `SNFResult` is defined, and
+  `smithNormalForm` currently returns `none`
+- the PID bridge remains a placeholder API for future work rather than a
+  completed comparison theorem layer
+- the artifact bundle itself is still being assembled, and the axiom audit
+  remains a smoke script over the current public API surface

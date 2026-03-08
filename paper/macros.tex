@@ -1,0 +1,43 @@
+\newcommand{\Lean}{Lean~4}
+\newcommand{\mathlib}{mathlib}
+\newcommand{\HNF}{Hermite normal form}
+\newcommand{\SNF}{Smith normal form}
+\DeclareRobustCommand{\code}[1]{\nolinkurl{#1}}
+\DeclareRobustCommand{\module}[1]{\nolinkurl{#1}}
+\newcommand{\fin}{\mathrm{Fin}}
+\newcommand{\Int}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Poly}{\mathbb{Q}[X]}
+\newcommand{\lowerRight}{\operatorname{lowerRight}}
+\newcommand{\tailCols}{\operatorname{tailCols}}
+\newcommand{\diagLift}{\operatorname{diagLift}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+
+\theoremstyle{definition}
+\newtheorem{remark}{Remark}
+
+\lstdefinelanguage{Lean}{
+  morekeywords={
+    class, structure, def, theorem, instance, where, by, match, with,
+    inductive, namespace, open, let, in, if, then, else, fun, forall,
+    noncomputable, abbrev, intro, exact
+  },
+  sensitive=true,
+  morecomment=[l]{--},
+  morecomment=[s]{/-}{-/},
+  morestring=[b]"
+}
+
+\lstdefinestyle{leanstyle}{
+  language=Lean,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape,
+  showstringspaces=false,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single
+}

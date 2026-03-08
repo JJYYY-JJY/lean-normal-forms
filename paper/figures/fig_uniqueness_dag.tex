@@ -1,0 +1,38 @@
+\begin{tikzpicture}[x=1cm,y=1cm,font=\small]
+  \node[fig/node dark, text width=6.0cm] (assm) at (6.90,9.10)
+    {unimodular $U$\\$U H_1 = H_2$\\$H_1, H_2$ in HNF};
+
+  \node[fig/node, text width=3.6cm] (llu) at (2.90,7.10)
+    {lower-left of $U$ vanishes\\[-0.1ex]{\footnotesize first-column equations}};
+  \node[fig/node, text width=3.9cm] (llinv) at (10.90,7.10)
+    {lower-left of $U^{-1}$ vanishes\\[-0.1ex]{\footnotesize same argument on $U^{-1} H_2 = H_1$}};
+
+  \node[fig/node, text width=3.6cm] (lrU) at (2.90,5.15)
+    {$\lowerRight(U)$ unimodular\\[-0.1ex]{\footnotesize restrict the inverse}};
+  \node[fig/node, text width=3.6cm] (unit) at (10.90,5.15)
+    {$U_{0,0}$ is a unit\\[-0.1ex]{\footnotesize read $(0,0)$ of $U U^{-1} = I$}};
+
+  \node[fig/node dark, text width=5.3cm] (lreq) at (7.15,3.15)
+    {$\lowerRight(H_1)=\lowerRight(H_2)$\\[-0.1ex]{\footnotesize induction hypothesis}};
+
+  \node[fig/node, text width=3.2cm] (pivot) at (2.55,1.20)
+    {pivot equality\\[-0.1ex]{\footnotesize normalized associates}};
+  \node[fig/node, text width=3.4cm] (toprow) at (10.95,1.20)
+    {top row equality\\[-0.1ex]{\footnotesize canonical remainders}};
+
+  \node[fig/node plain, text width=2.4cm] (goal) at (6.90,-0.50)
+    {$H_1 = H_2$};
+
+  \coordinate (unitPivotBend) at (10.90,2.00);
+
+  \draw[fig/arrow] (assm.south west) -- (llu.north);
+  \draw[fig/arrow] (assm.south east) -- (llinv.north);
+  \draw[fig/arrow] (llu.south) -- (lrU.north);
+  \draw[fig/arrow] (llinv.south) -- (unit.north);
+  \draw[fig/arrow] (lrU.south east) -- (lreq.north west);
+  \draw[fig/arrow] (lreq.south) -- (pivot.north west);
+  \draw[fig/arrow] (lreq.south east) -- (toprow.north west);
+  \draw[fig/arrow] (unit.south) -- (unitPivotBend) -- (pivot.north east);
+  \draw[fig/arrow] (pivot.south east) -- (goal.north west);
+  \draw[fig/arrow] (toprow.south west) -- (goal.north east);
+\end{tikzpicture}

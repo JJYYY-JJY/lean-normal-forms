@@ -7,7 +7,7 @@ authors:
     given-names: Junye
 license: Apache-2.0
 version: 0.1.0
-date-released: 2026-03-05
+date-released: 2026-03-07
 abstract: >-
   Executable Hermite and Smith normal forms in Lean 4 over Euclidean domains,
   with a bridge to mathlib's PID results.

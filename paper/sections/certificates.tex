@@ -1,0 +1,85 @@
+\section{Architecture of Certificates}
+\label{sec:certificates}
+
+\subsection{From replay logs to proof-facing transforms}
+
+Phase~1 of the repository develops elementary row and column operations, mixed
+operation logs, and accumulator lemmas showing that replaying a log amounts to
+left and right multiplication by accumulated elementary matrices. On top of this
+infrastructure, the module \module{NormalForms.Matrix.Hermite.Basic} first
+defines a log-oriented structure \code{RowTransform}. A \code{RowTransform}
+stores the output matrix, an operation log, a proof that every logged step is a
+row step, a proof that every step is unimodular, and a replay equation.
+
+This layer is well suited to local soundness arguments. If a routine is genuinely
+implemented as a row-operation program, then \code{RowTransform} is a natural
+specification object. The HNF kernel, however, needs something stronger. Its
+state is the following proof-facing certificate, shown here in a simplified form
+with implicit parameters omitted.
+
+\begin{lstlisting}[style=leanstyle,caption={Simplified shape of the proof-facing certificate.},label={lst:lefttransform}]
+structure LeftTransform (A : Matrix m n R) where
+  U : Matrix m m R
+  B : Matrix m n R
+  left_mul : U * A = B
+  unimodular : Unimodular U
+\end{lstlisting}
+
+The distinction is not superficial. A \code{LeftTransform} exposes the
+transformation matrix \code{U} itself, not merely a log from which \code{U} can
+be reconstructed. Composition is therefore direct matrix multiplication:
+\code{LeftTransform.trans} replaces a pair of certificates
+\((U_1, B_1)\) and \((U_2, B_2)\) with
+\((U_2 U_1, B_2)\). When a routine really is implemented as a row log, the
+conversion \code{LeftTransform.ofRowTransform} recovers this proof-facing form.
+But the HNF recursion no longer has to mention logs once it leaves that boundary.
+
+\subsection{Why explicit unimodularity matters}
+
+\begin{figure}[t]
+  \centering
+  \input{figures/fig_block_lifts}
+  \caption{The two block-lift gadgets used by the recursive certificate layer.}
+  \label{fig:block-lifts}
+\end{figure}
+
+The central design decision is that \code{LeftTransform} stores
+\code{unimodular : Unimodular U} explicitly. In this repository,
+\code{Unimodular U} abbreviates \code{IsUnit (det U)}. That choice has two
+consequences.
+
+First, recursive block lifts become local matrix statements instead of log
+reconstruction problems. The algorithm repeatedly applies two gadgets, shown in
+Figure~\ref{fig:block-lifts}. The diagonal lift \code{diagLiftMatrix U} embeds a
+certificate for a recursive call into the lower-right block while fixing the top
+row. The lifted Bezout matrix \code{topBezoutMatrix a b} embeds a \(2 \times 2\)
+Bezout eliminator into the leading block while leaving the tail block equal to
+the identity. Both gadgets are certainly equivalent to sequences of elementary
+row operations, but expressing them through logs at every call site would force
+the recursive proof to reopen accumulator definitions, replay lemmas, and
+row-only side conditions repeatedly. Carrying the matrix itself keeps the proof
+state aligned with the block identities one actually uses.
+
+Second, the uniqueness proof needs direct access to inverses. Once
+\code{Unimodular U} is available as a field, Lean's matrix library supplies the
+inverse matrix \(U^{-1}\) together with the lemmas
+\code{Matrix.mul_nonsing_inv} and \code{Matrix.nonsing_inv_mul}. In the
+pivot/pivot branch of uniqueness, the proof first shows that the lower-left block
+of \(U\) and of \(U^{-1}\) is zero. Evaluating the inverse identities at the
+\((0,0)\) entry then produces two-sided inverses for \code{U 0 0}, hence
+\code{IsUnit (U 0 0)}. This is exactly the algebraic fact needed to compare
+normalized pivots. If unimodularity were carried only implicitly through a row
+log, every such step would start by reconstructing invertibility from the log
+rather than reasoning directly with the matrix that appears in the theorem
+statement.
+
+\subsection{Row logs remain useful, but at the right layer}
+
+The design is therefore layered rather than replacement-based. \code{RowTransform}
+remains the right interface for replay semantics, for elementary row programs,
+and for collapsing the right accumulator to the identity. \code{LeftTransform} is
+the right interface for recursive HNF, where the significant operations are block
+matrix constructors such as \code{LeftTransform.diagLift} and
+\code{LeftTransform.topBezout}. This split avoids proof-state explosion precisely
+because it keeps each representation at the layer where it carries the most
+useful invariants.

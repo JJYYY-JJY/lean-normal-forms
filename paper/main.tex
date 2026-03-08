@@ -1,0 +1,102 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{listings}
+\usepackage{hyperref}
+
+\usetikzlibrary{arrows.meta,positioning,calc,fit,matrix}
+
+\input{macros}
+
+\definecolor{figstroke}{gray}{0.35}
+\definecolor{figsoft}{gray}{0.95}
+\definecolor{figshade}{gray}{0.90}
+\definecolor{figtext}{gray}{0.32}
+
+\tikzset{
+  fig/line/.style={
+    draw=figstroke,
+    line width=0.45pt
+  },
+  fig/arrow/.style={
+    -{Latex[length=2.0mm,width=1.3mm]},
+    draw=figstroke,
+    line width=0.5pt
+  },
+  fig/node/.style={
+    draw=figstroke,
+    line width=0.45pt,
+    rounded corners=1.5pt,
+    fill=figsoft,
+    align=center,
+    inner sep=4pt
+  },
+  fig/node dark/.style={
+    fig/node,
+    fill=figshade
+  },
+  fig/node plain/.style={
+    fig/node,
+    fill=white
+  },
+  fig/banner/.style={
+    draw=figstroke,
+    line width=0.4pt,
+    rounded corners=1pt,
+    fill=white,
+    align=center,
+    inner sep=3pt
+  },
+  fig/panel/.style={
+    font=\footnotesize,
+    text=figtext
+  },
+  fig/stage/.style={
+    font=\scriptsize\itshape,
+    text=figtext
+  }
+}
+
+\hypersetup{
+  colorlinks=true,
+  citecolor=blue,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\setlength{\emergencystretch}{2em}
+\title{Executable Hermite Normal Form in Lean 4 over Euclidean Domains:\\
+Explicit Left Certificates and Canonical Remainders}
+\author{Junye Ji}
+\date{March 7, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\input{sections/introduction}
+\input{sections/background}
+\input{sections/certificates}
+\input{sections/algorithm}
+\input{sections/uniqueness}
+\input{sections/future_work}
+\input{sections/conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
