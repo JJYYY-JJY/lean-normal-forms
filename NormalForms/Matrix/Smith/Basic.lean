@@ -86,9 +86,10 @@ inductive IsSmithNormalFormFin {R : Type _}
   | emptyCols {m : Nat} (A : _root_.Matrix (Fin m) (Fin 0) R) :
       IsSmithNormalFormFin A
   | zeroLead {m n : Nat} (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
+      (hzero : A 0 0 = 0)
       (hrow : ∀ j : Fin n, A 0 j.succ = 0)
       (hcol : ∀ i : Fin m, A i.succ 0 = 0)
-      (hLower : IsSmithNormalFormFin (lowerRight A)) :
+      (hLowerZero : lowerRight A = 0) :
       IsSmithNormalFormFin A
   | pivot {m n : Nat} (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
       (hpivot : A 0 0 ≠ 0)
@@ -110,7 +111,232 @@ structure FinSNFResult {m n : Nat} {R : Type _}
   rightUnimodular : Unimodular V
   isSmith : IsSmithNormalFormFin S
 
+
+def invariantFactors {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] :
+    {m n : Nat} -> _root_.Matrix (Fin m) (Fin n) R -> List R
+  | 0, _, _ => []
+  | _, 0, _ => []
+  | _ + 1, _ + 1, A =>
+      let d := normalize (A 0 0)
+      if d = 0 then
+        []
+      else
+        d :: invariantFactors (lowerRight A)
+
+
+@[simp] theorem invariantFactors_emptyRows {n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin 0) (Fin n) R) :
+    invariantFactors A = [] := by
+  simp [invariantFactors]
+
+
+@[simp] theorem invariantFactors_emptyCols {m : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin m) (Fin 0) R) :
+    invariantFactors A = [] := by
+  cases m <;> simp [invariantFactors]
+
+
+@[simp] theorem invariantFactors_zeroLead {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (hzero : A 0 0 = 0) :
+    invariantFactors A = [] := by
+  simp [invariantFactors, hzero]
+
+
+@[simp] theorem invariantFactors_pivot {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (hpivot : A 0 0 ≠ 0)
+    (hnorm : A 0 0 = normalize (A 0 0)) :
+    invariantFactors A = A 0 0 :: invariantFactors (lowerRight A) := by
+  have hnormNe : normalize (A 0 0) ≠ 0 := by
+    rw [← hnorm]
+    exact hpivot
+  dsimp [invariantFactors]
+  rw [if_neg hnormNe]
+  rw [← hnorm]
+
+
+private theorem diagEntry_lowerRight {m n : Nat} {R : Type _}
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
+    (k : Nat) (hk : k < Nat.min m n) :
+    diagEntry (lowerRight A) k hk =
+      diagEntry A (k + 1)
+        ((lt_min_iff).2
+          ⟨Nat.succ_lt_succ ((lt_min_iff).1 hk).1,
+            Nat.succ_lt_succ ((lt_min_iff).1 hk).2⟩) := by
+  simp [diagEntry, lowerRight]
+
+
+private theorem lt_min_of_succ_lt_min_succ {a b k : Nat}
+    (hk : k + 1 < Nat.min (a + 1) (b + 1)) :
+    k < Nat.min a b := by
+  refine (lt_min_iff).2 ⟨?_, ?_⟩
+  · exact Nat.succ_lt_succ_iff.mp ((lt_min_iff).1 hk).1
+  · exact Nat.succ_lt_succ_iff.mp ((lt_min_iff).1 hk).2
+
+
+private theorem two_lt_min_succ_of_lt_min {a b k : Nat}
+    (hk : k + 1 < Nat.min a b) :
+    k + 2 < Nat.min (a + 1) (b + 1) := by
+  refine (lt_min_iff).2 ⟨?_, ?_⟩
+  · exact Nat.succ_lt_succ ((lt_min_iff).1 hk).1
+  · exact Nat.succ_lt_succ ((lt_min_iff).1 hk).2
+
+
+private theorem offDiagZero_lowerRight {m n : Nat} {R : Type _} [Zero R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (hA : offDiagZero A) :
+    offDiagZero (lowerRight A) := by
+  intro i j hij
+  exact hA i.succ j.succ (by
+    intro hEq
+    exact hij (Nat.succ.inj hEq))
+
+
+private theorem diagNormalized_lowerRight {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (hA : diagNormalized A) :
+    diagNormalized (lowerRight A) := by
+  intro k hk
+  rw [diagEntry_lowerRight]
+  exact hA (k + 1) ((lt_min_iff).2
+    ⟨Nat.succ_lt_succ ((lt_min_iff).1 hk).1,
+      Nat.succ_lt_succ ((lt_min_iff).1 hk).2⟩)
+
+
+private theorem diagChain_lowerRight {m n : Nat} {R : Type _}
+    [EuclideanDomain R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (hA : diagChain A) :
+    diagChain (lowerRight A) := by
+  intro k hk
+  rw [diagEntry_lowerRight, diagEntry_lowerRight]
+  exact hA (k + 1) (two_lt_min_succ_of_lt_min hk)
+
+
+theorem isSmithNormalFormFin_toDiag {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin m) (Fin n) R}
+    (hA : IsSmithNormalFormFin A) :
+    IsSmithNormalFormDiag A := by
+  induction hA
+  case emptyRows A =>
+      refine ⟨?_, ?_, ?_⟩
+      · intro i
+        exact Fin.elim0 i
+      · intro k hk
+        simpa using hk
+      · intro k hk
+        simpa using hk
+  case emptyCols A =>
+      refine ⟨?_, ?_, ?_⟩
+      · intro i j
+        exact Fin.elim0 j
+      · intro k hk
+        simpa using hk
+      · intro k hk
+        simpa using hk
+  case zeroLead m' n' A hzero hrow hcol hLowerZero =>
+      refine ⟨?_, ?_, ?_⟩
+      · intro i j hij
+        cases i using Fin.cases with
+        | zero =>
+            cases j using Fin.cases with
+            | zero =>
+                exact False.elim (hij rfl)
+            | succ j =>
+                exact hrow j
+        | succ i =>
+            cases j using Fin.cases with
+            | zero =>
+                exact hcol i
+            | succ j =>
+                simpa [lowerRight] using congrFun (congrFun hLowerZero i) j
+      · intro k hk
+        cases k with
+        | zero =>
+            simpa [diagEntry, hzero]
+        | succ k =>
+            have hk' : k < Nat.min m' n' := lt_min_of_succ_lt_min_succ hk
+            rw [← diagEntry_lowerRight (A := A) k hk']
+            simp [hLowerZero, diagEntry]
+      · intro k hk
+        cases k with
+        | zero =>
+            have hk' : 0 < Nat.min m' n' := lt_min_of_succ_lt_min_succ hk
+            have hRight : diagEntry A 1 hk = 0 := by
+              rw [← diagEntry_lowerRight (A := A) 0 hk']
+              simp [hLowerZero, diagEntry]
+            simpa [diagEntry, hzero] using hRight
+        | succ k =>
+            have hkMid : k + 1 < Nat.min (m' + 1) (n' + 1) :=
+              Nat.lt_trans (Nat.lt_succ_self (k + 1)) hk
+            have hkLeft : k < Nat.min m' n' := lt_min_of_succ_lt_min_succ hkMid
+            have hkRight : k + 1 < Nat.min m' n' := lt_min_of_succ_lt_min_succ hk
+            rw [← diagEntry_lowerRight (A := A) k hkLeft]
+            rw [← diagEntry_lowerRight (A := A) (k + 1) hkRight]
+            simp [hLowerZero, diagEntry]
+  case pivot m' n' A hpivot hnorm hrow hcol hLower hdiv ih =>
+      rcases ih with ⟨hOffLower, hNormLower, hChainLower⟩
+      refine ⟨?_, ?_, ?_⟩
+      · intro i j hij
+        cases i using Fin.cases with
+        | zero =>
+            cases j using Fin.cases with
+            | zero =>
+                exact False.elim (hij rfl)
+            | succ j =>
+                exact hrow j
+        | succ i =>
+            cases j using Fin.cases with
+            | zero =>
+                exact hcol i
+            | succ j =>
+                exact hOffLower i j (by
+                  intro hEq
+                  exact hij (by simpa [hEq]))
+      · intro k hk
+        cases k with
+        | zero =>
+            simpa [diagEntry] using hnorm
+        | succ k =>
+            simpa [diagEntry_lowerRight] using
+              hNormLower k (lt_min_of_succ_lt_min_succ hk)
+      · intro k hk
+        cases k with
+        | zero =>
+            have hm : 0 < m' := Nat.succ_lt_succ_iff.mp ((lt_min_iff).1 hk).1
+            have hn : 0 < n' := Nat.succ_lt_succ_iff.mp ((lt_min_iff).1 hk).2
+            let i0 : Fin m' := ⟨0, hm⟩
+            let j0 : Fin n' := ⟨0, hn⟩
+            simpa [diagEntry, i0, j0] using hdiv i0 j0
+        | succ k =>
+            simpa [diagEntry_lowerRight] using
+              hChainLower k (lt_min_of_succ_lt_min_succ hk)
+
 end Internal
+
+/-- The bridge-side submodule attached to a matrix: its column span. -/
+def smithColumnSpan {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R]
+    (A : _root_.Matrix m n R) : Submodule R (m -> R) :=
+  LinearMap.range A.mulVecLin
+
+
+/-- Read normalized nonzero diagonal entries from a Smith matrix, truncating at the first `0`. -/
+noncomputable def smithInvariantFactors {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix m n R) : List R :=
+  Internal.invariantFactors
+    (_root_.Matrix.reindex (Fintype.equivFin m) (Fintype.equivFin n) A)
 
 /-- Public Smith-normal-form predicate. -/
 def IsSmithNormalForm {m n R : Type _}
@@ -127,6 +353,7 @@ noncomputable instance {m n R : Type _}
   classical
   unfold IsSmithNormalForm
   infer_instance
+
 
 
 theorem unimodular_transpose {m R : Type _}
@@ -290,6 +517,26 @@ structure SNFResult {m n R : Type _}
   V : _root_.Matrix n n R
   two_sided_mul : U * A * V = S
   isSmith : IsSmithNormalForm S
+
+noncomputable def SNFResult.invariantFactors {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix m n R} (result : SNFResult A) : List R :=
+  smithInvariantFactors result.S
+
+/-- Package an existing two-sided certificate together with a Smith witness. -/
+def SNFResult.ofCertificate {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix m n R}
+    (cert : NormalForms.Matrix.Certificates.TwoSidedCertificate A)
+    (hSmith : IsSmithNormalForm cert.result) :
+    SNFResult A :=
+  { U := cert.U
+    S := cert.result
+    V := cert.V
+    two_sided_mul := cert.equation
+    isSmith := hSmith }
 
 
 /-- Forget the Smith witness and keep only the two-sided transformation data. -/
