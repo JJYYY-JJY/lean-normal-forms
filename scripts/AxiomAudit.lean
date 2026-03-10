@@ -1,10 +1,10 @@
 import NormalForms
 
 /-!
-Lightweight axiom-audit smoke script for the public API skeleton.
+Lightweight axiom-audit smoke script for the current public API surface.
 
-Replace this with a declaration-discovering audit once theorems are no longer
-placeholders.
+Replace this with a declaration-discovering audit once the smoke-script phase is
+over.
 -/
 
 #print axioms NormalForms.Matrix.Hermite.HNFResult.toCertificate

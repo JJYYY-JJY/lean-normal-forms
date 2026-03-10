@@ -16,10 +16,16 @@ Current status:
   packaging through `HNFResult.toCertificate`
 - HNF correctness and uniqueness are proved, with exact uniqueness isolated
   behind the `CanonicalMod` interface for canonical remainder representatives
-- the SNF boundary is frozen but still placeholder-only: `IsSmithNormalForm`
-  remains a placeholder predicate, `SNFResult` is defined, and
-  `smithNormalForm` currently returns `none`
+- `CanonicalMod` is currently instantiated for both `Int` and `Polynomial Rat`
+- the Smith layer is no longer placeholder-only: `IsSmithNormalForm` is a real
+  diagonal specification, the internal recursive predicate/result shell is in
+  place, and `TwoSidedTransform` provides reusable two-sided certificate
+  scaffolding
+- `smithNormalForm` currently still returns `none`, so the executable Smith
+  kernel, public unimodularity helper theorems, and Smith uniqueness proofs are
+  still future work
 - the PID bridge remains a placeholder API for future work rather than a
   completed comparison theorem layer
-- the artifact bundle itself is still being assembled, and the axiom audit
-  remains a smoke script over the current public API surface
+- the example layer already includes Smith smoke theorems over `Int` and `Q[X]`,
+  but the artifact bundle itself is still being assembled
+- the axiom audit remains a smoke script over the current public API surface
