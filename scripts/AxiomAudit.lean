@@ -11,5 +11,5 @@ over.
 #print axioms NormalForms.Matrix.Hermite.hermiteNormalForm
 #print axioms NormalForms.Matrix.Smith.SNFResult.toCertificate
 #print axioms NormalForms.Matrix.Smith.smithNormalForm
-#print axioms NormalForms.Bridge.MathlibPID.executableSNFMatchesPID
-#print axioms NormalForms.Examples.AbelianGroups.presentationClassificationRoadmap
+#print axioms NormalForms.Bridge.MathlibPID.pidSmithColumnSpan_eq_range_mulVecLin
+#print axioms NormalForms.Examples.AbelianGroups.presentationColumnSpanBridgeSmoke

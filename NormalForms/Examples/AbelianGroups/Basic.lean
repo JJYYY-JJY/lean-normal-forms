@@ -558,8 +558,10 @@ theorem bezoutPolynomialSmoke :
   simpa using
     (bezoutReductionMatrix_mulVec ((Polynomial.X : Polynomial Rat) + 1) (Polynomial.X : Polynomial Rat))
 
-theorem presentationClassificationRoadmap :
-    NormalForms.Bridge.MathlibPID.InvariantFactorsAgreeUpToNormalization presentationMatrixZ := by
-  trivial
+theorem presentationColumnSpanBridgeSmoke :
+    NormalForms.Bridge.MathlibPID.pidSmithColumnSpan presentationMatrixZ =
+      LinearMap.range presentationMatrixZ.mulVecLin := by
+  simpa using
+    NormalForms.Bridge.MathlibPID.pidSmithColumnSpan_eq_range_mulVecLin presentationMatrixZ
 
 end NormalForms.Examples.AbelianGroups
