@@ -30,6 +30,20 @@ instance : CanonicalMod Int where
       _ = b % m := hmod
       _ = b := hb.symm
 
+instance : CanonicalMod (Polynomial Rat) where
+  mod_mod := by
+    intro a b
+    by_cases hb : b = 0
+    · simp [hb]
+    · exact (Polynomial.mod_eq_self_iff hb).2 (Polynomial.degree_mod_lt a hb)
+  reduced_eq_of_dvd_sub := by
+    intro a b m ha hb hdiv
+    have hmod : b % m = a % m := Polynomial.mod_eq_of_dvd_sub hdiv
+    calc
+      a = a % m := ha
+      _ = b % m := hmod.symm
+      _ = b := hb.symm
+
 
 def firstNonzero? {R : Type _} [Zero R] [DecidableEq R] :
     {n : Nat} -> (Fin n -> R) -> Option (Fin n)
