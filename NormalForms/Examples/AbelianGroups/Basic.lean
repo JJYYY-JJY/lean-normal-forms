@@ -366,6 +366,30 @@ theorem simpleSmithMatrixQXSpecSmoke :
     simpa [NormalForms.Matrix.Smith.Internal.diagEntry, simpleSmithMatrixQX] using
       (dvd_refl (1 : Polynomial Rat))
 
+theorem zeroMatrixSNFInvariantFactorsSmoke :
+    NormalForms.Matrix.Smith.Internal.invariantFactors zeroMatrixZ = [] := by
+  native_decide
+
+theorem fullRankSNFInvariantFactorsSmoke :
+    NormalForms.Matrix.Smith.Internal.invariantFactors fullRankSNFMatrixZ = [1, 1] := by
+  native_decide
+
+theorem rankDeficientSNFInvariantFactorsSmoke :
+    NormalForms.Matrix.Smith.Internal.invariantFactors rankDeficientSNFMatrixZ = [1] := by
+  native_decide
+
+theorem unitBoundarySNFInvariantFactorsSmoke :
+    NormalForms.Matrix.Smith.Internal.invariantFactors unitBoundarySNFMatrixZ = [1, 2] := by
+  native_decide
+
+theorem presentationSNFInvariantFactorsSmoke :
+    NormalForms.Matrix.Smith.Internal.invariantFactors presentationSNFMatrixZ = [2, 2] := by
+  native_decide
+
+theorem simpleSmithMatrixQXInvariantFactorsSmoke :
+    NormalForms.Matrix.Smith.Internal.invariantFactors simpleSmithMatrixQX = [1, 1] := by
+  simp [NormalForms.Matrix.Smith.Internal.invariantFactors, simpleSmithMatrixQX, lowerRight]
+
 def fullRankSNFCertificateZ : TwoSidedCertificate fullRankMatrixZ :=
   { U := fullRankSNFLeftZ
     result := fullRankSNFMatrixZ
@@ -409,6 +433,48 @@ theorem presentationSNFCertificateSmoke :
     presentationSNFCertificateZ.U * presentationMatrixZ * presentationSNFCertificateZ.V =
       presentationSNFCertificateZ.result := by
   exact presentationSNFCertificateZ.equation
+
+theorem fullRankSNFOfCertificateUSmoke
+    (hSmith : IsSmithNormalForm fullRankSNFCertificateZ.result) :
+    (SNFResult.ofCertificate fullRankSNFCertificateZ hSmith).U =
+      fullRankSNFCertificateZ.U := rfl
+
+theorem fullRankSNFOfCertificateSSmoke
+    (hSmith : IsSmithNormalForm fullRankSNFCertificateZ.result) :
+    (SNFResult.ofCertificate fullRankSNFCertificateZ hSmith).S =
+      fullRankSNFCertificateZ.result := rfl
+
+theorem fullRankSNFOfCertificateVSmoke
+    (hSmith : IsSmithNormalForm fullRankSNFCertificateZ.result) :
+    (SNFResult.ofCertificate fullRankSNFCertificateZ hSmith).V =
+      fullRankSNFCertificateZ.V := rfl
+
+theorem fullRankSNFOfCertificateEquationSmoke
+    (hSmith : IsSmithNormalForm fullRankSNFCertificateZ.result) :
+    (SNFResult.ofCertificate fullRankSNFCertificateZ hSmith).two_sided_mul =
+      fullRankSNFCertificateZ.equation := rfl
+
+theorem fullRankSNFOfCertificateRoundTripSmoke
+    (hSmith : IsSmithNormalForm fullRankSNFCertificateZ.result) :
+    (SNFResult.ofCertificate fullRankSNFCertificateZ hSmith).toCertificate =
+      fullRankSNFCertificateZ := rfl
+
+noncomputable def simpleSmithSNFCertificateQX :
+    TwoSidedCertificate simpleSmithMatrixQX :=
+  { U := 1
+    result := simpleSmithMatrixQX
+    V := 1
+    equation := by simp }
+
+theorem simpleSmithSNFCertificateQXSmoke :
+    simpleSmithSNFCertificateQX.U * simpleSmithMatrixQX * simpleSmithSNFCertificateQX.V =
+      simpleSmithSNFCertificateQX.result := by
+  exact simpleSmithSNFCertificateQX.equation
+
+theorem simpleSmithSNFOfCertificateRoundTripQXSmoke
+    (hSmith : IsSmithNormalForm (R := Polynomial Rat) simpleSmithSNFCertificateQX.result) :
+    (SNFResult.ofCertificate simpleSmithSNFCertificateQX hSmith).toCertificate =
+      simpleSmithSNFCertificateQX := rfl
 
 theorem fullRankRowSwapSmoke :
     applyRowOperation fullRankMatrixZ (.swap (0 : Fin 2) (1 : Fin 2)) = swappedFullRankMatrixZ := by
