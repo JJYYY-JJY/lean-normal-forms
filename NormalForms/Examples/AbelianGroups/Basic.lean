@@ -15,6 +15,7 @@ open Polynomial
 open NormalForms.Matrix.Elementary
 open NormalForms.Matrix.Certificates
 open NormalForms.Matrix.Hermite
+open NormalForms.Matrix.Smith
 
 def zeroMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
   0
@@ -160,6 +161,43 @@ def presentationHNFMatrixZ : _root_.Matrix (Fin 2) (Fin 3) Int :=
   !![2, 4, 6;
      0, 8, 10]
 
+def fullRankSNFMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![1, 0;
+     0, 1]
+
+def rankDeficientSNFMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![1, 0;
+     0, 0]
+
+def unitBoundarySNFMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![1, 0;
+     0, 2]
+
+def presentationSNFMatrixZ : _root_.Matrix (Fin 2) (Fin 3) Int :=
+  !![2, 0, 0;
+     0, 2, 0]
+
+noncomputable def simpleSmithMatrixQX : _root_.Matrix (Fin 2) (Fin 2) (Polynomial Rat) :=
+  !![(1 : Polynomial Rat), 0;
+     0, 1]
+
+def fullRankSNFLeftZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![-5, 2;
+     3, -1]
+
+def rankDeficientSNFLeftZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![0, 1;
+     1, -2]
+
+def rankDeficientSNFRightZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![1, -2;
+     0, 1]
+
+def presentationSNFRightZ : _root_.Matrix (Fin 3) (Fin 3) Int :=
+  !![1, -1, 2;
+     0, -1, 5;
+     0, 1, -4]
+
 noncomputable def fullRankHNFPublic : HNFResult fullRankMatrixZ :=
   Classical.choose (NormalForms.Matrix.Hermite.hermiteNormalForm_exists fullRankMatrixZ)
 
@@ -206,6 +244,10 @@ theorem unitBoundaryHNFExists :
     ∃ result, hermiteNormalForm unitBoundaryMatrixZ = some result :=
   NormalForms.Matrix.Hermite.hermiteNormalForm_exists unitBoundaryMatrixZ
 
+theorem polynomialMatrixQXHNFExists :
+    ∃ result, hermiteNormalForm polynomialMatrixQX = some result :=
+  NormalForms.Matrix.Hermite.hermiteNormalForm_exists polynomialMatrixQX
+
 theorem fullRankHNFPublicSmoke :
     hermiteNormalForm fullRankMatrixZ = some fullRankHNFPublic :=
   Classical.choose_spec (NormalForms.Matrix.Hermite.hermiteNormalForm_exists fullRankMatrixZ)
@@ -245,6 +287,129 @@ theorem fullRankHNFPublicCertificateSmoke :
 theorem fullRankHNFPublicCertificateMatchesResult :
     (fullRankHNFPublic.toCertificate).result = fullRankHNFPublic.H := by
   rfl
+
+theorem fullRankSNFSpecSmoke :
+    NormalForms.Matrix.Smith.Internal.IsSmithNormalFormDiag fullRankSNFMatrixZ := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro i j hij
+    fin_cases i <;> fin_cases j <;> simp [fullRankSNFMatrixZ] at hij ⊢
+  · intro k hk
+    norm_num at hk
+    interval_cases k <;>
+      norm_num [NormalForms.Matrix.Smith.Internal.diagEntry, fullRankSNFMatrixZ]
+  · intro k hk
+    norm_num at hk
+    have hk0 : k = 0 := by omega
+    subst hk0
+    norm_num [NormalForms.Matrix.Smith.Internal.diagEntry, fullRankSNFMatrixZ]
+
+theorem rankDeficientSNFSpecSmoke :
+    NormalForms.Matrix.Smith.Internal.IsSmithNormalFormDiag rankDeficientSNFMatrixZ := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro i j hij
+    fin_cases i <;> fin_cases j <;> simp [rankDeficientSNFMatrixZ] at hij ⊢
+  · intro k hk
+    norm_num at hk
+    interval_cases k <;>
+      norm_num [NormalForms.Matrix.Smith.Internal.diagEntry, rankDeficientSNFMatrixZ]
+  · intro k hk
+    norm_num at hk
+    have hk0 : k = 0 := by omega
+    subst hk0
+    norm_num [NormalForms.Matrix.Smith.Internal.diagEntry, rankDeficientSNFMatrixZ]
+
+theorem unitBoundarySNFSpecSmoke :
+    NormalForms.Matrix.Smith.Internal.IsSmithNormalFormDiag unitBoundarySNFMatrixZ := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro i j hij
+    fin_cases i <;> fin_cases j <;> simp [unitBoundarySNFMatrixZ] at hij ⊢
+  · intro k hk
+    norm_num at hk
+    interval_cases k <;>
+      simp [NormalForms.Matrix.Smith.Internal.diagEntry, unitBoundarySNFMatrixZ,
+        Int.normalize_of_nonneg]
+  · intro k hk
+    norm_num at hk
+    have hk0 : k = 0 := by omega
+    subst hk0
+    norm_num [NormalForms.Matrix.Smith.Internal.diagEntry, unitBoundarySNFMatrixZ]
+
+theorem presentationSNFSpecSmoke :
+    NormalForms.Matrix.Smith.Internal.IsSmithNormalFormDiag presentationSNFMatrixZ := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro i j hij
+    fin_cases i <;> fin_cases j <;> simp [presentationSNFMatrixZ] at hij ⊢
+  · intro k hk
+    norm_num at hk
+    interval_cases k <;>
+      simp [NormalForms.Matrix.Smith.Internal.diagEntry, presentationSNFMatrixZ,
+        Int.normalize_of_nonneg]
+  · intro k hk
+    norm_num at hk
+    have hk0 : k = 0 := by omega
+    subst hk0
+    norm_num [NormalForms.Matrix.Smith.Internal.diagEntry, presentationSNFMatrixZ]
+
+theorem simpleSmithMatrixQXSpecSmoke :
+    NormalForms.Matrix.Smith.Internal.IsSmithNormalFormDiag simpleSmithMatrixQX := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro i j hij
+    fin_cases i <;> fin_cases j <;> simp [simpleSmithMatrixQX] at hij ⊢
+  · intro k hk
+    norm_num at hk
+    interval_cases k <;>
+      simp [NormalForms.Matrix.Smith.Internal.diagEntry, simpleSmithMatrixQX]
+  · intro k hk
+    norm_num at hk
+    have hk0 : k = 0 := by omega
+    subst hk0
+    simpa [NormalForms.Matrix.Smith.Internal.diagEntry, simpleSmithMatrixQX] using
+      (dvd_refl (1 : Polynomial Rat))
+
+def fullRankSNFCertificateZ : TwoSidedCertificate fullRankMatrixZ :=
+  { U := fullRankSNFLeftZ
+    result := fullRankSNFMatrixZ
+    V := 1
+    equation := by native_decide }
+
+def rankDeficientSNFCertificateZ : TwoSidedCertificate rankDeficientMatrixZ :=
+  { U := rankDeficientSNFLeftZ
+    result := rankDeficientSNFMatrixZ
+    V := rankDeficientSNFRightZ
+    equation := by native_decide }
+
+def unitBoundarySNFCertificateZ : TwoSidedCertificate unitBoundaryMatrixZ :=
+  { U := rowOperationMatrix (.smul (0 : Fin 2) (-1))
+    result := unitBoundarySNFMatrixZ
+    V := 1
+    equation := by native_decide }
+
+def presentationSNFCertificateZ : TwoSidedCertificate presentationMatrixZ :=
+  { U := 1
+    result := presentationSNFMatrixZ
+    V := presentationSNFRightZ
+    equation := by native_decide }
+
+theorem fullRankSNFCertificateSmoke :
+    fullRankSNFCertificateZ.U * fullRankMatrixZ * fullRankSNFCertificateZ.V =
+      fullRankSNFCertificateZ.result := by
+  exact fullRankSNFCertificateZ.equation
+
+theorem rankDeficientSNFCertificateSmoke :
+    rankDeficientSNFCertificateZ.U * rankDeficientMatrixZ * rankDeficientSNFCertificateZ.V =
+      rankDeficientSNFCertificateZ.result := by
+  exact rankDeficientSNFCertificateZ.equation
+
+theorem unitBoundarySNFCertificateSmoke :
+    unitBoundarySNFCertificateZ.U * unitBoundaryMatrixZ * unitBoundarySNFCertificateZ.V =
+      unitBoundarySNFCertificateZ.result := by
+  exact unitBoundarySNFCertificateZ.equation
+
+theorem presentationSNFCertificateSmoke :
+    presentationSNFCertificateZ.U * presentationMatrixZ * presentationSNFCertificateZ.V =
+      presentationSNFCertificateZ.result := by
+  exact presentationSNFCertificateZ.equation
+
 theorem fullRankRowSwapSmoke :
     applyRowOperation fullRankMatrixZ (.swap (0 : Fin 2) (1 : Fin 2)) = swappedFullRankMatrixZ := by
   decide
