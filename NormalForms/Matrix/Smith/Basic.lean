@@ -5,6 +5,24 @@ import NormalForms.Matrix.Hermite.Basic
 # Smith Normal Form API
 
 Two-sided Smith normal forms over Euclidean domains.
+
+This module exposes the public Smith predicate, invariant-factor reader, and
+certificate/result packaging API over arbitrary finite index types by reindexing
+through `Fintype.equivFin`.
+
+That bridge is intentionally kept proof-oriented rather than simplification-
+oriented: we do not register `[simp]` lemmas that force `reindex
+(Fintype.equivFin _)` back to definitional identity on `Fin`. In practice those
+lemmas can trigger very expensive definitional-equality search for matrix blocks
+and `Fin` coercions. Concrete diagonal-specification and invariant-factor smoke
+tests therefore live on the internal `Fin` layer, while the public layer focuses
+on stable packaging theorems such as `SNFResult.ofCertificate`.
+
+Internally, the current Phase 3 implementation already includes a verified
+same-size lead-reduction foundation: pivot-state records, pure-data
+first-column/first-row clearing loops, and external invariance lemmas ending in
+`clearLeadByPivot`. The missing pieces are still nondivisible pivot improvement
+and the outer recursive executable Smith kernel.
 -/
 
 namespace NormalForms.Matrix.Smith
@@ -406,7 +424,13 @@ def smithColumnSpan {m n R : Type _}
   LinearMap.range A.mulVecLin
 
 
-/-- Read normalized nonzero diagonal entries from a Smith matrix, truncating at the first `0`. -/
+/-- Read normalized nonzero diagonal entries from a Smith matrix, truncating at the first `0`.
+
+The public wrapper works for arbitrary finite index types by reindexing to
+`Fin`. We intentionally avoid a companion `[simp]` bridge lemma for `Fin`
+matrices, since expanding `Fintype.equivFin` aggressively can make elaboration
+pathologically slow.
+-/
 noncomputable def smithInvariantFactors {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
@@ -414,7 +438,13 @@ noncomputable def smithInvariantFactors {m n R : Type _}
   Internal.invariantFactors
     (_root_.Matrix.reindex (Fintype.equivFin m) (Fintype.equivFin n) A)
 
-/-- Public Smith-normal-form predicate. -/
+/-- Public Smith-normal-form predicate.
+
+Like `smithInvariantFactors`, this wrapper is defined by reindexing to the
+internal `Fin` predicate. Callers should not expect `simp` to compute through
+that bridge automatically; use the internal predicate for concrete executable
+smoke checks, and use this public predicate for API-level statements.
+-/
 def IsSmithNormalForm {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
@@ -1588,7 +1618,13 @@ noncomputable def SNFResult.invariantFactors {m n R : Type _}
     {A : _root_.Matrix m n R} (result : SNFResult A) : List R :=
   smithInvariantFactors result.S
 
-/-- Package an existing two-sided certificate together with a Smith witness. -/
+/-- Package an existing two-sided certificate together with a Smith witness.
+
+This is the intended public constructor when an external proof or example has
+already produced a concrete two-sided certificate and a separate Smith witness.
+It keeps the public result API lightweight without forcing users to build the
+internal Smith recursion infrastructure.
+-/
 def SNFResult.ofCertificate {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]

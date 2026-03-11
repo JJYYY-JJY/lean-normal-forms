@@ -6,7 +6,19 @@ import NormalForms.Bridge.MathlibPID
 
 Sample matrices for the future finitely generated abelian-group showcase.
 The current module includes executable smoke checks for elementary matrices,
-mixed log certificates, the Phase 1 Bezout reduction gadget, and Phase 2 HNF smoke coverage.
+mixed log certificates, the Phase 1 Bezout reduction gadget, and Phase 2 HNF
+smoke coverage.
+
+For Smith normal form, the examples are intentionally split across two layers:
+
+- internal `Fin`-indexed smoke theorems check concrete diagonal specifications
+  and invariant factors over `Int` and `Q[X]`
+- public smoke theorems focus on certificate/result packaging through
+  `SNFResult.ofCertificate`
+
+This split keeps the examples close to the public API while avoiding the costly
+`Fintype.equivFin` simplification paths that can otherwise dominate elaboration
+for concrete matrices.
 -/
 
 namespace NormalForms.Examples.AbelianGroups
