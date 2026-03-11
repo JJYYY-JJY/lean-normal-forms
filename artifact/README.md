@@ -18,14 +18,25 @@ Current status:
   behind the `CanonicalMod` interface for canonical remainder representatives
 - `CanonicalMod` is currently instantiated for both `Int` and `Polynomial Rat`
 - the Smith layer is no longer placeholder-only: `IsSmithNormalForm` is a real
-  diagonal specification, the internal recursive predicate/result shell is in
-  place, and `TwoSidedTransform` provides reusable two-sided certificate
-  scaffolding
+  diagonal specification, `smithInvariantFactors` and `smithColumnSpan` are
+  available, the internal recursive predicate/result shell is in place,
+  `TwoSidedTransform` provides reusable two-sided certificate scaffolding, and
+  `SNFResult.ofCertificate` / `SNFResult.toCertificate` define the current
+  public certificate boundary
+- the current internal Smith milestone is a verified same-size lead-reduction
+  foundation: pivot-state records, raw first-row/first-column clearing steps,
+  pure-data clearing loops, external invariant theorems, and `clearLeadByPivot`
 - `smithNormalForm` currently still returns `none`, so the executable Smith
-  kernel, public unimodularity helper theorems, and Smith uniqueness proofs are
-  still future work
+  kernel is not yet end-to-end; the remaining work is nondivisible pivot
+  improvement, outer recursion, public unimodularity helper theorems, and Smith
+  uniqueness
 - the PID bridge remains a placeholder API for future work rather than a
   completed comparison theorem layer
-- the example layer already includes Smith smoke theorems over `Int` and `Q[X]`,
-  but the artifact bundle itself is still being assembled
-- the axiom audit remains a smoke script over the current public API surface
+- the example layer already includes internal Smith diagonal/invariant-factor
+  smoke theorems over `Int` and `Q[X]` together with public packaging smoke for
+  `SNFResult.ofCertificate`; concrete public `simp` across `Fintype.equivFin`
+  is intentionally avoided for elaboration stability
+- the current local verification baseline on March 11, 2026 includes
+  `lake build`, `lake env lean scripts/AxiomAudit.lean`,
+  `lake env lean NormalForms/Matrix/Smith/Basic.lean`, and
+  `lake env lean NormalForms/Examples/AbelianGroups/Basic.lean`

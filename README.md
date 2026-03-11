@@ -1,23 +1,55 @@
 # lean-normal-forms
 
-Executable Hermite normal form and Smith-normal-form infrastructure in Lean 4 over Euclidean domains, with certified matrix certificates and a planned bridge to mathlib's PID results.
+Executable Hermite normal form and Smith-normal-form infrastructure in Lean 4
+over Euclidean domains, with certified matrix certificates and a planned bridge
+to mathlib's PID results.
 
 ## Status
 
-This repository currently contains a buildable `NormalForms` Lean library with a completed recursive row-style Hermite layer, a real Smith specification/infrastructure layer, and a placeholder PID bridge.
+This repository currently contains a buildable `NormalForms` Lean library with a
+completed recursive row-style Hermite layer, a real Smith
+specification/infrastructure layer with a verified same-size lead-reduction
+foundation, and a placeholder PID bridge.
 
-- Public API for `IsHermiteNormalForm`, `IsSmithNormalForm`, `HNFResult`, and `SNFResult`
+- Public API for `IsHermiteNormalForm`, `IsSmithNormalForm`, `HNFResult`,
+  `SNFResult`, `smithInvariantFactors`, `smithColumnSpan`,
+  `SNFResult.ofCertificate`, and `SNFResult.toCertificate`
 - Executable recursive row-style HNF over Euclidean domains, with first-column elimination, lower-right recursion, top-row reduction, and `HNFResult.toCertificate`
 - Internal HNF recursion carries explicit unimodular left certificates end-to-end, and the public theorem `hermiteNormalForm_unimodular` exposes that certificate from `hermiteNormalForm`
 - HNF correctness and uniqueness are now proved, via `hermiteNormalForm_isHermite` and `isHermiteNormalForm_unique_of_left_equiv`
 - `CanonicalMod` instances are available for both `Int` and `Polynomial Rat`
-- `NormalForms.Matrix.Smith.Basic` now contains a real public Smith predicate, an internal recursive Smith predicate/result skeleton, two-sided transform helpers, and the public theorem `smithNormalForm_isSmith`
-- The public `smithNormalForm` entrypoint still returns `none`; the executable Smith kernel, left/right unimodularity helper theorems, and Smith uniqueness proofs are still pending
+- `NormalForms.Matrix.Smith.Basic` now contains a real public Smith predicate,
+  a public invariant-factor reader, an internal recursive Smith
+  predicate/result skeleton, two-sided transform helpers, a verified same-size
+  lead-reduction layer (`clearFirstColumnByPivotLoop`,
+  `clearFirstRowByPivotLoop`, `clearLeadByPivot`), and the public theorem
+  `smithNormalForm_isSmith`
+- The public `smithNormalForm` entrypoint still returns `none`; the remaining
+  Smith work is nondivisible pivot improvement, outer recursion, public
+  existence/unimodularity helper theorems, and Smith uniqueness
 - Elementary row/column operations, mixed-log certificate helpers, and a reusable 2x2 Bezout reduction gadget
-- Smoke examples over `Int` and `Q[X]`, including public HNF certificate checks, `Int` Smith two-sided certificate examples, and `Q[X]` Smith diagonal-spec smoke, plus the local plan in `PLAN.md`
+- Smoke examples over `Int` and `Q[X]`, including public HNF certificate
+  checks, internal Smith diagonal-spec and invariant-factor checks, and public
+  `SNFResult.ofCertificate` packaging smoke, plus the local plan in `PLAN.md`
 - GitHub Actions, citation metadata, Zenodo metadata, and an axiom-audit smoke script
 
-The current Lean files compute recursive HNF, package explicit certificates, and prove public HNF correctness and uniqueness. On the Smith side, the repository has moved beyond a pure API freeze: the public predicate is now a real diagonal specification, the internal recursive predicate and transform shells are in place, and the example layer exercises both `Int` and `Q[X]`. The immediate next phase is still the executable Smith kernel plus its correctness, unimodularity, and uniqueness proofs, followed by the PID bridge.
+The current Lean files compute recursive HNF, package explicit certificates, and
+prove public HNF correctness and uniqueness. On the Smith side, the repository
+has moved beyond a pure API freeze: the public predicate and invariant-factor
+reader are real, the internal recursive predicate and transform shells are in
+place, the same-size lead-reduction layer is now implemented and verified, and
+the example layer exercises both `Int` and `Q[X]`. The immediate next phase is
+the nondivisible pivot-improvement layer and outer recursive Smith kernel,
+followed by its correctness, unimodularity, and uniqueness proofs, and then the
+PID bridge.
+
+One deliberate implementation boundary is worth calling out: the public Smith
+wrappers over arbitrary `Fintype` indices are defined by reindexing through
+`Fintype.equivFin`, but the library intentionally does not expose global `[simp]`
+bridge lemmas that try to collapse that reindexing on concrete `Fin` matrices.
+Those simplifications can trigger very expensive elaboration. As a result, the
+example layer keeps concrete Smith computation smoke on the internal `Fin`
+definitions and reserves the public layer for stable packaging and API checks.
 
 ## Build
 
@@ -25,6 +57,7 @@ The current Lean files compute recursive HNF, package explicit certificates, and
 lake exe cache get
 lake build
 lake env lean scripts/AxiomAudit.lean
+lake env lean NormalForms/Matrix/Smith/Basic.lean
 lake env lean NormalForms/Examples/AbelianGroups/Basic.lean
 ```
 
@@ -34,10 +67,15 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 
 - `NormalForms/Matrix/Elementary`: row and column operation skeletons, logs, and replay semantics
 - `NormalForms/Matrix/Hermite`: executable HNF predicate, internal Fin kernel, public result packaging, uniqueness, and `CanonicalMod`
-- `NormalForms/Matrix/Smith`: public Smith diagonal specification, internal recursive scaffolding, two-sided transform helpers, and the current `SNFResult` / `smithNormalForm` boundary
+- `NormalForms/Matrix/Smith`: public Smith diagonal specification,
+  invariant-factor reader, certificate/result packaging API, internal recursive
+  scaffolding, same-size lead-reduction foundations, two-sided transform
+  helpers, and the current `SNFResult` / `smithNormalForm` boundary
 - `NormalForms/Matrix/Certificates`: reusable certificate shapes and unimodularity lemmas
 - `NormalForms/Bridge/MathlibPID`: placeholder bridge theorem API toward mathlib's PID results
-- `NormalForms/Examples/AbelianGroups`: sample matrices, executable HNF smoke checks, `Int` Smith certificate examples, and `Q[X]` Smith spec smoke
+- `NormalForms/Examples/AbelianGroups`: sample matrices, executable HNF smoke
+  checks, internal `Int` and `Q[X]` Smith spec/invariant-factor smoke, and
+  public Smith certificate/result packaging smoke
 - `paper/`: manuscript planning notes
 - `artifact/`: artifact packaging notes
 
