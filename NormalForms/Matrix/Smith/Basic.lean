@@ -881,6 +881,77 @@ def TwoSidedTransform.diagLiftRight {m n : Nat} {R : Type _}
     leftUnimodular := unimodular_one
     rightUnimodular := unimodular_diagLiftMatrix hV }
 
+
+@[simp] theorem mul_diagLiftMatrix_firstCol {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin m) (Fin (n + 1)) R)
+    (V : _root_.Matrix (Fin n) (Fin n) R) (i : Fin m) :
+    (A * diagLiftMatrix V) i 0 = A i 0 := by
+  simp [diagLiftMatrix, _root_.Matrix.mul_apply, Fin.sum_univ_succ]
+
+
+@[simp] theorem lowerRight_mul_diagLiftMatrix {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
+    (V : _root_.Matrix (Fin n) (Fin n) R) :
+    lowerRight (A * diagLiftMatrix V) = lowerRight A * V := by
+  ext i j
+  simp [diagLiftMatrix, lowerRight, _root_.Matrix.mul_apply, Fin.sum_univ_succ]
+
+
+private theorem diagLiftMatrix_mul_zero_firstCol {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (U : _root_.Matrix (Fin m) (Fin m) R)
+    (hcol : ∀ i : Fin m, A i.succ 0 = 0) :
+    ∀ i : Fin m, (diagLiftMatrix U * A) i.succ 0 = 0 := by
+  intro i
+  simp [diagLiftMatrix, _root_.Matrix.mul_apply, Fin.sum_univ_succ, hcol]
+
+
+private theorem zero_topRow_mul_diagLiftMatrix {m n : Nat} {R : Type _}
+    [CommRing R] [NormalizationMonoid R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (V : _root_.Matrix (Fin n) (Fin n) R)
+    (hrow : ∀ j : Fin n, A 0 j.succ = 0) :
+    ∀ j : Fin n, (A * diagLiftMatrix V) 0 j.succ = 0 := by
+  intro j
+  simp [diagLiftMatrix, _root_.Matrix.mul_apply, Fin.sum_univ_succ, hrow]
+
+
+private theorem dvd_matrix_mul_of_right {l m n : Type _} {R : Type _}
+    [Fintype l] [Fintype m] [Fintype n]
+    [DecidableEq l] [DecidableEq m] [DecidableEq n] [CommRing R]
+    {d : R} {A : _root_.Matrix l m R} {B : _root_.Matrix m n R}
+    (hB : ∀ i j, d ∣ B i j) :
+    ∀ i j, d ∣ (A * B) i j := by
+  intro i j
+  rw [_root_.Matrix.mul_apply]
+  refine Finset.dvd_sum ?_
+  intro k hk
+  rcases hB k j with ⟨x, hx⟩
+  refine ⟨A i k * x, ?_⟩
+  calc
+    A i k * B k j = A i k * (d * x) := by rw [hx]
+    _ = d * (A i k * x) := by ring
+
+
+private theorem dvd_matrix_mul_of_left {l m n : Type _} {R : Type _}
+    [Fintype l] [Fintype m] [Fintype n]
+    [DecidableEq l] [DecidableEq m] [DecidableEq n] [CommRing R]
+    {d : R} {A : _root_.Matrix l m R} {B : _root_.Matrix m n R}
+    (hA : ∀ i j, d ∣ A i j) :
+    ∀ i j, d ∣ (A * B) i j := by
+  intro i j
+  rw [_root_.Matrix.mul_apply]
+  refine Finset.dvd_sum ?_
+  intro k hk
+  rcases hA i k with ⟨x, hx⟩
+  refine ⟨x * B k j, ?_⟩
+  calc
+    A i k * B k j = (d * x) * B k j := by rw [hx]
+    _ = d * (x * B k j) := by ring
+
 private theorem mod_ne_zero_of_not_dvd {R : Type _} [EuclideanDomain R]
     {a b : R} (ha : a ≠ 0) (hnot : ¬ a ∣ b) :
     b % a ≠ 0 := by
@@ -2574,6 +2645,129 @@ def stabilizePivot {m n : Nat} {R : Type _}
   exact (measure μ).wf.fix step state
 
 
+def smithNormalFormFin {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] [CanonicalMod R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) : FinSNFResult A := by
+  induction m generalizing n with
+  | zero =>
+      refine
+        { U := 1
+          S := A
+          V := 1
+          two_sided_mul := by simp
+          leftUnimodular := unimodular_one
+          rightUnimodular := unimodular_one
+          isSmith := IsSmithNormalFormFin.emptyRows _ }
+  | succ m ih =>
+      cases n with
+      | zero =>
+          refine
+            { U := 1
+              S := A
+              V := 1
+              two_sided_mul := by simp
+              leftUnimodular := unimodular_one
+              rightUnimodular := unimodular_one
+              isSmith := IsSmithNormalFormFin.emptyCols _ }
+      | succ n =>
+          by_cases hA : A = 0
+          · refine
+              { U := 1
+                S := A
+                V := 1
+                two_sided_mul := by simp
+                leftUnimodular := unimodular_one
+                rightUnimodular := unimodular_one
+                isSmith := ?_ }
+            simpa [hA] using (zeroSmith (m := m + 1) (n := n + 1) (R := R))
+          · let state0 := initPivotState A hA
+            let state := stabilizePivot state0
+            let lowerRes := ih (n := n) (lowerRight state.t.B)
+            let tLiftLeft :=
+              TwoSidedTransform.diagLiftLeft state.t.B lowerRes.U lowerRes.leftUnimodular
+            let tAfterLeft := state.t.trans tLiftLeft
+            let tLiftRight :=
+              TwoSidedTransform.diagLiftRight tAfterLeft.B lowerRes.V lowerRes.rightUnimodular
+            let tFinal := tAfterLeft.trans tLiftRight
+            have hAfterLeftTopLeft : tAfterLeft.B 0 0 = state.t.B 0 0 := by
+              simp [tAfterLeft, tLiftLeft, TwoSidedTransform.diagLiftLeft, TwoSidedTransform.trans,
+                diagLiftMatrix_mul_topRow]
+            have hAfterLeftRow : ∀ j : Fin n, tAfterLeft.B 0 j.succ = 0 := by
+              intro j
+              simpa [tAfterLeft, tLiftLeft, TwoSidedTransform.diagLiftLeft,
+                TwoSidedTransform.trans, diagLiftMatrix_mul_topRow] using state.rowCleared j
+            have hAfterLeftCol : ∀ i : Fin m, tAfterLeft.B i.succ 0 = 0 := by
+              intro i
+              simpa [tAfterLeft, tLiftLeft, TwoSidedTransform.diagLiftLeft,
+                TwoSidedTransform.trans] using
+                diagLiftMatrix_mul_zero_firstCol (A := state.t.B) lowerRes.U state.colCleared i
+            have hFinalTopLeft : tFinal.B 0 0 = state.t.B 0 0 := by
+              simp [tFinal, tLiftRight, TwoSidedTransform.diagLiftRight, TwoSidedTransform.trans,
+                hAfterLeftTopLeft]
+            have hFinalRow : ∀ j : Fin n, tFinal.B 0 j.succ = 0 := by
+              intro j
+              simpa [tFinal, tLiftRight, TwoSidedTransform.diagLiftRight,
+                TwoSidedTransform.trans] using
+                zero_topRow_mul_diagLiftMatrix (A := tAfterLeft.B) lowerRes.V hAfterLeftRow j
+            have hFinalCol : ∀ i : Fin m, tFinal.B i.succ 0 = 0 := by
+              intro i
+              rw [show tFinal.B i.succ 0 = tAfterLeft.B i.succ 0 by
+                simpa [tFinal, tLiftRight, TwoSidedTransform.diagLiftRight, TwoSidedTransform.trans] using
+                  mul_diagLiftMatrix_firstCol tAfterLeft.B lowerRes.V i.succ]
+              exact hAfterLeftCol i
+            have hFinalLower : lowerRight tFinal.B = lowerRes.S := by
+              calc
+                lowerRight tFinal.B
+                    = lowerRight (tAfterLeft.B * diagLiftMatrix lowerRes.V) := by
+                        rfl
+                _ = lowerRight tAfterLeft.B * lowerRes.V := by
+                      simpa [tFinal, tLiftRight, TwoSidedTransform.diagLiftRight,
+                        TwoSidedTransform.trans] using
+                        lowerRight_mul_diagLiftMatrix tAfterLeft.B lowerRes.V
+                _ = (lowerRes.U * lowerRight state.t.B) * lowerRes.V := by
+                      simp [tAfterLeft, tLiftLeft, TwoSidedTransform.diagLiftLeft,
+                        TwoSidedTransform.trans, lowerRight_diagLiftMatrix_mul]
+                _ = lowerRes.S := by simpa [Matrix.mul_assoc] using lowerRes.two_sided_mul
+            have hFinalDiv : ∀ i : Fin m, ∀ j : Fin n, tFinal.B 0 0 ∣ tFinal.B i.succ j.succ := by
+              intro i j
+              rw [hFinalTopLeft]
+              have hLeft :
+                  ∀ r s, state.t.B 0 0 ∣
+                    (lowerRes.U * lowerRight state.t.B) r s := by
+                exact dvd_matrix_mul_of_right state.lowerRightDivisible
+              have hRight :
+                  ∀ r s, state.t.B 0 0 ∣
+                    ((lowerRes.U * lowerRight state.t.B) * lowerRes.V) r s := by
+                exact dvd_matrix_mul_of_left hLeft
+              have hEq :
+                  tFinal.B i.succ j.succ =
+                    ((lowerRes.U * lowerRight state.t.B) * lowerRes.V) i j := by
+                calc
+                  tFinal.B i.succ j.succ = (lowerRight tFinal.B) i j := by rfl
+                  _ = lowerRes.S i j := by rw [hFinalLower]
+                  _ = ((lowerRes.U * lowerRight state.t.B) * lowerRes.V) i j := by
+                        rw [lowerRes.two_sided_mul]
+              rw [hEq]
+              exact hRight i j
+            refine
+              { U := tFinal.U
+                S := tFinal.B
+                V := tFinal.V
+                two_sided_mul := tFinal.two_sided_mul
+                leftUnimodular := tFinal.leftUnimodular
+                rightUnimodular := tFinal.rightUnimodular
+                isSmith := ?_ }
+            refine IsSmithNormalFormFin.pivot _ ?_ ?_ ?_ ?_ ?_ ?_
+            · rw [hFinalTopLeft]
+              exact state.pivot_ne_zero
+            · rw [hFinalTopLeft]
+              exact state.pivot_normalized
+            · exact hFinalRow
+            · exact hFinalCol
+            · simpa [hFinalLower] using lowerRes.isSmith
+            · exact hFinalDiv
+
+
 end Internal
 
 
@@ -2633,7 +2827,80 @@ noncomputable def smithNormalForm {m n R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     [CanonicalMod R]
     (A : _root_.Matrix m n R) : Option (SNFResult A) :=
-  none
+  let em := Fintype.equivFin m
+  let en := Fintype.equivFin n
+  let Afin : _root_.Matrix (Fin (Fintype.card m)) (Fin (Fintype.card n)) R :=
+    _root_.Matrix.reindex em en A
+  let result := Internal.smithNormalFormFin Afin
+  some
+    { U := _root_.Matrix.reindex em.symm em.symm result.U
+      S := _root_.Matrix.reindex em.symm en.symm result.S
+      V := _root_.Matrix.reindex en.symm en.symm result.V
+      two_sided_mul := by
+        have hmulRight :
+            _root_.Matrix.reindex em.symm en.symm (result.U * Afin * result.V) =
+              _root_.Matrix.reindex em.symm en.symm (result.U * Afin) *
+                _root_.Matrix.reindex en.symm en.symm result.V := by
+          simpa [Matrix.reindexLinearEquiv, Matrix.mul_assoc] using
+            (Matrix.reindexLinearEquiv_mul R R em.symm en.symm en.symm
+              (result.U * Afin) result.V)
+        have hmulLeft :
+            _root_.Matrix.reindex em.symm en.symm (result.U * Afin) =
+              _root_.Matrix.reindex em.symm em.symm result.U *
+                _root_.Matrix.reindex em.symm en.symm Afin := by
+          simpa [Matrix.reindexLinearEquiv] using
+            (Matrix.reindexLinearEquiv_mul R R em.symm em.symm en.symm result.U Afin)
+        have hEq := congrArg (_root_.Matrix.reindex em.symm en.symm) result.two_sided_mul
+        calc
+          _root_.Matrix.reindex em.symm em.symm result.U * A *
+              _root_.Matrix.reindex en.symm en.symm result.V
+              = _root_.Matrix.reindex em.symm en.symm (result.U * Afin * result.V) := by
+                  rw [hmulRight, hmulLeft]
+                  simp [Afin, Matrix.mul_assoc]
+          _ = _root_.Matrix.reindex em.symm en.symm result.S := hEq
+      isSmith := by
+        unfold IsSmithNormalForm
+        convert Internal.isSmithNormalFormFin_toDiag result.isSmith using 1
+        ext i j
+        simp [em, en] }
+
+
+theorem smithNormalForm_exists {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] [CanonicalMod R]
+    (A : _root_.Matrix m n R) : ∃ result, smithNormalForm A = some result := by
+  unfold smithNormalForm
+  simp
+
+
+theorem smithNormalForm_leftUnimodular {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] [CanonicalMod R]
+    {A : _root_.Matrix m n R} {result : SNFResult A}
+    (hresult : smithNormalForm A = some result) :
+    Unimodular result.U := by
+  unfold smithNormalForm at hresult
+  dsimp at hresult
+  injection hresult with hEq
+  subst hEq
+  exact unimodular_reindex (Fintype.equivFin m).symm
+    (Internal.smithNormalFormFin
+      (_root_.Matrix.reindex (Fintype.equivFin m) (Fintype.equivFin n) A)).leftUnimodular
+
+
+theorem smithNormalForm_rightUnimodular {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] [CanonicalMod R]
+    {A : _root_.Matrix m n R} {result : SNFResult A}
+    (hresult : smithNormalForm A = some result) :
+    Unimodular result.V := by
+  unfold smithNormalForm at hresult
+  dsimp at hresult
+  injection hresult with hEq
+  subst hEq
+  exact unimodular_reindex (Fintype.equivFin n).symm
+    (Internal.smithNormalFormFin
+      (_root_.Matrix.reindex (Fintype.equivFin m) (Fintype.equivFin n) A)).rightUnimodular
 
 
 theorem smithNormalForm_isSmith {m n R : Type _}
