@@ -19,10 +19,12 @@ tests therefore live on the internal `Fin` layer, while the public layer focuses
 on stable packaging theorems such as `SNFResult.ofCertificate`.
 
 Internally, the current Phase 3 implementation already includes a verified
-same-size lead-reduction foundation: pivot-state records, pure-data
-first-column/first-row clearing loops, and external invariance lemmas ending in
-`clearLeadByPivot`. The missing pieces are still nondivisible pivot improvement
-and the outer recursive executable Smith kernel.
+same-size lead-clearing foundation together with the next raw same-size layer:
+pivot-state records, pure-data first-column/first-row clearing loops, external
+invariance lemmas ending in `clearLeadByPivot`, row/column `prepareLead...`
+wrappers, and a single-step nondivisible `improvePivot` interface with a strict
+descent theorem. The missing pieces are still the alternating/stabilization
+driver around those raw steps and the outer recursive executable Smith kernel.
 -/
 
 namespace NormalForms.Matrix.Smith
