@@ -11,8 +11,9 @@ smoke coverage.
 
 For Smith normal form, the examples are intentionally split across two layers:
 
-- internal `Fin`-indexed smoke theorems check concrete diagonal specifications
-  and invariant factors over `Int` and `Q[X]`
+- internal `Fin`-indexed smoke theorems check concrete diagonal specifications,
+  invariant factors, and the same-size `prepareLead...` / `improvePivot`
+  building blocks over `Int` and `Q[X]`
 - public smoke theorems focus on certificate/result packaging through
   `SNFResult.ofCertificate`
 
@@ -192,6 +193,32 @@ def presentationSNFMatrixZ : _root_.Matrix (Fin 2) (Fin 3) Int :=
 noncomputable def simpleSmithMatrixQX : _root_.Matrix (Fin 2) (Fin 2) (Polynomial Rat) :=
   !![(1 : Polynomial Rat), 0;
      0, 1]
+
+def prepareLeadColumnMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![6, 0;
+     15, 0]
+
+def prepareLeadRowMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![6, 15;
+     0, 0]
+
+def improvePivotMatrixZ : _root_.Matrix (Fin 3) (Fin 3) Int :=
+  !![6, 0, 0;
+     0, 0, 15;
+     0, 0, 0]
+
+def improvePivotLeadClearedStateZ :
+    NormalForms.Matrix.Smith.Internal.LeadClearedState improvePivotMatrixZ :=
+  { t := TwoSidedTransform.refl improvePivotMatrixZ
+    pivot_ne_zero := by decide
+    pivot_normalized := by
+      simpa [improvePivotMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg]
+    rowCleared := by
+      intro j
+      fin_cases j <;> decide
+    colCleared := by
+      intro i
+      fin_cases i <;> decide }
 
 def fullRankSNFLeftZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
   !![-5, 2;
@@ -401,6 +428,79 @@ theorem presentationSNFInvariantFactorsSmoke :
 theorem simpleSmithMatrixQXInvariantFactorsSmoke :
     NormalForms.Matrix.Smith.Internal.invariantFactors simpleSmithMatrixQX = [1, 1] := by
   simp [NormalForms.Matrix.Smith.Internal.invariantFactors, simpleSmithMatrixQX, lowerRight]
+
+theorem prepareLeadColumnStepDataTopLeftSmoke :
+    (NormalForms.Matrix.Smith.Internal.prepareLeadColumnStepData
+      (A := prepareLeadColumnMatrixZ)
+      (TwoSidedTransform.refl prepareLeadColumnMatrixZ) (0 : Fin 1)).B 0 0 =
+      normalize (EuclideanDomain.gcd (6 : Int) 15) := by
+  have hwit :
+      (TwoSidedTransform.refl prepareLeadColumnMatrixZ).B (0 : Fin 1).succ 0 ≠ 0 := by
+    norm_num [prepareLeadColumnMatrixZ, TwoSidedTransform.refl]
+  simpa [prepareLeadColumnMatrixZ] using
+    NormalForms.Matrix.Smith.Internal.prepareLeadColumnStepData_topLeft_eq_normalize_gcd
+      (t := TwoSidedTransform.refl prepareLeadColumnMatrixZ) (i := (0 : Fin 1)) hwit
+
+theorem prepareLeadRowStepDataTopLeftSmoke :
+    (NormalForms.Matrix.Smith.Internal.prepareLeadRowStepData
+      (A := prepareLeadRowMatrixZ)
+      (TwoSidedTransform.refl prepareLeadRowMatrixZ) (0 : Fin 1)).B 0 0 =
+      normalize (EuclideanDomain.gcd (6 : Int) 15) := by
+  have hwit :
+      (TwoSidedTransform.refl prepareLeadRowMatrixZ).B 0 (0 : Fin 1).succ ≠ 0 := by
+    norm_num [prepareLeadRowMatrixZ, TwoSidedTransform.refl]
+  simpa [prepareLeadRowMatrixZ] using
+    NormalForms.Matrix.Smith.Internal.prepareLeadRowStepData_topLeft_eq_normalize_gcd
+      (t := TwoSidedTransform.refl prepareLeadRowMatrixZ) (j := (0 : Fin 1)) hwit
+
+theorem improvePivotStepDataSmoke :
+    let t :=
+      NormalForms.Matrix.Smith.Internal.improvePivotStepData
+        improvePivotLeadClearedStateZ (0 : Fin 2) (1 : Fin 2)
+    t.B 0 0 = 3 ∧ t.B 0 0 ≠ 0 ∧
+      Int.natAbs (t.B 0 0) < Int.natAbs (improvePivotMatrixZ 0 0) := by
+  dsimp
+  have hbad :
+      ¬ improvePivotLeadClearedStateZ.t.B 0 0 ∣
+        improvePivotLeadClearedStateZ.t.B (0 : Fin 2).succ (1 : Fin 2).succ := by
+    change ¬ (6 : Int) ∣ 15
+    norm_num
+  have htop :
+      (NormalForms.Matrix.Smith.Internal.improvePivotStepData
+        improvePivotLeadClearedStateZ (0 : Fin 2) (1 : Fin 2)).B 0 0 = 3 := by
+    have htop' :=
+      NormalForms.Matrix.Smith.Internal.improvePivot_topLeft_eq_normalize_gcd
+        improvePivotLeadClearedStateZ (0 : Fin 2) (1 : Fin 2) hbad
+    have htop'' :
+        (NormalForms.Matrix.Smith.Internal.improvePivotStepData
+          improvePivotLeadClearedStateZ (0 : Fin 2) (1 : Fin 2)).B 0 0 =
+          normalize (EuclideanDomain.gcd (6 : Int) 15) := by
+      simpa [improvePivotLeadClearedStateZ, improvePivotMatrixZ, TwoSidedTransform.refl,
+        Int.normalize_of_nonneg] using htop'
+    have hgcd : normalize (EuclideanDomain.gcd (6 : Int) 15) = 3 := by
+      have hgcdNat : Int.gcd (6 : Int) 15 = 3 := by
+        norm_num
+      have hgcdInt' : gcd (6 : Int) 15 = 3 := by
+        simpa [Int.coe_gcd] using congrArg (fun x : Nat => (x : Int)) hgcdNat
+      have hgcdNorm : gcd (6 : Int) 15 = normalize (EuclideanDomain.gcd (6 : Int) 15) := by
+        have hEuclid : gcd (6 : Int) 15 ∣ EuclideanDomain.gcd (6 : Int) 15 := by
+          exact EuclideanDomain.dvd_gcd
+            (show gcd (6 : Int) 15 ∣ (6 : Int) by exact gcd_dvd_left _ _)
+            (show gcd (6 : Int) 15 ∣ (15 : Int) by exact gcd_dvd_right _ _)
+        have hGcd : EuclideanDomain.gcd (6 : Int) 15 ∣ gcd (6 : Int) 15 := by
+          exact GCDMonoid.dvd_gcd
+            (EuclideanDomain.gcd_dvd_left (6 : Int) 15)
+            (EuclideanDomain.gcd_dvd_right (6 : Int) 15)
+        apply gcd_eq_normalize
+        · exact hEuclid
+        · exact hGcd
+      exact hgcdNorm.symm.trans hgcdInt'
+    exact htop''.trans hgcd
+  refine ⟨htop, ?_, ?_⟩
+  · simpa [htop] using
+      NormalForms.Matrix.Smith.Internal.improvePivot_pivot_ne_zero
+        improvePivotLeadClearedStateZ (0 : Fin 2) (1 : Fin 2) hbad
+  · simpa [htop, improvePivotMatrixZ]
 
 def fullRankSNFCertificateZ : TwoSidedCertificate fullRankMatrixZ :=
   { U := fullRankSNFLeftZ
