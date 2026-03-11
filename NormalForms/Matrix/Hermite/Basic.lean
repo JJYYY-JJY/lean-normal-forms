@@ -1273,6 +1273,42 @@ theorem clearFirstColumnStep_topLeft_ne_zero {m n : Nat} {R : Type _}
     exact fun hg => hgcdNe (normalize_eq_zero.mp hg)
 
 
+theorem clearFirstColumnStep_topLeft_eq_normalize_gcd {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
+    (i : Fin (m + 1)) (t : LeftTransform A) (hentry : t.B i.succ 0 ≠ 0) :
+    (clearFirstColumnStep i t).B 0 0 =
+      normalize (EuclideanDomain.gcd (t.B 0 0) (t.B i.succ 0)) := by
+  let tSwap := t.trans (LeftTransform.swap t.B i.succ (1 : Fin (m + 2)))
+  let tBez := tSwap.trans (LeftTransform.topBezout tSwap.B)
+  let tNorm := tBez.trans
+    (LeftTransform.unitSmul tBez.B 0 (normUnit (tBez.B 0 0) : R)
+      (normUnit (tBez.B 0 0)).isUnit)
+  have htop' : tSwap.B 0 0 = t.B 0 0 := by
+    simp [tSwap, LeftTransform.swap, LeftTransform.trans]
+  have hrow' : tSwap.B 1 0 = t.B i.succ 0 := by
+    simp [tSwap, LeftTransform.swap, LeftTransform.trans]
+  have hdet :
+      tBez.B 0 0 = EuclideanDomain.gcd (t.B 0 0) (t.B i.succ 0) := by
+    calc
+      tBez.B 0 0 = EuclideanDomain.gcd (tSwap.B 0 0) (tSwap.B 1 0) := by
+        simpa [tBez, LeftTransform.topBezout, LeftTransform.trans] using
+          topBezoutMatrix_mul_topLeft (m := m) (n := n) (A := tSwap.B)
+      _ = EuclideanDomain.gcd (t.B 0 0) (t.B i.succ 0) := by
+        rw [htop', hrow']
+  have hnormTop :
+      tNorm.B 0 0 = normalize (EuclideanDomain.gcd (t.B 0 0) (t.B i.succ 0)) := by
+    calc
+      tNorm.B 0 0 = normalize (tBez.B 0 0) := by
+        simp [tNorm, LeftTransform.unitSmul, LeftTransform.trans, applyRowOperation,
+          normalize_apply, mul_comm]
+      _ = normalize (EuclideanDomain.gcd (t.B 0 0) (t.B i.succ 0)) := by
+        rw [hdet]
+  have hclear : clearFirstColumnStep i t = tNorm := by
+    simp [clearFirstColumnStep, hentry, tNorm, tBez, tSwap]
+  rw [hclear, hnormTop]
+
+
 theorem clearFirstColumnStep_topLeft_normalized {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
