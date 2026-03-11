@@ -25,9 +25,10 @@ Internally, the current Phase 3 implementation already includes a verified
 same-size lead-clearing foundation together with the next raw same-size layer:
 pivot-state records, pure-data first-column/first-row clearing loops, external
 invariance lemmas ending in `clearLeadByPivot`, row/column `prepareLead...`
-wrappers, and a single-step nondivisible `improvePivot` interface with a strict
-descent theorem. The missing pieces are still the alternating/stabilization
-driver around those raw steps and the outer recursive executable Smith kernel.
+wrappers, a generic same-size `stabilizePivot` driver, and a single-step
+nondivisible `improvePivot` interface with a strict descent theorem. The
+missing pieces are now the outer recursive executable Smith kernel and the
+public proof/uniqueness layer.
 -/
 
 namespace NormalForms.Matrix.Smith
@@ -1052,10 +1053,11 @@ the same-size layer factored into reusable pieces:
 - a pure algebra kernel on `a b : R`
 - HNF-to-Smith bridge lemmas for exact top-left gcd formulas
 - row/column `prepareLead...` raw steps on `TwoSidedTransform`
+- same-size `prepareLead...` / `stabilizePivot` wrappers on `PivotState`
 - a single-step `improvePivot` wrapper and a strict-descent theorem
 
-The next phase can then add the alternating/stabilization driver and outer
-recursion without refactoring these proofs.
+The next phase can then add the outer recursion without refactoring these
+proofs.
 -/
 
 def firstUndivisibleFirstCol? {m n : Nat} {R : Type _}
