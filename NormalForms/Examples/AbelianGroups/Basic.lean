@@ -452,6 +452,35 @@ theorem simpleSmithMatrixQXInvariantFactorsSmoke :
     NormalForms.Matrix.Smith.Internal.invariantFactors simpleSmithMatrixQX = [1, 1] := by
   simp [NormalForms.Matrix.Smith.Internal.invariantFactors, simpleSmithMatrixQX, lowerRight]
 
+theorem zeroMatrixSNFSmoke :
+    (NormalForms.Matrix.Smith.Internal.smithNormalFormFin zeroMatrixZ).S = zeroMatrixZ := by
+  native_decide
+
+
+theorem fullRankSNFSmoke :
+    (NormalForms.Matrix.Smith.Internal.smithNormalFormFin fullRankMatrixZ).S =
+      fullRankSNFMatrixZ := by
+  native_decide
+
+
+theorem rankDeficientSNFSmoke :
+    (NormalForms.Matrix.Smith.Internal.smithNormalFormFin rankDeficientMatrixZ).S =
+      rankDeficientSNFMatrixZ := by
+  native_decide
+
+
+theorem unitBoundarySNFSmoke :
+    (NormalForms.Matrix.Smith.Internal.smithNormalFormFin unitBoundaryMatrixZ).S =
+      unitBoundarySNFMatrixZ := by
+  native_decide
+
+
+theorem presentationSNFSmoke :
+    (NormalForms.Matrix.Smith.Internal.smithNormalFormFin presentationMatrixZ).S =
+      presentationSNFMatrixZ := by
+  native_decide
+
+
 theorem prepareLeadColumnStepDataTopLeftSmoke :
     (NormalForms.Matrix.Smith.Internal.prepareLeadColumnStepData
       (A := prepareLeadColumnMatrixZ)
@@ -656,6 +685,74 @@ theorem simpleSmithSNFOfCertificateRoundTripQXSmoke
     (hSmith : IsSmithNormalForm (R := Polynomial Rat) simpleSmithSNFCertificateQX.result) :
     (SNFResult.ofCertificate simpleSmithSNFCertificateQX hSmith).toCertificate =
       simpleSmithSNFCertificateQX := rfl
+
+noncomputable def fullRankSNFPublic : SNFResult fullRankMatrixZ :=
+  Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists fullRankMatrixZ)
+
+
+theorem zeroMatrixSNFExists :
+    ∃ result, smithNormalForm zeroMatrixZ = some result :=
+  NormalForms.Matrix.Smith.smithNormalForm_exists zeroMatrixZ
+
+
+theorem fullRankSNFExists :
+    ∃ result, smithNormalForm fullRankMatrixZ = some result :=
+  NormalForms.Matrix.Smith.smithNormalForm_exists fullRankMatrixZ
+
+
+theorem rankDeficientSNFExists :
+    ∃ result, smithNormalForm rankDeficientMatrixZ = some result :=
+  NormalForms.Matrix.Smith.smithNormalForm_exists rankDeficientMatrixZ
+
+
+theorem unitBoundarySNFExists :
+    ∃ result, smithNormalForm unitBoundaryMatrixZ = some result :=
+  NormalForms.Matrix.Smith.smithNormalForm_exists unitBoundaryMatrixZ
+
+
+theorem presentationSNFExists :
+    ∃ result, smithNormalForm presentationMatrixZ = some result :=
+  NormalForms.Matrix.Smith.smithNormalForm_exists presentationMatrixZ
+
+
+theorem polynomialMatrixQXSNFExists :
+    ∃ result, smithNormalForm polynomialMatrixQX = some result :=
+  NormalForms.Matrix.Smith.smithNormalForm_exists polynomialMatrixQX
+
+
+theorem fullRankSNFPublicSmoke :
+    smithNormalForm fullRankMatrixZ = some fullRankSNFPublic :=
+  Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists fullRankMatrixZ)
+
+
+theorem fullRankSNFPublicEquationSmoke :
+    fullRankSNFPublic.U * fullRankMatrixZ * fullRankSNFPublic.V = fullRankSNFPublic.S :=
+  fullRankSNFPublic.two_sided_mul
+
+
+theorem fullRankSNFPublicIsSmithSmoke :
+    IsSmithNormalForm fullRankSNFPublic.S :=
+  NormalForms.Matrix.Smith.smithNormalForm_isSmith
+    (A := fullRankMatrixZ)
+    (result := fullRankSNFPublic)
+    (Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists fullRankMatrixZ))
+
+
+theorem fullRankSNFPublicLeftUnimodularSmoke :
+    Unimodular fullRankSNFPublic.U :=
+  NormalForms.Matrix.Smith.smithNormalForm_leftUnimodular
+    (A := fullRankMatrixZ)
+    (result := fullRankSNFPublic)
+    (Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists fullRankMatrixZ))
+
+
+theorem fullRankSNFPublicRightUnimodularSmoke :
+    Unimodular fullRankSNFPublic.V :=
+  NormalForms.Matrix.Smith.smithNormalForm_rightUnimodular
+    (A := fullRankMatrixZ)
+    (result := fullRankSNFPublic)
+    (Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists fullRankMatrixZ))
+
 
 theorem fullRankRowSwapSmoke :
     applyRowOperation fullRankMatrixZ (.swap (0 : Fin 2) (1 : Fin 2)) = swappedFullRankMatrixZ := by
