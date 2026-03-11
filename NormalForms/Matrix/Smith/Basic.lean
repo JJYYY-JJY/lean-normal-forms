@@ -1,5 +1,8 @@
 import NormalForms.Matrix.Certificates
 import NormalForms.Matrix.Hermite.Basic
+import Mathlib.RingTheory.PrincipalIdealDomain
+import Mathlib.RingTheory.UniqueFactorizationDomain.Basic
+import Mathlib.RingTheory.UniqueFactorizationDomain.NormalizedFactors
 
 /-!
 # Smith Normal Form API
@@ -314,10 +317,115 @@ def firstUndivisibleLowerRight? {m n : Nat} {R : Type _}
             | some p => some p
             | none =>
                 let i : Fin m := ⟨k, Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk⟩
-                match firstUndivisible? d (fun j : Fin n => A i.succ j.succ) with
-                | none => none
-                | some j => some (i, j)
+                Option.map (fun j : Fin n => (i, j))
+                  (firstUndivisible? d (fun j : Fin n => A i.succ j.succ))
       goRows m (Nat.le_refl _)
+
+
+theorem firstUndivisibleLowerRight?_eq_none {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [DecidableEq R] :
+    ∀ (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) (d : R),
+      firstUndivisibleLowerRight? A d = none ->
+        ∀ i : Fin m, ∀ j : Fin n, d ∣ A i.succ j.succ
+  | A, d, hnone => by
+      unfold firstUndivisibleLowerRight? at hnone
+      have hnone' : firstUndivisibleLowerRight?.goRows A d m (Nat.le_refl m) = none := by
+        simpa [firstUndivisibleLowerRight?] using hnone
+      clear hnone
+      let rowWitness : ∀ k (hk : k ≤ m),
+          firstUndivisibleLowerRight?.goRows A d k hk = none ->
+            ∀ i' : Fin m, i'.1 < k -> ∀ j' : Fin n, d ∣ A i'.succ j'.succ := by
+        intro k
+        induction k with
+        | zero =>
+            intro hk hgo i' hi
+            exact False.elim (Nat.not_lt_zero _ hi)
+        | succ k ih =>
+            intro hk hgo i' hi j'
+            let hk' : k ≤ m := Nat.le_of_lt (Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk)
+            rcases Nat.lt_succ_iff_lt_or_eq.mp hi with hi' | hEq
+            · have hgo' : firstUndivisibleLowerRight?.goRows A d k hk' = none := by
+                cases hgoRows : firstUndivisibleLowerRight?.goRows A d k hk' with
+                | none =>
+                    rfl
+                | some p =>
+                    have : some p = none := by
+                      simpa [firstUndivisibleLowerRight?.goRows, hgoRows] using hgo
+                    cases this
+              exact ih hk' hgo' i' hi' j'
+            · let i0 : Fin m := ⟨k, Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk⟩
+              have : i' = i0 := Fin.ext hEq
+              subst this
+              cases hgoRows : firstUndivisibleLowerRight?.goRows A d k hk' with
+              | some p =>
+                  have : False := by
+                    simp [firstUndivisibleLowerRight?.goRows, hgoRows] at hgo
+                  exact False.elim this
+              | none =>
+                  cases hrow : firstUndivisible? d (fun s : Fin n => A i0.succ s.succ) with
+                  | none =>
+                      exact firstUndivisible?_eq_none d (fun s : Fin n => A i0.succ s.succ) hrow j'
+                  | some p =>
+                      have : False := by
+                        have hrowNone :
+                            firstUndivisible? d (fun s : Fin n => A i0.succ s.succ) = none := by
+                          simpa [firstUndivisibleLowerRight?.goRows, hgoRows] using hgo
+                        have : some p = none := hrow.symm.trans hrowNone
+                        cases this
+                      exact False.elim this
+      intro i j
+      exact rowWitness m (Nat.le_refl m) hnone' i i.is_lt j
+
+
+theorem firstUndivisibleLowerRight?_some_not_dvd {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [DecidableEq R] :
+    ∀ (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) (d : R)
+      {p : Fin m × Fin n},
+      firstUndivisibleLowerRight? A d = some p ->
+        ¬ d ∣ A p.1.succ p.2.succ
+  | A, d, p, hsome => by
+      unfold firstUndivisibleLowerRight? at hsome
+      have hsome' : firstUndivisibleLowerRight?.goRows A d m (Nat.le_refl m) = some p := by
+        simpa [firstUndivisibleLowerRight?] using hsome
+      clear hsome
+      let rowWitness : ∀ k (hk : k ≤ m) {p : Fin m × Fin n},
+          firstUndivisibleLowerRight?.goRows A d k hk = some p ->
+            ¬ d ∣ A p.1.succ p.2.succ := by
+        intro k
+        induction k with
+        | zero =>
+            intro hk p h
+            simpa [firstUndivisibleLowerRight?.goRows] using h
+        | succ k ih =>
+            intro hk p h
+            let hk' : k ≤ m := Nat.le_of_lt (Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk)
+            cases hgo : firstUndivisibleLowerRight?.goRows A d k hk' with
+            | some q =>
+                simp [firstUndivisibleLowerRight?.goRows, hgo] at h
+                cases h
+                exact ih hk' hgo
+            | none =>
+                let i : Fin m := ⟨k, Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk⟩
+                cases hrow : firstUndivisible? d (fun j : Fin n => A i.succ j.succ) with
+                | none =>
+                    have hnone :
+                        firstUndivisibleLowerRight?.goRows A d (k + 1) hk = none := by
+                      simpa [firstUndivisibleLowerRight?.goRows, hgo, hrow]
+                    rw [hnone] at h
+                    cases h
+                | some j =>
+                    have h' := h
+                    simp [firstUndivisibleLowerRight?.goRows, hgo] at h'
+                    rcases h' with ⟨a, ha, hp⟩
+                    have ha' : a = j := by
+                      have hs : some a = some j := by
+                        simpa [i] using ha.symm.trans hrow
+                      exact Option.some.inj hs
+                    subst a
+                    have hp' : p = (i, j) := hp.symm
+                    cases hp'
+                    exact firstUndivisible?_some_not_dvd d (fun s : Fin n => A i.succ s.succ) hrow
+      exact rowWitness m (Nat.le_refl m) hsome'
 
 def invariantFactors {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] :
@@ -962,6 +1070,44 @@ def firstUndivisibleFirstRow? {m n : Nat} {R : Type _}
   firstUndivisible? (B 0 0) (fun j : Fin n => B 0 j.succ)
 
 
+theorem firstUndivisibleFirstCol?_eq_none {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [DecidableEq R]
+    (B : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
+    (hnone : firstUndivisibleFirstCol? B = none) :
+    ∀ i : Fin m, B 0 0 ∣ B i.succ 0 := by
+  simpa [firstUndivisibleFirstCol?] using
+    (firstUndivisible?_eq_none (d := B 0 0) (row := fun i : Fin m => B i.succ 0) hnone)
+
+
+theorem firstUndivisibleFirstCol?_some_not_dvd {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [DecidableEq R]
+    (B : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
+    {i : Fin m} (hsome : firstUndivisibleFirstCol? B = some i) :
+    ¬ B 0 0 ∣ B i.succ 0 := by
+  simpa [firstUndivisibleFirstCol?] using
+    (firstUndivisible?_some_not_dvd (d := B 0 0)
+      (row := fun j : Fin m => B j.succ 0) hsome)
+
+
+theorem firstUndivisibleFirstRow?_eq_none {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [DecidableEq R]
+    (B : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
+    (hnone : firstUndivisibleFirstRow? B = none) :
+    ∀ j : Fin n, B 0 0 ∣ B 0 j.succ := by
+  simpa [firstUndivisibleFirstRow?] using
+    (firstUndivisible?_eq_none (d := B 0 0) (row := fun j : Fin n => B 0 j.succ) hnone)
+
+
+theorem firstUndivisibleFirstRow?_some_not_dvd {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [DecidableEq R]
+    (B : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
+    {j : Fin n} (hsome : firstUndivisibleFirstRow? B = some j) :
+    ¬ B 0 0 ∣ B 0 j.succ := by
+  simpa [firstUndivisibleFirstRow?] using
+    (firstUndivisible?_some_not_dvd (d := B 0 0)
+      (row := fun k : Fin n => B 0 k.succ) hsome)
+
+
 def prepareLeadColumnStepData {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
@@ -1073,6 +1219,224 @@ theorem prepareLeadRowStepData_preserves_prefix_zero {m n : Nat} {R : Type _}
   simpa [prepareLeadRowStepData] using hclear c hc
 
 
+theorem prepareLeadColumn_topLeft_eq_normalize_gcd {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
+    (s : PivotState A) (i : Fin (m + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B i.succ 0) :
+    (prepareLeadColumnStepData s.t i).B 0 0 =
+      normalize (EuclideanDomain.gcd (s.t.B 0 0) (s.t.B i.succ 0)) := by
+  have hwit : s.t.B i.succ 0 ≠ 0 := by
+    intro hzero
+    exact hbad (hzero ▸ dvd_zero _)
+  exact prepareLeadColumnStepData_topLeft_eq_normalize_gcd s.t i hwit
+
+
+theorem prepareLeadColumn_pivot_ne_zero {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
+    (s : PivotState A) (i : Fin (m + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B i.succ 0) :
+    (prepareLeadColumnStepData s.t i).B 0 0 ≠ 0 := by
+  have hwit : s.t.B i.succ 0 ≠ 0 := by
+    intro hzero
+    exact hbad (hzero ▸ dvd_zero _)
+  exact prepareLeadColumnStepData_pivot_ne_zero s.t i s.pivot_ne_zero hwit
+
+
+theorem prepareLeadColumn_pivot_normalized {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
+    (s : PivotState A) (i : Fin (m + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B i.succ 0) :
+    (prepareLeadColumnStepData s.t i).B 0 0 =
+      normalize ((prepareLeadColumnStepData s.t i).B 0 0) := by
+  have hwit : s.t.B i.succ 0 ≠ 0 := by
+    intro hzero
+    exact hbad (hzero ▸ dvd_zero _)
+  exact prepareLeadColumnStepData_pivot_normalized s.t i hwit
+
+
+theorem prepareLeadColumn_strict_descent {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
+    (s : PivotState A) (i : Fin (m + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B i.succ 0) :
+    (prepareLeadColumnStepData s.t i).B 0 0 ∣ s.t.B i.succ 0 % s.t.B 0 0 ∧
+      s.t.B i.succ 0 % s.t.B 0 0 ≠ 0 ∧
+      EuclideanDomain.r (s.t.B i.succ 0 % s.t.B 0 0) (s.t.B 0 0) := by
+  have hmodNe : s.t.B i.succ 0 % s.t.B 0 0 ≠ 0 :=
+    mod_ne_zero_of_not_dvd s.pivot_ne_zero hbad
+  refine ⟨?_, hmodNe, EuclideanDomain.mod_lt _ s.pivot_ne_zero⟩
+  rw [prepareLeadColumn_topLeft_eq_normalize_gcd s i hbad]
+  exact (normalize_dvd_iff).2 (gcd_dvd_mod (a := s.t.B 0 0) (b := s.t.B i.succ 0))
+
+
+def prepareLeadColumn {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
+    (s : PivotState A) (i : Fin (m + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B i.succ 0) :
+    PivotState A :=
+  { t := prepareLeadColumnStepData s.t i
+    pivot_ne_zero := prepareLeadColumn_pivot_ne_zero s i hbad
+    pivot_normalized := prepareLeadColumn_pivot_normalized s i hbad }
+
+
+theorem prepareLeadColumn_lt_associates {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
+    (s : PivotState A) (i : Fin (m + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B i.succ 0) :
+    Associates.mk ((prepareLeadColumn s i hbad).t.B 0 0) <
+      Associates.mk (s.t.B 0 0) := by
+  have hdiv :
+      (prepareLeadColumn s i hbad).t.B 0 0 ∣ s.t.B 0 0 := by
+    change (prepareLeadColumnStepData s.t i).B 0 0 ∣ s.t.B 0 0
+    rw [prepareLeadColumn_topLeft_eq_normalize_gcd s i hbad]
+    exact (normalize_dvd_iff).2 (EuclideanDomain.gcd_dvd_left _ _)
+  have hnot :
+      ¬ s.t.B 0 0 ∣ (prepareLeadColumn s i hbad).t.B 0 0 := by
+    intro hback
+    have hEq :
+        (prepareLeadColumn s i hbad).t.B 0 0 = s.t.B 0 0 := by
+      exact dvd_antisymm_of_normalize_eq
+        (prepareLeadColumn_pivot_normalized s i hbad).symm s.pivot_normalized.symm hdiv hback
+    have hdivWitness : s.t.B 0 0 ∣ s.t.B i.succ 0 := by
+      have hdivWitness' : (prepareLeadColumn s i hbad).t.B 0 0 ∣ s.t.B i.succ 0 := by
+        change (prepareLeadColumnStepData s.t i).B 0 0 ∣ s.t.B i.succ 0
+        rw [prepareLeadColumn_topLeft_eq_normalize_gcd s i hbad]
+        exact (normalize_dvd_iff).2 (EuclideanDomain.gcd_dvd_right _ _)
+      rw [hEq] at hdivWitness'
+      exact hdivWitness'
+    exact hbad hdivWitness
+  exact Associates.dvdNotUnit_iff_lt.1 <|
+    Associates.mk_dvdNotUnit_mk_iff.2 (dvdNotUnit_of_dvd_of_not_dvd hdiv hnot)
+
+
+theorem prepareLeadColumn_factors_card_lt {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
+    (s : PivotState A) (i : Fin (m + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B i.succ 0) :
+    (UniqueFactorizationMonoid.normalizedFactors ((prepareLeadColumn s i hbad).t.B 0 0)).card <
+      (UniqueFactorizationMonoid.normalizedFactors (s.t.B 0 0)).card := by
+  apply Multiset.card_lt_card
+  exact (UniqueFactorizationMonoid.dvdNotUnit_iff_normalizedFactors_lt_normalizedFactors
+      (prepareLeadColumn s i hbad).pivot_ne_zero s.pivot_ne_zero).1 <|
+    Associates.mk_dvdNotUnit_mk_iff.mp <|
+      Associates.dvdNotUnit_of_lt (prepareLeadColumn_lt_associates s i hbad)
+
+
+theorem prepareLeadRow_topLeft_eq_normalize_gcd {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 2)) R}
+    (s : PivotState A) (j : Fin (n + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B 0 j.succ) :
+    (prepareLeadRowStepData s.t j).B 0 0 =
+      normalize (EuclideanDomain.gcd (s.t.B 0 0) (s.t.B 0 j.succ)) := by
+  have hwit : s.t.B 0 j.succ ≠ 0 := by
+    intro hzero
+    exact hbad (hzero ▸ dvd_zero _)
+  exact prepareLeadRowStepData_topLeft_eq_normalize_gcd s.t j hwit
+
+
+theorem prepareLeadRow_pivot_ne_zero {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 2)) R}
+    (s : PivotState A) (j : Fin (n + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B 0 j.succ) :
+    (prepareLeadRowStepData s.t j).B 0 0 ≠ 0 := by
+  have hwit : s.t.B 0 j.succ ≠ 0 := by
+    intro hzero
+    exact hbad (hzero ▸ dvd_zero _)
+  exact prepareLeadRowStepData_pivot_ne_zero s.t j s.pivot_ne_zero hwit
+
+
+theorem prepareLeadRow_pivot_normalized {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 2)) R}
+    (s : PivotState A) (j : Fin (n + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B 0 j.succ) :
+    (prepareLeadRowStepData s.t j).B 0 0 =
+      normalize ((prepareLeadRowStepData s.t j).B 0 0) := by
+  have hwit : s.t.B 0 j.succ ≠ 0 := by
+    intro hzero
+    exact hbad (hzero ▸ dvd_zero _)
+  exact prepareLeadRowStepData_pivot_normalized s.t j hwit
+
+
+theorem prepareLeadRow_strict_descent {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 2)) R}
+    (s : PivotState A) (j : Fin (n + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B 0 j.succ) :
+    (prepareLeadRowStepData s.t j).B 0 0 ∣ s.t.B 0 j.succ % s.t.B 0 0 ∧
+      s.t.B 0 j.succ % s.t.B 0 0 ≠ 0 ∧
+      EuclideanDomain.r (s.t.B 0 j.succ % s.t.B 0 0) (s.t.B 0 0) := by
+  have hmodNe : s.t.B 0 j.succ % s.t.B 0 0 ≠ 0 :=
+    mod_ne_zero_of_not_dvd s.pivot_ne_zero hbad
+  refine ⟨?_, hmodNe, EuclideanDomain.mod_lt _ s.pivot_ne_zero⟩
+  rw [prepareLeadRow_topLeft_eq_normalize_gcd s j hbad]
+  exact (normalize_dvd_iff).2 (gcd_dvd_mod (a := s.t.B 0 0) (b := s.t.B 0 j.succ))
+
+
+def prepareLeadRow {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 2)) R}
+    (s : PivotState A) (j : Fin (n + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B 0 j.succ) :
+    PivotState A :=
+  { t := prepareLeadRowStepData s.t j
+    pivot_ne_zero := prepareLeadRow_pivot_ne_zero s j hbad
+    pivot_normalized := prepareLeadRow_pivot_normalized s j hbad }
+
+
+theorem prepareLeadRow_lt_associates {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 2)) R}
+    (s : PivotState A) (j : Fin (n + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B 0 j.succ) :
+    Associates.mk ((prepareLeadRow s j hbad).t.B 0 0) <
+      Associates.mk (s.t.B 0 0) := by
+  have hdiv :
+      (prepareLeadRow s j hbad).t.B 0 0 ∣ s.t.B 0 0 := by
+    change (prepareLeadRowStepData s.t j).B 0 0 ∣ s.t.B 0 0
+    rw [prepareLeadRow_topLeft_eq_normalize_gcd s j hbad]
+    exact (normalize_dvd_iff).2 (EuclideanDomain.gcd_dvd_left _ _)
+  have hnot :
+      ¬ s.t.B 0 0 ∣ (prepareLeadRow s j hbad).t.B 0 0 := by
+    intro hback
+    have hEq :
+        (prepareLeadRow s j hbad).t.B 0 0 = s.t.B 0 0 := by
+      exact dvd_antisymm_of_normalize_eq
+        (prepareLeadRow_pivot_normalized s j hbad).symm s.pivot_normalized.symm hdiv hback
+    have hdivWitness : s.t.B 0 0 ∣ s.t.B 0 j.succ := by
+      have hdivWitness' : (prepareLeadRow s j hbad).t.B 0 0 ∣ s.t.B 0 j.succ := by
+        change (prepareLeadRowStepData s.t j).B 0 0 ∣ s.t.B 0 j.succ
+        rw [prepareLeadRow_topLeft_eq_normalize_gcd s j hbad]
+        exact (normalize_dvd_iff).2 (EuclideanDomain.gcd_dvd_right _ _)
+      rw [hEq] at hdivWitness'
+      exact hdivWitness'
+    exact hbad hdivWitness
+  exact Associates.dvdNotUnit_iff_lt.1 <|
+    Associates.mk_dvdNotUnit_mk_iff.2 (dvdNotUnit_of_dvd_of_not_dvd hdiv hnot)
+
+
+theorem prepareLeadRow_factors_card_lt {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 2)) R}
+    (s : PivotState A) (j : Fin (n + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B 0 j.succ) :
+    (UniqueFactorizationMonoid.normalizedFactors ((prepareLeadRow s j hbad).t.B 0 0)).card <
+      (UniqueFactorizationMonoid.normalizedFactors (s.t.B 0 0)).card := by
+  apply Multiset.card_lt_card
+  exact (UniqueFactorizationMonoid.dvdNotUnit_iff_normalizedFactors_lt_normalizedFactors
+      (prepareLeadRow s j hbad).pivot_ne_zero s.pivot_ne_zero).1 <|
+    Associates.mk_dvdNotUnit_mk_iff.mp <|
+      Associates.dvdNotUnit_of_lt (prepareLeadRow_lt_associates s j hbad)
+
+
 def injectLowerRightWitnessToFirstColData {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 2)) R}
@@ -1176,6 +1540,51 @@ def improvePivot {m n : Nat} {R : Type _}
   { t := improvePivotStepData s i j
     pivot_ne_zero := improvePivot_pivot_ne_zero s i j hbad
     pivot_normalized := improvePivot_pivot_normalized s i j hbad }
+
+
+theorem improvePivot_lt_associates {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 2)) R}
+    (s : LeadClearedState A) (i : Fin (m + 1)) (j : Fin (n + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B i.succ j.succ) :
+    Associates.mk ((improvePivot s i j hbad).t.B 0 0) <
+      Associates.mk (s.t.B 0 0) := by
+  have hdiv :
+      (improvePivot s i j hbad).t.B 0 0 ∣ s.t.B 0 0 := by
+    change (improvePivotStepData s i j).B 0 0 ∣ s.t.B 0 0
+    rw [improvePivot_topLeft_eq_normalize_gcd s i j hbad]
+    exact (normalize_dvd_iff).2 (EuclideanDomain.gcd_dvd_left _ _)
+  have hnot :
+      ¬ s.t.B 0 0 ∣ (improvePivot s i j hbad).t.B 0 0 := by
+    intro hback
+    have hEq :
+        (improvePivot s i j hbad).t.B 0 0 = s.t.B 0 0 := by
+      exact dvd_antisymm_of_normalize_eq
+        (improvePivot_pivot_normalized s i j hbad).symm s.pivot_normalized.symm hdiv hback
+    have hdivWitness : s.t.B 0 0 ∣ s.t.B i.succ j.succ := by
+      have hdivWitness' : (improvePivot s i j hbad).t.B 0 0 ∣ s.t.B i.succ j.succ := by
+        change (improvePivotStepData s i j).B 0 0 ∣ s.t.B i.succ j.succ
+        rw [improvePivot_topLeft_eq_normalize_gcd s i j hbad]
+        exact (normalize_dvd_iff).2 (EuclideanDomain.gcd_dvd_right _ _)
+      rw [hEq] at hdivWitness'
+      exact hdivWitness'
+    exact hbad hdivWitness
+  exact Associates.dvdNotUnit_iff_lt.1 <|
+    Associates.mk_dvdNotUnit_mk_iff.2 (dvdNotUnit_of_dvd_of_not_dvd hdiv hnot)
+
+
+theorem improvePivot_factors_card_lt {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 2)) R}
+    (s : LeadClearedState A) (i : Fin (m + 1)) (j : Fin (n + 1))
+    (hbad : ¬ s.t.B 0 0 ∣ s.t.B i.succ j.succ) :
+    (UniqueFactorizationMonoid.normalizedFactors ((improvePivot s i j hbad).t.B 0 0)).card <
+      (UniqueFactorizationMonoid.normalizedFactors (s.t.B 0 0)).card := by
+  apply Multiset.card_lt_card
+  exact (UniqueFactorizationMonoid.dvdNotUnit_iff_normalizedFactors_lt_normalizedFactors
+      (improvePivot s i j hbad).pivot_ne_zero s.pivot_ne_zero).1 <|
+    Associates.mk_dvdNotUnit_mk_iff.mp <|
+      Associates.dvdNotUnit_of_lt (improvePivot_lt_associates s i j hbad)
 
 
 private def clearFirstColumnCoeff {m n : Nat} {R : Type _}
@@ -2041,6 +2450,126 @@ def clearLeadByPivot {m n : Nat} {R : Type _}
     rw [clearFirstRowByPivotLoop_firstCol n le_rfl sCol.t sCol.pivot_ne_zero
       sCol.pivot_normalized hrowDiv' i.succ]
     exact hcol i
+
+
+theorem clearLeadByPivot_topLeft {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (s : PivotState A)
+    (hcolDiv : ∀ i : Fin m, s.t.B 0 0 ∣ s.t.B i.succ 0)
+    (hrowDiv : ∀ j : Fin n, s.t.B 0 0 ∣ s.t.B 0 j.succ) :
+    (clearLeadByPivot s hcolDiv hrowDiv).t.B 0 0 = s.t.B 0 0 := by
+  let sCol := clearFirstColumnByPivot s hcolDiv
+  have hcol : ∀ i : Fin m, sCol.t.B i.succ 0 = 0 := by
+    intro i
+    dsimp [sCol, clearFirstColumnByPivot]
+    exact clearFirstColumnByPivotLoop_prefix_zero m le_rfl s.t s.pivot_ne_zero
+      s.pivot_normalized hcolDiv i i.is_lt
+  have hrowDiv' : ∀ j : Fin n, sCol.t.B 0 0 ∣ sCol.t.B 0 j.succ := by
+    intro j
+    dsimp [sCol, clearFirstColumnByPivot]
+    rw [clearFirstColumnByPivotLoop_topLeft m le_rfl s.t s.pivot_ne_zero s.pivot_normalized hcolDiv,
+      clearFirstColumnByPivotLoop_topRow m le_rfl s.t s.pivot_ne_zero s.pivot_normalized hcolDiv
+        j.succ]
+    exact hrowDiv j
+  let sRow := clearFirstRowByPivot sCol hcol hrowDiv'
+  have hrowTop : sRow.t.B 0 0 = sCol.t.B 0 0 := by
+    dsimp [sRow, clearFirstRowByPivot]
+    exact clearFirstRowByPivotLoop_topLeft n le_rfl sCol.t sCol.pivot_ne_zero
+      sCol.pivot_normalized hrowDiv'
+  have hcolTop : sCol.t.B 0 0 = s.t.B 0 0 := by
+    dsimp [sCol, clearFirstColumnByPivot]
+    exact clearFirstColumnByPivotLoop_topLeft m le_rfl s.t s.pivot_ne_zero
+      s.pivot_normalized hcolDiv
+  exact hrowTop.trans hcolTop
+
+
+def stabilizePivot {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (state : PivotState A) :
+    PivotDivisibleState A := by
+  let μ : PivotState A -> Nat := fun s =>
+    (UniqueFactorizationMonoid.normalizedFactors (s.t.B 0 0)).card
+  let step :
+      (state : PivotState A) ->
+      ((next : PivotState A) -> μ next < μ state -> PivotDivisibleState A) ->
+      PivotDivisibleState A := by
+    intro state recurse
+    cases m with
+    | zero =>
+        cases n with
+        | zero =>
+            let sClear := clearLeadByPivot state (fun i => Fin.elim0 i) (fun j => Fin.elim0 j)
+            exact sClear.toPivotDivisibleState (fun i => Fin.elim0 i)
+        | succ n =>
+            cases hrow : firstUndivisibleFirstRow? state.t.B with
+            | some j =>
+                let next := prepareLeadRow state j
+                  (firstUndivisibleFirstRow?_some_not_dvd state.t.B hrow)
+                have hlt : μ next < μ state :=
+                  prepareLeadRow_factors_card_lt state j
+                    (firstUndivisibleFirstRow?_some_not_dvd state.t.B hrow)
+                exact recurse next hlt
+            | none =>
+                let hcolDiv : ∀ i : Fin 0, state.t.B 0 0 ∣ state.t.B i.succ 0 := fun i => Fin.elim0 i
+                let hrowDiv := firstUndivisibleFirstRow?_eq_none state.t.B hrow
+                let sClear := clearLeadByPivot state hcolDiv hrowDiv
+                exact sClear.toPivotDivisibleState (fun i => Fin.elim0 i)
+    | succ m =>
+        cases n with
+        | zero =>
+            cases hcol : firstUndivisibleFirstCol? state.t.B with
+            | some i =>
+                let next := prepareLeadColumn state i
+                  (firstUndivisibleFirstCol?_some_not_dvd state.t.B hcol)
+                have hlt : μ next < μ state :=
+                  prepareLeadColumn_factors_card_lt state i
+                    (firstUndivisibleFirstCol?_some_not_dvd state.t.B hcol)
+                exact recurse next hlt
+            | none =>
+                let hcolDiv := firstUndivisibleFirstCol?_eq_none state.t.B hcol
+                let hrowDiv : ∀ j : Fin 0, state.t.B 0 0 ∣ state.t.B 0 j.succ := fun j => Fin.elim0 j
+                let sClear := clearLeadByPivot state hcolDiv hrowDiv
+                exact sClear.toPivotDivisibleState (fun i j => Fin.elim0 j)
+        | succ n =>
+            cases hcol : firstUndivisibleFirstCol? state.t.B with
+            | some i =>
+                let next := prepareLeadColumn state i
+                  (firstUndivisibleFirstCol?_some_not_dvd state.t.B hcol)
+                have hlt : μ next < μ state :=
+                  prepareLeadColumn_factors_card_lt state i
+                    (firstUndivisibleFirstCol?_some_not_dvd state.t.B hcol)
+                exact recurse next hlt
+            | none =>
+                cases hrow : firstUndivisibleFirstRow? state.t.B with
+                | some j =>
+                    let next := prepareLeadRow state j
+                      (firstUndivisibleFirstRow?_some_not_dvd state.t.B hrow)
+                    have hlt : μ next < μ state :=
+                      prepareLeadRow_factors_card_lt state j
+                        (firstUndivisibleFirstRow?_some_not_dvd state.t.B hrow)
+                    exact recurse next hlt
+                | none =>
+                    let hcolDiv := firstUndivisibleFirstCol?_eq_none state.t.B hcol
+                    let hrowDiv := firstUndivisibleFirstRow?_eq_none state.t.B hrow
+                    let sClear := clearLeadByPivot state hcolDiv hrowDiv
+                    cases hlower : firstUndivisibleLowerRight? sClear.t.B (sClear.t.B 0 0) with
+                    | some p =>
+                        let next := improvePivot sClear p.1 p.2
+                          (firstUndivisibleLowerRight?_some_not_dvd
+                            sClear.t.B (sClear.t.B 0 0) hlower)
+                        have hlt : μ next < μ state := by
+                          dsimp [μ, next]
+                          rw [← clearLeadByPivot_topLeft state hcolDiv hrowDiv]
+                          exact improvePivot_factors_card_lt sClear p.1 p.2
+                            (firstUndivisibleLowerRight?_some_not_dvd
+                              sClear.t.B (sClear.t.B 0 0) hlower)
+                        exact recurse next hlt
+                    | none =>
+                        exact sClear.toPivotDivisibleState <|
+                          firstUndivisibleLowerRight?_eq_none sClear.t.B (sClear.t.B 0 0) hlower
+  exact (measure μ).wf.fix step state
 
 
 end Internal
