@@ -22,3 +22,4 @@ paper/.cache/
 paper/rendered/
 paper/scripts/__pycache__/
 paper/.mpl-cache/
+.elan/

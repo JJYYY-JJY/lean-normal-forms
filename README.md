@@ -96,3 +96,4 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 - The initial research application is finitely generated abelian groups over `Z`
 
 For the full roadmap, milestones, and submission strategy, see `PLAN.md`.
+

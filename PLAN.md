@@ -141,3 +141,4 @@
 - Do not copy unpublished proof text or code text from the existing group repository into this project
 - Frame the first paper around `Lean 4 + executable normal forms + mathlib bridge`, not generic formal linear algebra
 - Do not promise executable algorithms over arbitrary PIDs; executable scope stays with Euclidean domains and PID stays at the bridge and specification layer
+

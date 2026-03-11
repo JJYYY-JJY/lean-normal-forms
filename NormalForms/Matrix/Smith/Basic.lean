@@ -2913,3 +2913,7 @@ theorem smithNormalForm_isSmith {m n R : Type _}
   exact result.isSmith
 
 end NormalForms.Matrix.Smith
+
+
+
+

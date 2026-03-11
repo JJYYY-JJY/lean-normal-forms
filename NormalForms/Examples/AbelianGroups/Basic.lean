@@ -909,3 +909,4 @@ theorem presentationColumnSpanBridgeSmoke :
     NormalForms.Bridge.MathlibPID.pidSmithColumnSpan_eq_range_mulVecLin presentationMatrixZ
 
 end NormalForms.Examples.AbelianGroups
+
