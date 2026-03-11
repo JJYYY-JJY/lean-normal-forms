@@ -15,10 +15,13 @@ targeted at later integration with \mathlib{} \citep{deMouraUllrich2021Lean4,
 mathlib2020, ji2026normalforms}. The public API is phrased over arbitrary finite
 index types, while the internal executable kernel reindexes to \code{Fin} and
 recurses directly on matrix dimensions. The current code base also contains a
-frozen public API for \SNF{}, but neither the executable \SNF{} algorithm nor its
-proofs are present. Accordingly, this manuscript is intentionally narrow: it
-documents only the completed HNF layer, together with the design decisions that
-made correctness and uniqueness tractable.
+partially realized public \SNF{} layer: a real Smith specification, public
+invariant-factor and certificate-packaging interfaces, and internal recursive
+scaffolding are already present, and the same-size lead-reduction phase is now
+verified, but neither the executable \SNF{} algorithm nor its proofs are
+complete. Accordingly, this manuscript is intentionally narrow: it documents
+only the completed HNF layer, together with the design decisions that made
+correctness and uniqueness tractable.
 
 That scope matters for novelty. Formalized HNF and SNF are not new in theorem
 proving as such. Executable normal-form developments already exist in
@@ -52,4 +55,4 @@ recursive HNF specification. Section~\ref{sec:certificates} explains the certifi
 architecture. Section~\ref{sec:algorithm} presents the executable kernel and its lifted
 Bezout machinery. Section~\ref{sec:uniqueness} develops the uniqueness proof and the
 role of canonical remainder representatives. Section~\ref{sec:future} records the
-current \SNF{} and PID-bridge status as future work only.
+current \SNF{} executable and PID-bridge status as future work.

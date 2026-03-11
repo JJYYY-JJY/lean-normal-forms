@@ -7,8 +7,10 @@ proof-facing left certificates, a recursive kernel built from lifted Bezout and
 diagonal block gadgets, and a narrow \code{CanonicalMod} boundary that upgrades
 computational remainders into exact uniqueness statements. The resulting public
 API provides executable HNF, unimodular left certificates, correctness, and
-uniqueness. It does not yet provide executable \SNF{} or a PID bridge, and the
-paper has been written accordingly.
+uniqueness. The repository also now contains a genuine public \SNF{}
+specification and certificate-packaging layer together with a verified same-size
+lead-reduction foundation, but it does not yet provide an executable \SNF{}
+kernel or a PID bridge, and the paper has been written accordingly.
 
 From an engineering perspective, the main lesson is that canonical algebraic
 statements in \Lean{} benefit from separating three concerns that are often

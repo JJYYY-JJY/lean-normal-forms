@@ -23,5 +23,17 @@ Figure workflow:
 
 Scope notes:
 
-- The manuscript covers only the completed HNF layer.
-- `NormalForms.Matrix.Smith.Basic` and `NormalForms.Bridge.MathlibPID.Basic` are described only as future work and frozen API boundaries.
+- The manuscript still centers on the completed HNF layer.
+- `NormalForms.Matrix.Smith.Basic` is no longer just a frozen placeholder API:
+  it already contains a real public Smith specification, invariant-factor
+  reader, certificate/result packaging helpers, internal recursive
+  scaffolding, and a verified same-size lead-reduction foundation, even though
+  the executable kernel and uniqueness layer are still future work.
+- `NormalForms.Bridge.MathlibPID.Basic` remains future work rather than a
+  completed comparison-theorem layer.
+- If the manuscript scope expands before submission, the Smith discussion should
+  describe the current public packaging boundary and same-size lead-reduction
+  foundation separately from the still-missing nondivisible pivot-improvement
+  and outer recursive kernel layers, since the repository deliberately avoids
+  aggressive public `simp` lemmas through `Fintype.equivFin` for elaboration
+  stability.
