@@ -1,4 +1,5 @@
 import NormalForms.Matrix.Hermite
+import NormalForms.Matrix.Smith
 import NormalForms.Bridge.MathlibPID
 
 /-!
@@ -12,8 +13,9 @@ smoke coverage.
 For Smith normal form, the examples are intentionally split across two layers:
 
 - internal `Fin`-indexed smoke theorems check concrete diagonal specifications,
-  invariant factors, and the same-size `prepareLead...` / `improvePivot`
-  building blocks over `Int` and `Q[X]`
+  invariant factors, same-size `prepareLead...` / `stabilizePivot` /
+  `improvePivot` building blocks, and witness/result checks over `Int` and
+  `Q[X]`
 - public smoke theorems focus on certificate/result packaging through
   `SNFResult.ofCertificate`
 
@@ -219,6 +221,27 @@ def improvePivotLeadClearedStateZ :
     colCleared := by
       intro i
       fin_cases i <;> decide }
+
+def prepareLeadColumnPivotStateZ :
+    NormalForms.Matrix.Smith.Internal.PivotState prepareLeadColumnMatrixZ :=
+  { t := TwoSidedTransform.refl prepareLeadColumnMatrixZ
+    pivot_ne_zero := by decide
+    pivot_normalized := by
+      simpa [prepareLeadColumnMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg] }
+
+def prepareLeadRowPivotStateZ :
+    NormalForms.Matrix.Smith.Internal.PivotState prepareLeadRowMatrixZ :=
+  { t := TwoSidedTransform.refl prepareLeadRowMatrixZ
+    pivot_ne_zero := by decide
+    pivot_normalized := by
+      simpa [prepareLeadRowMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg] }
+
+def fullRankSNFPivotStateZ :
+    NormalForms.Matrix.Smith.Internal.PivotState fullRankSNFMatrixZ :=
+  { t := TwoSidedTransform.refl fullRankSNFMatrixZ
+    pivot_ne_zero := by decide
+    pivot_normalized := by
+      simpa [fullRankSNFMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg] }
 
 def fullRankSNFLeftZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
   !![-5, 2;
@@ -501,6 +524,52 @@ theorem improvePivotStepDataSmoke :
       NormalForms.Matrix.Smith.Internal.improvePivot_pivot_ne_zero
         improvePivotLeadClearedStateZ (0 : Fin 2) (1 : Fin 2) hbad
   · simpa [htop, improvePivotMatrixZ]
+
+theorem stabilizePivotColumnWitnessSmoke :
+    NormalForms.Matrix.Smith.Internal.firstUndivisibleFirstCol? prepareLeadColumnMatrixZ =
+      some (0 : Fin 1) := by
+  native_decide
+
+theorem stabilizePivotRowWitnessSmoke :
+    NormalForms.Matrix.Smith.Internal.firstUndivisibleFirstRow? prepareLeadRowMatrixZ =
+      some (0 : Fin 1) := by
+  native_decide
+
+theorem stabilizePivotImproveWitnessSmoke :
+    NormalForms.Matrix.Smith.Internal.firstUndivisibleLowerRight? improvePivotMatrixZ (6 : Int) =
+      some ((0 : Fin 2), (1 : Fin 2)) := by
+  native_decide
+
+theorem stabilizePivotAlreadyDivisibleWitnessSmoke :
+    NormalForms.Matrix.Smith.Internal.firstUndivisibleFirstCol? fullRankSNFMatrixZ = none ∧
+      NormalForms.Matrix.Smith.Internal.firstUndivisibleFirstRow? fullRankSNFMatrixZ = none ∧
+      NormalForms.Matrix.Smith.Internal.firstUndivisibleLowerRight? fullRankSNFMatrixZ (1 : Int) = none := by
+  native_decide
+
+theorem stabilizePivotColumnResultSmoke :
+    (NormalForms.Matrix.Smith.Internal.stabilizePivot prepareLeadColumnPivotStateZ).t.B
+      (0 : Fin 1).succ 0 = 0 := by
+  exact (NormalForms.Matrix.Smith.Internal.stabilizePivot prepareLeadColumnPivotStateZ).colCleared _
+
+theorem stabilizePivotRowResultSmoke :
+    (NormalForms.Matrix.Smith.Internal.stabilizePivot prepareLeadRowPivotStateZ).t.B
+      0 (0 : Fin 1).succ = 0 := by
+  exact (NormalForms.Matrix.Smith.Internal.stabilizePivot prepareLeadRowPivotStateZ).rowCleared _
+
+theorem stabilizePivotImproveResultSmoke :
+    (NormalForms.Matrix.Smith.Internal.stabilizePivot improvePivotLeadClearedStateZ.toPivotState).t.B
+      0 0 ∣
+      (NormalForms.Matrix.Smith.Internal.stabilizePivot improvePivotLeadClearedStateZ.toPivotState).t.B
+        (0 : Fin 2).succ (0 : Fin 2).succ := by
+  let result := NormalForms.Matrix.Smith.Internal.stabilizePivot improvePivotLeadClearedStateZ.toPivotState
+  exact result.lowerRightDivisible _ _
+
+theorem stabilizePivotAlreadyDivisibleResultSmoke :
+    (NormalForms.Matrix.Smith.Internal.stabilizePivot fullRankSNFPivotStateZ).t.B 0 0 ∣
+      (NormalForms.Matrix.Smith.Internal.stabilizePivot fullRankSNFPivotStateZ).t.B
+        (0 : Fin 1).succ (0 : Fin 1).succ := by
+  let result := NormalForms.Matrix.Smith.Internal.stabilizePivot fullRankSNFPivotStateZ
+  exact result.lowerRightDivisible _ _
 
 def fullRankSNFCertificateZ : TwoSidedCertificate fullRankMatrixZ :=
   { U := fullRankSNFLeftZ
