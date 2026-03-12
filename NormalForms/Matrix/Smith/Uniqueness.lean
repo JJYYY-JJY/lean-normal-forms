@@ -547,7 +547,8 @@ private theorem diagPrefixProduct_succ {m n : Nat} {R : Type _}
     diagPrefixProduct A (k + 1) hk =
       diagPrefixProduct A k (Nat.le_trans (Nat.le_succ k) hk) *
         diagEntry A k (lt_of_lt_of_le (Nat.lt_succ_self k) hk) := by
-  sorry
+  let f : Fin (k + 1) → R := fun i => diagEntry A i.1 (lt_of_lt_of_le i.is_lt hk)
+  simpa [diagPrefixProduct, f, Nat.le_trans (Nat.le_succ k) hk] using Fin.prod_univ_castSucc f
 
 private theorem diagPrefixProduct_dvd_of_tail {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R]
@@ -556,8 +557,19 @@ private theorem diagPrefixProduct_dvd_of_tail {m n : Nat} {R : Type _}
     (k : Nat) (hk : k + 1 ≤ Nat.min m n) :
     diagPrefixProduct A k (Nat.le_trans (Nat.le_succ k) hk) ∣
       diagPrefixProduct A (k + 1) hk := by
-  sorry
+  let _ := hChain
+  refine ⟨diagEntry A k (lt_of_lt_of_le (Nat.lt_succ_self k) hk), ?_⟩
+  rw [diagPrefixProduct_succ A k hk]
 
+private theorem diagPrefixProduct_head_mul_lowerRight {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R) (k : Nat)
+    (hk : k ≤ Nat.min m n) :
+    diagPrefixProduct A (k + 1) (succ_le_min_succ hk) =
+      A 0 0 * diagPrefixProduct (lowerRight A) k hk := by
+  let f : Fin (k + 1) → R := fun i =>
+    diagEntry A i.1 (lt_of_lt_of_le i.is_lt (succ_le_min_succ hk))
+  simpa [diagPrefixProduct, f, diagEntry, diagEntry_lowerRight] using Fin.prod_univ_succ f
 private theorem diagPrefixProduct_dvd_minor_step {m n k : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R]
     {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
@@ -569,7 +581,150 @@ private theorem diagPrefixProduct_dvd_minor_step {m n k : Nat} {R : Type _}
     ∀ r : Fin (k + 1) ↪ Fin (m + 1), ∀ c : Fin (k + 1) ↪ Fin (n + 1),
       diagPrefixProduct A (k + 1) (succ_le_min_succ hk) ∣
         _root_.Matrix.det (A.submatrix r c) := by
-  sorry
+  let _ := h00
+  intro r c
+  have hprefix :
+      diagPrefixProduct A (k + 1) (succ_le_min_succ hk) =
+        A 0 0 * diagPrefixProduct (lowerRight A) k hk :=
+    diagPrefixProduct_head_mul_lowerRight A k hk
+  by_cases hrow : ∃ i, r i = 0
+  · rcases hrow with ⟨i, hi⟩
+    by_cases hcol : ∃ j, c j = 0
+    · rcases hcol with ⟨j, hj⟩
+      rw [_root_.Matrix.det_succ_row (A := A.submatrix r c) i]
+      apply Finset.dvd_sum
+      intro t ht
+      by_cases htj : t = j
+      · subst t
+        let rTail : Fin k ↪ Fin (m + 1) := {
+          toFun := fun u => r (i.succAbove u)
+          inj' := by
+            intro u v huv
+            exact i.succAbove_right_injective (r.inj' huv)
+        }
+        let cTail : Fin k ↪ Fin (n + 1) := {
+          toFun := fun u => c (Fin.succAbove j u)
+          inj' := by
+            intro u v huv
+            have hjinj : Function.Injective (Fin.succAbove j) := Fin.succAbove_right_injective
+            exact hjinj (c.inj' huv)
+        }
+        have hrTail : ∀ u, rTail u ≠ 0 := by
+          intro u hu
+          have : i.succAbove u = i := r.inj' (by simpa [rTail, hi] using hu)
+          exact Fin.ne_succAbove i u this.symm
+        have hcTail : ∀ u, cTail u ≠ 0 := by
+          intro u hu
+          have : Fin.succAbove j u = j := c.inj' (by simpa [cTail, hj] using hu)
+          exact Fin.ne_succAbove j u this.symm
+        obtain ⟨r', c', hEqTail⟩ :=
+          submatrix_tail_reindex_via_predAbove A rTail cTail hrTail hcTail
+        have hminor :
+            diagPrefixProduct (lowerRight A) k hk ∣
+              _root_.Matrix.det ((A.submatrix r c).submatrix i.succAbove (Fin.succAbove j)) := by
+          change diagPrefixProduct (lowerRight A) k hk ∣ _root_.Matrix.det (A.submatrix rTail cTail)
+          rw [hEqTail]
+          exact hTail r' c'
+        have hmul :
+            diagPrefixProduct A (k + 1) (succ_le_min_succ hk) ∣
+              A 0 0 * _root_.Matrix.det ((A.submatrix r c).submatrix i.succAbove (Fin.succAbove j)) := by
+          rw [hprefix]
+          exact mul_dvd_mul (dvd_refl _) hminor
+        simpa [hi, hj, mul_assoc, mul_left_comm, mul_comm] using
+          dvd_mul_of_dvd_right hmul ((-1 : R) ^ (i + j : Nat))
+      · have hct : c t ≠ 0 := by
+          intro hzero
+          apply htj
+          exact c.inj' (by simpa [hj] using hzero)
+        have hzeroEntry : (A.submatrix r c) i t = 0 := by
+          exact hOff (r i) (c t) (by
+            intro hval
+            apply hct
+            ext
+            simpa [hi] using hval.symm)
+        rw [hzeroEntry]
+        simp
+    · have hcolAll : ∀ t, c t ≠ 0 := by
+        intro t ht
+        exact hcol ⟨t, ht⟩
+      have hdetZero : _root_.Matrix.det (A.submatrix r c) = 0 := by
+        apply _root_.Matrix.det_eq_zero_of_row_eq_zero i
+        intro t
+        exact hOff (r i) (c t) (by
+          intro hval
+          apply hcolAll t
+          ext
+          simpa [hi] using hval.symm)
+      rw [hdetZero]
+      exact dvd_zero _
+  · by_cases hcol : ∃ j, c j = 0
+    · rcases hcol with ⟨j, hj⟩
+      have hrowAll : ∀ t, r t ≠ 0 := by
+        intro t ht
+        exact hrow ⟨t, ht⟩
+      have hdetZero : _root_.Matrix.det (A.submatrix r c) = 0 := by
+        apply _root_.Matrix.det_eq_zero_of_column_eq_zero j
+        intro t
+        exact hOff (r t) (c j) (by
+          intro hval
+          apply hrowAll t
+          ext
+          simpa [hj] using hval)
+      rw [hdetZero]
+      exact dvd_zero _
+    · have hrowAll : ∀ t, r t ≠ 0 := by
+        intro t ht
+        exact hrow ⟨t, ht⟩
+      have hcolAll : ∀ t, c t ≠ 0 := by
+        intro t ht
+        exact hcol ⟨t, ht⟩
+      obtain ⟨r', c', hEq⟩ := submatrix_tail_reindex_via_predAbove A r c hrowAll hcolAll
+      rw [hEq, hprefix]
+      let B : _root_.Matrix (Fin (k + 1)) (Fin (k + 1)) R := (lowerRight A).submatrix r' c'
+      change A 0 0 * diagPrefixProduct (lowerRight A) k hk ∣ _root_.Matrix.det B
+      rw [_root_.Matrix.det_succ_row_zero (A := B)]
+      apply Finset.dvd_sum
+      intro j hj
+      have hentry : A 0 0 ∣ B 0 j := by
+        by_cases hEqIdx : (r' 0).1 = (c' j).1
+        · have hkHead : (r' 0).1 < Nat.min m n := by
+            exact lt_min_iff.mpr ⟨(r' 0).is_lt, by simpa [hEqIdx] using (c' j).is_lt⟩
+          have hdiag : A 0 0 ∣ diagEntry (lowerRight A) (r' 0).1 hkHead := by
+            rw [diagEntry_lowerRight (A := A) (r' 0).1 hkHead]
+            exact headDiag_dvd_diagEntry_of_diagChain hChain (r' 0).1 hkHead
+          have hcEq : c' j = ⟨(r' 0).1, by simpa [hEqIdx] using (c' j).is_lt⟩ := by
+            ext
+            simpa [hEqIdx]
+          simpa [B, diagEntry, hcEq] using hdiag
+        · have hzeroEntry : B 0 j = 0 := by
+            exact offDiagZero_lowerRight hOff (r' 0) (c' j) hEqIdx
+          rw [hzeroEntry]
+          exact dvd_zero _
+      let rTail : Fin k ↪ Fin m := {
+        toFun := fun u => r' u.succ
+        inj' := by
+          intro u v huv
+          simpa using r'.inj' huv
+      }
+      let cTail : Fin k ↪ Fin n := {
+        toFun := fun u => c' (Fin.succAbove j u)
+        inj' := by
+          intro u v huv
+          have hjinj : Function.Injective (Fin.succAbove j) := Fin.succAbove_right_injective
+          exact hjinj (c'.inj' huv)
+      }
+      have hcof :
+          diagPrefixProduct (lowerRight A) k hk ∣
+            _root_.Matrix.det (B.submatrix Fin.succ (Fin.succAbove j)) := by
+        dsimp [B]
+        rw [_root_.Matrix.submatrix_submatrix]
+        simpa [rTail, cTail, Function.comp] using hTail rTail cTail
+      have hmul :
+          A 0 0 * diagPrefixProduct (lowerRight A) k hk ∣
+            B 0 j * _root_.Matrix.det (B.submatrix Fin.succ (Fin.succAbove j)) := by
+        exact mul_dvd_mul hentry hcof
+      simpa [B, mul_assoc, mul_left_comm, mul_comm] using
+        dvd_mul_of_dvd_right hmul ((-1 : R) ^ (j : Nat))
 
 private theorem diagPrefixProduct_dvd_minor {m n k : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R]
@@ -578,7 +733,62 @@ private theorem diagPrefixProduct_dvd_minor {m n k : Nat} {R : Type _}
     (hk : k ≤ Nat.min m n) :
     ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n,
       diagPrefixProduct A k hk ∣ _root_.Matrix.det (A.submatrix r c) := by
-  sorry
+  induction k generalizing m n A with
+  | zero =>
+      intro r c
+      simpa [diagPrefixProduct_zero (A := A) hk] using
+        (one_dvd (_root_.Matrix.det (A.submatrix r c)))
+  | succ k ih =>
+      cases m with
+      | zero =>
+          have : False := by simpa using hk
+          exact this.elim
+      | succ m =>
+          cases n with
+          | zero =>
+              have : False := by simpa using hk
+              exact this.elim
+          | succ n =>
+              have hkTail : k ≤ Nat.min m n := by
+                refine le_min_iff.mpr ?_
+                constructor
+                · exact Nat.le_of_succ_le_succ (le_trans hk (Nat.min_le_left _ _))
+                · exact Nat.le_of_succ_le_succ (le_trans hk (Nat.min_le_right _ _))
+              by_cases hzero : A 0 0 = 0
+              · have hLowerZero : lowerRight A = 0 :=
+                  lowerRight_eq_zero_of_head_zero hOff hChain hzero
+                have hAzero : A = 0 := by
+                  ext i j
+                  refine Fin.cases ?_ ?_ i
+                  · refine Fin.cases ?_ ?_ j
+                    · simpa using hzero
+                    · intro j
+                      exact hOff 0 j.succ (by simp)
+                  · intro i
+                    refine Fin.cases ?_ ?_ j
+                    · exact hOff i.succ 0 (by simp)
+                    · intro j
+                      simpa [lowerRight] using congrFun (congrFun hLowerZero i) j
+                have hdiagZero :
+                    diagEntry A k (lt_of_lt_of_le (Nat.lt_succ_self k) hk) = 0 :=
+                  diagEntry_eq_zero_of_head_zero hChain hzero k
+                    (lt_of_lt_of_le (Nat.lt_succ_self k) hk)
+                have hprefixZero :
+                    diagPrefixProduct A (k + 1) hk = 0 := by
+                  rw [diagPrefixProduct_succ A k hk]
+                  simp [hdiagZero]
+                intro r c
+                have hdetZero : _root_.Matrix.det (A.submatrix r c) = 0 := by
+                  simpa [hAzero] using
+                    (_root_.Matrix.det_zero (R := R) (n := Fin (k + 1))
+                      (by infer_instance : Nonempty (Fin (k + 1))))
+                rw [hprefixZero, hdetZero]
+              · have hTail : ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n,
+                    diagPrefixProduct (lowerRight A) k hkTail ∣
+                      _root_.Matrix.det ((lowerRight A).submatrix r c) :=
+                  ih (A := lowerRight A) (offDiagZero_lowerRight hOff)
+                    (diagChain_lowerRight hChain) hkTail
+                exact diagPrefixProduct_dvd_minor_step (A := A) hOff hChain hzero hkTail hTail
 private theorem invariantFactors_length_le_min {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     (A : _root_.Matrix (Fin m) (Fin n) R) :
