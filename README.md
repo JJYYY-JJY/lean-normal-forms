@@ -28,9 +28,10 @@ bridge helper layer.
   `improvePivotStepData`, `improvePivot`, and
   `improvePivot_strict_descent`)
 - `NormalForms.Matrix.Smith.Uniqueness` already proves uniqueness from equal
-  invariant factors and now contains minor-divisibility and diagonal-entry
-  groundwork for the remaining public Smith uniqueness theorem under two-sided
-  unimodular equivalence
+  invariant factors, proves preservation of the first invariant factor under
+  explicit two-sided unimodular equivalence, and now contains a decomposed
+  `diagPrefixProduct` / minor-divisibility skeleton for the remaining general-
+  `k` public Smith uniqueness theorem
 - Elementary row/column operations, mixed-log certificate helpers, and a reusable 2x2 Bezout reduction gadget
 - Smoke examples over `Int` and `Q[X]`, including public HNF certificate
   checks, internal Smith diagonal-spec, invariant-factor, and same-size-step
@@ -45,8 +46,11 @@ reader are real, the executable recursive kernel and public
 `smithNormalForm` existence/isSmith/unimodularity theorems are in place, and the
 same-size lead-clearing, lead-preparation, stabilization, and single-step
 nondivisible pivot-improvement layers are verified over both `Int` and `Q[X]`.
-The remaining Smith work is narrower: finish the public uniqueness theorem under
-two-sided unimodular equivalence, then complete the full PID bridge.
+The remaining Smith work is narrower: fill the decomposed general-`k` minor
+divisibility chain in `NormalForms.Matrix.Smith.Uniqueness`, lift first-
+invariant-factor preservation to full invariant-factor preservation under
+two-sided unimodular equivalence, then complete the public uniqueness theorem
+and finally the full PID bridge.
 
 One deliberate implementation boundary is worth calling out: the public Smith
 wrappers over arbitrary `Fintype` indices are defined by reindexing through
@@ -96,5 +100,4 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 - The initial research application is finitely generated abelian groups over `Z`
 
 For the full roadmap, milestones, and submission strategy, see `PLAN.md`.
-
 
