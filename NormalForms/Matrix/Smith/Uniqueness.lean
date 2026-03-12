@@ -121,6 +121,284 @@ private theorem headDiag_dvd_diagEntry_of_diagChain {m n : Nat} {R : Type _}
         simpa using hChain (k + 1) (succ_lt_min_succ hk)
       exact dvd_trans hprev hnext
 
+private theorem det_submatrix_mul_aux {k m n p : Nat} {R : Type _}
+    [CommRing R]
+    {M : _root_.Matrix (Fin m) (Fin n) R}
+    {N : _root_.Matrix (Fin n) (Fin p) R}
+    {r : Fin k ↪ Fin m} {c : Fin k ↪ Fin p}
+    {f : Fin k → Fin n}
+    (hf : ¬ Function.Injective f) :
+    (∑ σ : Equiv.Perm (Fin k),
+      (↑(Equiv.Perm.sign σ : ℤˣ) : R) * ∏ i, M (r (σ i)) (f i) * N (f i) (c i)) = 0 := by
+  obtain ⟨i, j, hij, hne⟩ : ∃ i j, f i = f j ∧ i ≠ j := by
+    rw [Function.Injective] at hf
+    push_neg at hf
+    exact hf
+  have hFactor :
+      (∑ σ : Equiv.Perm (Fin k),
+        (↑(Equiv.Perm.sign σ : ℤˣ) : R) * ∏ i, M (r (σ i)) (f i) * N (f i) (c i)) =
+        (∏ i, N (f i) (c i)) * ∑ σ : Equiv.Perm (Fin k),
+          (↑(Equiv.Perm.sign σ : ℤˣ) : R) * ∏ i, M (r (σ i)) (f i) := by
+    simp_rw [Finset.prod_mul_distrib]
+    rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro σ hσ
+    ring
+  have hdet : _root_.Matrix.det (M.submatrix r f) = 0 := by
+    apply _root_.Matrix.det_zero_of_column_eq hne
+    intro l
+    simp [hij]
+  calc
+    (∑ σ : Equiv.Perm (Fin k),
+      (↑(Equiv.Perm.sign σ : ℤˣ) : R) * ∏ i, M (r (σ i)) (f i) * N (f i) (c i)) =
+        (∏ i, N (f i) (c i)) * _root_.Matrix.det (M.submatrix r f) := by
+            rw [hFactor, _root_.Matrix.det_apply']
+            apply congrArg ((∏ i, N (f i) (c i)) * ·)
+            simp
+    _ = 0 := by simp [hdet]
+
+private theorem det_submatrix_mul_sum_embeddings {k m n p : Nat} {R : Type _}
+    [CommRing R]
+    (M : _root_.Matrix (Fin m) (Fin n) R)
+    (N : _root_.Matrix (Fin n) (Fin p) R)
+    (r : Fin k ↪ Fin m)
+    (c : Fin k ↪ Fin p) :
+    _root_.Matrix.det ((M * N).submatrix r c) =
+      ∑ e : Fin k ↪ Fin n, _root_.Matrix.det (M.submatrix r e) * ∏ i, N (e i) (c i) := by
+  classical
+  calc
+    _root_.Matrix.det ((M * N).submatrix r c) =
+        ∑ σ : Equiv.Perm (Fin k),
+          (↑(Equiv.Perm.sign σ : ℤˣ) : R) *
+            ∏ i, ∑ j : Fin n, M (r (σ i)) j * N j (c i) := by
+          rw [_root_.Matrix.det_apply']
+          simp [_root_.Matrix.mul_apply]
+    _ = ∑ σ : Equiv.Perm (Fin k),
+          ∑ f : Fin k → Fin n,
+            (↑(Equiv.Perm.sign σ : ℤˣ) : R) *
+              ∏ i, M (r (σ i)) (f i) * N (f i) (c i) := by
+          apply Finset.sum_congr rfl
+          intro σ hσ
+          rw [Finset.prod_univ_sum, Finset.mul_sum]
+          simp [Fintype.piFinset_univ]
+    _ = ∑ f : Fin k → Fin n,
+          ∑ σ : Equiv.Perm (Fin k),
+            (↑(Equiv.Perm.sign σ : ℤˣ) : R) *
+              ∏ i, M (r (σ i)) (f i) * N (f i) (c i) := by
+          rw [Finset.sum_comm]
+    _ = ∑ f : Fin k → Fin n with Function.Injective f,
+          ∑ σ : Equiv.Perm (Fin k),
+            (↑(Equiv.Perm.sign σ : ℤˣ) : R) *
+              ∏ i, M (r (σ i)) (f i) * N (f i) (c i) := by
+          refine (Finset.sum_subset (Finset.filter_subset _ _) ?_).symm
+          intro f hf hnotinj
+          have hf' : ¬ Function.Injective f := by
+            simpa only [Finset.mem_filter, Finset.mem_univ, true_and] using hnotinj
+          exact det_submatrix_mul_aux (hf := hf')
+    _ = ∑ e : Fin k ↪ Fin n,
+          ∑ σ : Equiv.Perm (Fin k),
+            (↑(Equiv.Perm.sign σ : ℤˣ) : R) *
+              ∏ i, M (r (σ i)) (e i) * N (e i) (c i) := by
+          refine Finset.sum_bij (fun f hf => ⟨f, (Finset.mem_filter.mp hf).2⟩)
+            (fun _ _ => Finset.mem_univ _) ?_ ?_ ?_
+          · intro f hf g hg hfg
+            simpa using congrArg Function.Embedding.toFun hfg
+          · intro e he
+            refine ⟨e, Finset.mem_filter.mpr ⟨Finset.mem_univ _, e.injective⟩, ?_⟩
+            rfl
+          · intro f hf
+            rfl
+    _ = ∑ e : Fin k ↪ Fin n, _root_.Matrix.det (M.submatrix r e) * ∏ i, N (e i) (c i) := by
+          apply Finset.sum_congr rfl
+          intro e he
+          have hFactor :
+              (∑ σ : Equiv.Perm (Fin k),
+                (↑(Equiv.Perm.sign σ : ℤˣ) : R) *
+                  ∏ i, M (r (σ i)) (e i) * N (e i) (c i)) =
+                (∏ i, N (e i) (c i)) * ∑ σ : Equiv.Perm (Fin k),
+                  (↑(Equiv.Perm.sign σ : ℤˣ) : R) * ∏ i, M (r (σ i)) (e i) := by
+            simp_rw [Finset.prod_mul_distrib]
+            rw [Finset.mul_sum]
+            apply Finset.sum_congr rfl
+            intro σ hσ
+            ring
+          rw [hFactor, _root_.Matrix.det_apply']
+          simp
+          ring
+
+private theorem minor_dvd_of_right_mul {k m n p : Nat} {R : Type _}
+    [CommRing R]
+    {d : R}
+    {M : _root_.Matrix (Fin m) (Fin n) R}
+    {N : _root_.Matrix (Fin n) (Fin p) R}
+    (hM : ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n, d ∣ _root_.Matrix.det (M.submatrix r c)) :
+    ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin p, d ∣ _root_.Matrix.det ((M * N).submatrix r c) := by
+  intro r c
+  rw [det_submatrix_mul_sum_embeddings M N r c]
+  refine Finset.dvd_sum ?_
+  intro e he
+  rcases hM r e with ⟨x, hx⟩
+  refine ⟨x * ∏ i, N (e i) (c i), ?_⟩
+  rw [hx]
+  ring
+
+private theorem minor_dvd_of_left_mul {k m n : Nat} {R : Type _}
+    [CommRing R]
+    {d : R}
+    {U : _root_.Matrix (Fin m) (Fin m) R}
+    {M : _root_.Matrix (Fin m) (Fin n) R}
+    (hM : ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n, d ∣ _root_.Matrix.det (M.submatrix r c)) :
+    ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n, d ∣ _root_.Matrix.det ((U * M).submatrix r c) := by
+  intro r c
+  have hTranspose :
+      ∀ r' : Fin k ↪ Fin n, ∀ c' : Fin k ↪ Fin m,
+        d ∣ _root_.Matrix.det (M.transpose.submatrix r' c') := by
+    intro r' c'
+    have hEq : _root_.Matrix.det (M.transpose.submatrix r' c') = _root_.Matrix.det (M.submatrix c' r') := by
+      simpa [_root_.Matrix.transpose_submatrix] using
+        (_root_.Matrix.det_transpose (M := M.submatrix c' r'))
+    rw [hEq]
+    exact hM c' r'
+  have hRight : d ∣ _root_.Matrix.det ((M.transpose * U.transpose).submatrix c r) :=
+    minor_dvd_of_right_mul (M := M.transpose) (N := U.transpose) (d := d) hTranspose c r
+  have hEq : _root_.Matrix.det ((M.transpose * U.transpose).submatrix c r) = _root_.Matrix.det ((U * M).submatrix r c) := by
+    calc
+      _root_.Matrix.det ((M.transpose * U.transpose).submatrix c r)
+          = _root_.Matrix.det (((U * M).submatrix r c).transpose) := by
+              simp [_root_.Matrix.transpose_mul, _root_.Matrix.transpose_submatrix]
+      _ = _root_.Matrix.det ((U * M).submatrix r c) := by rw [_root_.Matrix.det_transpose]
+  rw [hEq] at hRight
+  exact hRight
+
+private theorem invariantFactors_length_le_min {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) :
+    (invariantFactors A).length ≤ Nat.min m n := by
+  induction m generalizing n with
+  | zero =>
+      simp [invariantFactors]
+  | succ m ih =>
+      cases n with
+      | zero =>
+          simp [invariantFactors]
+      | succ n =>
+          by_cases h0 : normalize (A 0 0) = 0
+          · simp [invariantFactors, h0]
+          · rw [invariantFactors]
+            simp [h0]
+            have hlen : (invariantFactors (lowerRight A)).length ≤ Nat.min m n :=
+              ih (lowerRight A)
+            exact ⟨le_trans hlen (Nat.min_le_left _ _), le_trans hlen (Nat.min_le_right _ _)⟩
+
+private theorem lt_min_of_succ_lt_min_succ {a b k : Nat}
+    (hk : k + 1 < Nat.min (a + 1) (b + 1)) :
+    k < Nat.min a b := by
+  exact lt_min_iff.mpr
+    ⟨Nat.lt_of_succ_lt_succ (Nat.lt_of_lt_of_le hk (Nat.min_le_left _ _)),
+      Nat.lt_of_succ_lt_succ (Nat.lt_of_lt_of_le hk (Nat.min_le_right _ _))⟩
+
+private theorem diagEntry_ne_zero_of_lt_invariantFactors_length {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin m) (Fin n) R}
+    (hA : IsSmithNormalFormFin A) :
+    ∀ k, k < (invariantFactors A).length ->
+      ∀ hk : k < Nat.min m n, diagEntry A k hk ≠ 0 := by
+  intro k
+  induction hA generalizing k with
+  | emptyRows A =>
+      intro hkLen
+      simp at hkLen
+  | emptyCols A =>
+      intro hkLen
+      simp at hkLen
+  | zeroLead A hzero hrow hcol hLowerZero =>
+      intro hkLen
+      simp [invariantFactors, hzero] at hkLen
+  | pivot A hpivot hnorm hrow hcol hLower hdiv ih =>
+      intro hkLen hk
+      rw [invariantFactors_pivot hpivot hnorm] at hkLen
+      cases k with
+      | zero =>
+          simpa [diagEntry] using hpivot
+      | succ k =>
+          have hkLen' : k < (invariantFactors (lowerRight A)).length := by
+            simpa using hkLen
+          have hk' : k < Nat.min _ _ := lt_min_of_succ_lt_min_succ hk
+          have hne := ih k hkLen' hk'
+          simpa [diagEntry_lowerRight (A := A) k hk'] using hne
+
+private theorem diagEntry_eq_zero_of_invariantFactors_length_le {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix (Fin m) (Fin n) R}
+    (hA : IsSmithNormalFormFin A) :
+    ∀ k, (invariantFactors A).length ≤ k ->
+      ∀ hk : k < Nat.min m n, diagEntry A k hk = 0 := by
+  intro k
+  induction hA generalizing k with
+  | emptyRows A =>
+      intro hkLen hk
+      simpa using hk
+  | emptyCols A =>
+      intro hkLen hk
+      simpa using hk
+  | zeroLead A hzero hrow hcol hLowerZero =>
+      intro hkLen hk
+      cases k with
+      | zero =>
+          simpa [diagEntry] using hzero
+      | succ k =>
+          have hk' : k < Nat.min _ _ := lt_min_of_succ_lt_min_succ hk
+          rw [← diagEntry_lowerRight (A := A) k hk']
+          simp [hLowerZero, diagEntry]
+  | pivot A hpivot hnorm hrow hcol hLower hdiv ih =>
+      intro hkLen hk
+      rw [invariantFactors_pivot hpivot hnorm] at hkLen
+      cases k with
+      | zero =>
+          cases hkLen
+      | succ k =>
+          have hkLen' : (invariantFactors (lowerRight A)).length ≤ k := by
+            simpa using hkLen
+          have hk' : k < Nat.min _ _ := lt_min_of_succ_lt_min_succ hk
+          rw [← diagEntry_lowerRight (A := A) k hk']
+          exact ih k hkLen' hk'
+private theorem diagEntry_dvd_of_diagChain {m n : Nat} {R : Type _}
+    [EuclideanDomain R]
+    {A : _root_.Matrix (Fin m) (Fin n) R}
+    (hChain : diagChain A) :
+    ∀ i j, i ≤ j -> ∀ hi : i < Nat.min m n, ∀ hj : j < Nat.min m n,
+      diagEntry A i hi ∣ diagEntry A j hj := by
+  intro i j hij hi hj
+  revert i j hij hi hj
+  induction m generalizing n with
+  | zero =>
+      intro i j hij hi hj
+      simpa using hi
+  | succ m ih =>
+      cases n with
+      | zero =>
+          intro i j hij hi hj
+          simpa using hi
+      | succ n =>
+          intro i j hij hi hj
+          cases i with
+          | zero =>
+              cases j with
+              | zero =>
+                  simpa [diagEntry] using dvd_rfl (A 0 0)
+              | succ j =>
+                  have hj' : j < Nat.min m n := lt_min_of_succ_lt_min_succ hj
+                  simpa [diagEntry] using headDiag_dvd_diagEntry_of_diagChain hChain j hj'
+          | succ i =>
+              cases j with
+              | zero =>
+                  cases Nat.not_succ_le_zero _ hij
+              | succ j =>
+                  have hi' : i < Nat.min m n := lt_min_of_succ_lt_min_succ hi
+                  have hj' : j < Nat.min m n := lt_min_of_succ_lt_min_succ hj
+                  rw [← diagEntry_lowerRight (A := A) i hi', ← diagEntry_lowerRight (A := A) j hj']
+                  exact ih (A := lowerRight A) (diagChain_lowerRight hChain) i j
+                    (Nat.succ_le_succ_iff.mp hij) hi' hj'
 /-- Convert the diagonal Smith specification into the recursive internal Smith predicate. -/
 theorem isSmithNormalFormDiag_toFin {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
@@ -286,6 +564,15 @@ theorem SNFResult.eq_of_invariantFactors_eq {m n R : Type _}
   isSmithNormalForm_eq_of_invariantFactors_eq result₁.isSmith result₂.isSmith hInv
 
 end NormalForms.Matrix.Smith
+
+
+
+
+
+
+
+
+
 
 
 
