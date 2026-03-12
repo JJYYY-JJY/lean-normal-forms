@@ -3,8 +3,8 @@ import NormalForms.Matrix.Smith
 /-!
 # PID Bridge Shapes
 
-Bridge-side frozen object shapes for comparing executable Smith data with
-mathlib's PID-side `Submodule.smithNormalForm` API in a later phase.
+Bridge-side helpers for comparing executable Smith data with PID-style
+`Basis.SmithNormalForm` readouts.
 -/
 
 namespace NormalForms.Bridge.MathlibPID
@@ -80,5 +80,3 @@ noncomputable def pidFullRankSmithNormalFormCoeffs {m n R : Type _}
   Submodule.smithNormalFormCoeffs b hfull'
 
 end NormalForms.Bridge.MathlibPID
-
-
