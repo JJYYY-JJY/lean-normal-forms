@@ -1,4 +1,5 @@
 import Mathlib.Algebra.GCDMonoid.Finset
+import Mathlib.Data.Fin.SuccPred
 import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 import NormalForms.Matrix.Smith.Basic
 
@@ -408,16 +409,24 @@ private def liftEmbeddingSucc {k m : Nat}
 
 private def tailEmbeddingOfHeadZero {k m : Nat}
     (r : Fin (k + 1) ↪ Fin (m + 1)) (hr0 : r 0 = 0) :
-    Fin k ↪ Fin m := by
-  sorry
-
+    Fin k ↪ Fin m where
+  toFun := fun i => (r i.succ).pred (by
+    intro h
+    have : i.succ = 0 := r.inj' (by simpa [hr0] using h)
+    exact i.succ_ne_zero this)
+  inj' := by
+    intro i j hij
+    have hEq : r i.succ = r j.succ := by
+      simpa using congrArg Fin.succ hij
+    simpa using r.inj' hEq
 private theorem submatrix_lowerRight_eq_submatrix_tail {k m n : Nat} {R : Type _}
     (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
     (r : Fin (k + 1) ↪ Fin (m + 1)) (c : Fin (k + 1) ↪ Fin (n + 1))
     (hr0 : r 0 = 0) (hc0 : c 0 = 0) :
     lowerRight (A.submatrix r c) =
       (lowerRight A).submatrix (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0) := by
-  sorry
+  ext i j
+  simp [lowerRight, tailEmbeddingOfHeadZero]
 
 private theorem submatrix_tail_reindex_via_predAbove {k m n : Nat} {R : Type _}
     (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
@@ -425,7 +434,25 @@ private theorem submatrix_tail_reindex_via_predAbove {k m n : Nat} {R : Type _}
     (hr : ∀ i, r i ≠ 0) (hc : ∀ j, c j ≠ 0) :
     ∃ r' : Fin k ↪ Fin m, ∃ c' : Fin k ↪ Fin n,
       A.submatrix r c = (lowerRight A).submatrix r' c' := by
-  sorry
+  let r' : Fin k ↪ Fin m := {
+    toFun := fun i => (r i).pred (hr i)
+    inj' := by
+      intro i j hij
+      have hEq : r i = r j := by
+        simpa using congrArg Fin.succ hij
+      exact r.inj' hEq
+  }
+  let c' : Fin k ↪ Fin n := {
+    toFun := fun j => (c j).pred (hc j)
+    inj' := by
+      intro i j hij
+      have hEq : r i = r j := by
+        simpa using congrArg Fin.succ hij
+      exact r.inj' hEq
+  }
+  refine ⟨r', c', ?_⟩
+  ext i j
+  simp [r', c', lowerRight]
 
 private theorem det_minor_head_factor_of_offDiagZero {k m n : Nat} {R : Type _}
     [CommRing R]
@@ -436,25 +463,63 @@ private theorem det_minor_head_factor_of_offDiagZero {k m n : Nat} {R : Type _}
     _root_.Matrix.det (A.submatrix r c) =
       A 0 0 * _root_.Matrix.det
         ((lowerRight A).submatrix (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0)) := by
-  sorry
-
+  let M := A.submatrix r c
+  let f : Fin (k + 1) → R := fun j =>
+    (-1) ^ (j : ℕ) * M 0 j * _root_.Matrix.det (M.submatrix Fin.succ (Fin.succAbove j))
+  have hsum : ∑ j : Fin (k + 1), f j = f 0 := by
+    refine Finset.sum_eq_single 0 ?_ ?_
+    · intro j _ hj
+      have hcj : c j ≠ 0 := by
+        intro h
+        exact hj (c.inj' (by simpa [hc0] using h))
+      have hzeroEntry : M 0 j = 0 := by
+        exact hOff (r 0) (c j) (by
+          intro hval
+          apply hcj
+          ext
+          simpa [hr0] using hval.symm)
+      simp [f, hzeroEntry]
+    · intro h0
+      simp at h0
+  calc
+    _root_.Matrix.det M = ∑ j : Fin (k + 1), f j := by
+      rw [_root_.Matrix.det_succ_row_zero]
+    _ = f 0 := hsum
+    _ = A 0 0 * _root_.Matrix.det ((A.submatrix r c).submatrix Fin.succ Fin.succ) := by
+      simp [f, M, hr0, hc0]
+    _ = A 0 0 * _root_.Matrix.det (lowerRight (A.submatrix r c)) := by
+      rfl
+    _ = A 0 0 * _root_.Matrix.det
+          ((lowerRight A).submatrix (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0)) := by
+      rw [submatrix_lowerRight_eq_submatrix_tail A r c hr0 hc0]
 private theorem det_minor_zero_of_missing_head_row {k m n : Nat} {R : Type _}
     [CommRing R]
     {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
     (hOff : offDiagZero A)
     (r : Fin (k + 1) ↪ Fin (m + 1)) (c : Fin (k + 1) ↪ Fin (n + 1))
-    (hr0 : r 0 = 0) (hc0 : c 0 ≠ 0) :
+    (hr0 : r 0 = 0) (hc : ∀ j, c j ≠ 0) :
     _root_.Matrix.det (A.submatrix r c) = 0 := by
-  sorry
-
+  apply _root_.Matrix.det_eq_zero_of_row_eq_zero 0
+  intro j
+  exact hOff (r 0) (c j) (by
+    intro hval
+    apply hc j
+    ext
+    simpa [hr0] using hval.symm)
 private theorem det_minor_zero_of_missing_head_col {k m n : Nat} {R : Type _}
     [CommRing R]
     {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
     (hOff : offDiagZero A)
     (r : Fin (k + 1) ↪ Fin (m + 1)) (c : Fin (k + 1) ↪ Fin (n + 1))
-    (hr0 : r 0 ≠ 0) (hc0 : c 0 = 0) :
+    (hr : ∀ i, r i ≠ 0) (hc0 : c 0 = 0) :
     _root_.Matrix.det (A.submatrix r c) = 0 := by
-  sorry
+  apply _root_.Matrix.det_eq_zero_of_column_eq_zero 0
+  intro i
+  exact hOff (r i) (c 0) (by
+    intro hval
+    apply hr i
+    ext
+    simpa [hc0] using hval)
 
 private theorem det_minor_eq_head_mul_lowerRight_minor {k m n : Nat} {R : Type _}
     [CommRing R]
@@ -465,14 +530,15 @@ private theorem det_minor_eq_head_mul_lowerRight_minor {k m n : Nat} {R : Type _
     _root_.Matrix.det (A.submatrix r c) =
       A 0 0 * _root_.Matrix.det
         ((lowerRight A).submatrix (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0)) := by
-  sorry
+  let _ := h00
+  simpa using det_minor_head_factor_of_offDiagZero (A := A) hOff r c hr0 hc0
 
 private theorem diagPrefixProduct_zero {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R]
     (A : _root_.Matrix (Fin m) (Fin n) R)
     (hk : 0 ≤ Nat.min m n) :
     diagPrefixProduct A 0 hk = 1 := by
-  sorry
+  simp [diagPrefixProduct]
 
 private theorem diagPrefixProduct_succ {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R]
@@ -807,6 +873,23 @@ theorem SNFResult.eq_of_invariantFactors_eq {m n R : Type _}
   isSmithNormalForm_eq_of_invariantFactors_eq result₁.isSmith result₂.isSmith hInv
 
 end NormalForms.Matrix.Smith
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
