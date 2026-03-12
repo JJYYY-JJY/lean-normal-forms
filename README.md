@@ -7,9 +7,9 @@ to mathlib's PID results.
 ## Status
 
 This repository currently contains a buildable `NormalForms` Lean library with a
-completed recursive row-style Hermite layer, an executable Smith layer with
-public correctness and unimodularity extraction theorems, and a minimal PID
-bridge helper layer.
+completed recursive row-style Hermite layer, a completed executable Smith layer
+with public correctness, uniqueness, and unimodularity extraction theorems, and
+a minimal PID bridge helper layer.
 
 - Public API for `IsHermiteNormalForm`, `IsSmithNormalForm`, `HNFResult`,
   `SNFResult`, `smithInvariantFactors`, `smithColumnSpan`,
@@ -27,11 +27,12 @@ bridge helper layer.
   `prepareLeadColumn`, `prepareLeadRow`, `stabilizePivot`,
   `improvePivotStepData`, `improvePivot`, and
   `improvePivot_strict_descent`)
-- `NormalForms.Matrix.Smith.Uniqueness` already proves uniqueness from equal
-  invariant factors, proves preservation of the first invariant factor under
-  explicit two-sided unimodular equivalence, and now contains a decomposed
-  `diagPrefixProduct` / minor-divisibility skeleton for the remaining general-
-  `k` public Smith uniqueness theorem
+- `NormalForms.Matrix.Smith.Uniqueness` now proves uniqueness from equal
+  invariant factors, preservation of the first invariant factor under explicit
+  two-sided unimodular equivalence, the completed decomposed
+  `diagPrefixProduct` / minor-divisibility chain, the internal theorem
+  `isSmithNormalFormFin_unique_of_two_sided_equiv`, and the public theorem
+  `isSmithNormalForm_unique_of_two_sided_equiv`
 - Elementary row/column operations, mixed-log certificate helpers, and a reusable 2x2 Bezout reduction gadget
 - Smoke examples over `Int` and `Q[X]`, including public HNF certificate
   checks, internal Smith diagonal-spec, invariant-factor, and same-size-step
@@ -43,14 +44,11 @@ The current Lean files compute recursive HNF, package explicit certificates, and
 prove public HNF correctness and uniqueness. On the Smith side, the repository
 has moved well beyond a pure API freeze: the public predicate and invariant-factor
 reader are real, the executable recursive kernel and public
-`smithNormalForm` existence/isSmith/unimodularity theorems are in place, and the
-same-size lead-clearing, lead-preparation, stabilization, and single-step
-nondivisible pivot-improvement layers are verified over both `Int` and `Q[X]`.
-The remaining Smith work is narrower: fill the decomposed general-`k` minor
-divisibility chain in `NormalForms.Matrix.Smith.Uniqueness`, lift first-
-invariant-factor preservation to full invariant-factor preservation under
-two-sided unimodular equivalence, then complete the public uniqueness theorem
-and finally the full PID bridge.
+`smithNormalForm` existence/isSmith/unimodularity/uniqueness theorems are in
+place, and the same-size lead-clearing, lead-preparation, stabilization, and
+single-step nondivisible pivot-improvement layers are verified over both `Int`
+and `Q[X]`. The Smith Phase 3 uniqueness closure is now done; the remaining
+project work shifts to the full PID bridge and the application layer.
 
 One deliberate implementation boundary is worth calling out: the public Smith
 wrappers over arbitrary `Fintype` indices are defined by reindexing through
@@ -69,6 +67,7 @@ lake build
 lake env lean scripts/AxiomAudit.lean
 lake env lean NormalForms/Matrix/Hermite/Basic.lean
 lake env lean NormalForms/Matrix/Smith/Basic.lean
+lake env lean NormalForms/Matrix/Smith/Uniqueness.lean
 lake env lean NormalForms/Examples/AbelianGroups/Basic.lean
 ```
 
@@ -80,10 +79,9 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 - `NormalForms/Matrix/Hermite`: executable HNF predicate, internal Fin kernel, public result packaging, uniqueness, and `CanonicalMod`
 - `NormalForms/Matrix/Smith`: public Smith diagonal specification,
   invariant-factor reader, certificate/result packaging API, internal recursive
-  scaffolding, same-size lead-clearing, lead-preparation, stabilization, and
-  pivot-improvement foundations, two-sided transform helpers, and the current
-  `SNFResult` /
-  `smithNormalForm` boundary
+  scaffolding, same-size lead-clearing, lead-preparation, stabilization, pivot-
+  improvement foundations, two-sided transform helpers, uniqueness proofs, and
+  the current `SNFResult` / `smithNormalForm` boundary
 - `NormalForms/Matrix/Certificates`: reusable certificate shapes and unimodularity lemmas
 - `NormalForms/Bridge/MathlibPID`: minimal unimodular/column-span bridge helpers toward mathlib's PID results, with the full invariant-factor comparison still pending
 - `NormalForms/Examples/AbelianGroups`: sample matrices, executable HNF smoke
@@ -100,4 +98,5 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 - The initial research application is finitely generated abelian groups over `Z`
 
 For the full roadmap, milestones, and submission strategy, see `PLAN.md`.
+
 
