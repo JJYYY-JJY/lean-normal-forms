@@ -1,3 +1,5 @@
+import Mathlib.Algebra.GCDMonoid.Finset
+import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 import NormalForms.Matrix.Smith.Basic
 
 /-!
@@ -16,6 +18,11 @@ private theorem succ_lt_min_succ {k m n : Nat} (hk : k < Nat.min m n) :
     k.succ < Nat.min m.succ n.succ := by
   exact lt_min_iff.mpr
     ⟨Nat.succ_lt_succ (lt_min_iff.mp hk).1, Nat.succ_lt_succ (lt_min_iff.mp hk).2⟩
+
+private theorem succ_le_min_succ {k m n : Nat} (hk : k ≤ Nat.min m n) :
+    k.succ ≤ Nat.min m.succ n.succ := by
+  exact le_min_iff.mpr
+    ⟨Nat.succ_le_succ (le_min_iff.mp hk).1, Nat.succ_le_succ (le_min_iff.mp hk).2⟩
 
 private theorem diagEntry_lowerRight {m n : Nat} {R : Type _}
     (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
@@ -270,6 +277,242 @@ private theorem minor_dvd_of_left_mul {k m n : Nat} {R : Type _}
   rw [hEq] at hRight
   exact hRight
 
+
+def firstInvariantFactor {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizedGCDMonoid R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) : R :=
+  (Finset.univ : Finset (Fin m × Fin n)).gcd fun p => A p.1 p.2
+
+theorem firstInvariantFactor_normalized {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizedGCDMonoid R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) :
+    normalize (firstInvariantFactor A) = firstInvariantFactor A := by
+  simpa [firstInvariantFactor] using
+    (Finset.normalize_gcd
+      (s := (Finset.univ : Finset (Fin m × Fin n)))
+      (f := fun p : Fin m × Fin n => A p.1 p.2))
+
+private theorem firstInvariantFactor_dvd_entry {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizedGCDMonoid R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) (i : Fin m) (j : Fin n) :
+    firstInvariantFactor A ∣ A i j := by
+  simpa [firstInvariantFactor] using
+    (Finset.gcd_dvd
+      (s := (Finset.univ : Finset (Fin m × Fin n)))
+      (f := fun p : Fin m × Fin n => A p.1 p.2)
+      (b := (i, j))
+      (by simp))
+
+private theorem dvd_firstInvariantFactor {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizedGCDMonoid R]
+    {d : R} {A : _root_.Matrix (Fin m) (Fin n) R}
+    (hA : ∀ i : Fin m, ∀ j : Fin n, d ∣ A i j) :
+    d ∣ firstInvariantFactor A := by
+  simpa [firstInvariantFactor] using
+    (Finset.dvd_gcd
+      (s := (Finset.univ : Finset (Fin m × Fin n)))
+      (f := fun p : Fin m × Fin n => A p.1 p.2)
+      (fun p _ => hA p.1 p.2))
+
+private def singleRowEmb {m : Nat} (i : Fin m) : Fin 1 ↪ Fin m where
+  toFun := fun _ => i
+  inj' := by
+    intro a b _
+    exact Subsingleton.elim _ _
+
+private def singleColEmb {n : Nat} (j : Fin n) : Fin 1 ↪ Fin n where
+  toFun := fun _ => j
+  inj' := by
+    intro a b _
+    exact Subsingleton.elim _ _
+
+@[simp] private theorem det_submatrix_singleton {m n : Nat} {R : Type _}
+    [CommRing R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) (i : Fin m) (j : Fin n) :
+    _root_.Matrix.det (A.submatrix (singleRowEmb i) (singleColEmb j)) = A i j := by
+  rw [_root_.Matrix.det_fin_one]
+  rfl
+
+private theorem firstInvariantFactor_dvd_two_sided_mul {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizedGCDMonoid R]
+    {A : _root_.Matrix (Fin m) (Fin n) R}
+    {U : _root_.Matrix (Fin m) (Fin m) R}
+    {V : _root_.Matrix (Fin n) (Fin n) R} :
+    firstInvariantFactor A ∣ firstInvariantFactor (U * A * V) := by
+  let d := firstInvariantFactor A
+  refine dvd_firstInvariantFactor ?_
+  intro i j
+  have hAminors :
+      ∀ r : Fin 1 ↪ Fin m, ∀ c : Fin 1 ↪ Fin n,
+        d ∣ _root_.Matrix.det (A.submatrix r c) := by
+    intro r c
+    have hentry : d ∣ A (r 0) (c 0) :=
+      firstInvariantFactor_dvd_entry A (r 0) (c 0)
+    rw [_root_.Matrix.det_fin_one]
+    simpa using hentry
+  have hLeft :
+      ∀ r : Fin 1 ↪ Fin m, ∀ c : Fin 1 ↪ Fin n,
+        d ∣ _root_.Matrix.det ((U * A).submatrix r c) :=
+    minor_dvd_of_left_mul (k := 1) (U := U) (M := A) (d := d) hAminors
+  have hRight :
+      ∀ r : Fin 1 ↪ Fin m, ∀ c : Fin 1 ↪ Fin n,
+        d ∣ _root_.Matrix.det (((U * A) * V).submatrix r c) :=
+    minor_dvd_of_right_mul (k := 1) (M := U * A) (N := V) (d := d) hLeft
+  have hminor :
+      d ∣ _root_.Matrix.det (((U * A) * V).submatrix (singleRowEmb i) (singleColEmb j)) :=
+    hRight (singleRowEmb i) (singleColEmb j)
+  rw [det_submatrix_singleton] at hminor
+  simpa [d, _root_.Matrix.mul_assoc] using hminor
+
+theorem first_invariantFactor_eq_of_two_sided_equiv {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizedGCDMonoid R]
+    {A B : _root_.Matrix (Fin m) (Fin n) R}
+    {U : _root_.Matrix (Fin m) (Fin m) R}
+    {V : _root_.Matrix (Fin n) (Fin n) R}
+    (hU : NormalForms.Matrix.Certificates.Unimodular U)
+    (hV : NormalForms.Matrix.Certificates.Unimodular V)
+    (hEq : U * A * V = B) :
+    firstInvariantFactor A = firstInvariantFactor B := by
+  have hAB : firstInvariantFactor A ∣ firstInvariantFactor B := by
+    rw [← hEq]
+    exact firstInvariantFactor_dvd_two_sided_mul (A := A) (U := U) (V := V)
+  have hEqInv : U⁻¹ * B * V⁻¹ = A := by
+    calc
+      U⁻¹ * B * V⁻¹ = U⁻¹ * (U * A * V) * V⁻¹ := by rw [hEq]
+      _ = U⁻¹ * (U * (A * V)) * V⁻¹ := by simp [_root_.Matrix.mul_assoc]
+      _ = (A * V) * V⁻¹ := by
+        rw [_root_.Matrix.nonsing_inv_mul_cancel_left (A := U) (B := A * V) hU]
+      _ = A := by
+        rw [_root_.Matrix.mul_nonsing_inv_cancel_right (A := V) (B := A) hV]
+  have hBA : firstInvariantFactor B ∣ firstInvariantFactor A := by
+    rw [← hEqInv]
+    exact firstInvariantFactor_dvd_two_sided_mul (A := B) (U := U⁻¹) (V := V⁻¹)
+  exact dvd_antisymm_of_normalize_eq
+    (firstInvariantFactor_normalized A)
+    (firstInvariantFactor_normalized B)
+    hAB hBA
+
+def diagPrefixProduct {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) (k : Nat)
+    (hk : k ≤ Nat.min m n) : R :=
+  ∏ i : Fin k, diagEntry A i.1 (lt_of_lt_of_le i.is_lt hk)
+
+private def liftEmbeddingSucc {k m : Nat}
+    (r : Fin k ↪ Fin m) :
+    Fin k ↪ Fin (m + 1) where
+  toFun := fun i => (r i).succ
+  inj' := by
+    intro i j hij
+    exact r.inj' (by simpa using hij)
+
+private def tailEmbeddingOfHeadZero {k m : Nat}
+    (r : Fin (k + 1) ↪ Fin (m + 1)) (hr0 : r 0 = 0) :
+    Fin k ↪ Fin m := by
+  sorry
+
+private theorem submatrix_lowerRight_eq_submatrix_tail {k m n : Nat} {R : Type _}
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
+    (r : Fin (k + 1) ↪ Fin (m + 1)) (c : Fin (k + 1) ↪ Fin (n + 1))
+    (hr0 : r 0 = 0) (hc0 : c 0 = 0) :
+    lowerRight (A.submatrix r c) =
+      (lowerRight A).submatrix (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0) := by
+  sorry
+
+private theorem submatrix_tail_reindex_via_predAbove {k m n : Nat} {R : Type _}
+    (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
+    (r : Fin k ↪ Fin (m + 1)) (c : Fin k ↪ Fin (n + 1))
+    (hr : ∀ i, r i ≠ 0) (hc : ∀ j, c j ≠ 0) :
+    ∃ r' : Fin k ↪ Fin m, ∃ c' : Fin k ↪ Fin n,
+      A.submatrix r c = (lowerRight A).submatrix r' c' := by
+  sorry
+
+private theorem det_minor_head_factor_of_offDiagZero {k m n : Nat} {R : Type _}
+    [CommRing R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (hOff : offDiagZero A)
+    (r : Fin (k + 1) ↪ Fin (m + 1)) (c : Fin (k + 1) ↪ Fin (n + 1))
+    (hr0 : r 0 = 0) (hc0 : c 0 = 0) :
+    _root_.Matrix.det (A.submatrix r c) =
+      A 0 0 * _root_.Matrix.det
+        ((lowerRight A).submatrix (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0)) := by
+  sorry
+
+private theorem det_minor_zero_of_missing_head_row {k m n : Nat} {R : Type _}
+    [CommRing R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (hOff : offDiagZero A)
+    (r : Fin (k + 1) ↪ Fin (m + 1)) (c : Fin (k + 1) ↪ Fin (n + 1))
+    (hr0 : r 0 = 0) (hc0 : c 0 ≠ 0) :
+    _root_.Matrix.det (A.submatrix r c) = 0 := by
+  sorry
+
+private theorem det_minor_zero_of_missing_head_col {k m n : Nat} {R : Type _}
+    [CommRing R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (hOff : offDiagZero A)
+    (r : Fin (k + 1) ↪ Fin (m + 1)) (c : Fin (k + 1) ↪ Fin (n + 1))
+    (hr0 : r 0 ≠ 0) (hc0 : c 0 = 0) :
+    _root_.Matrix.det (A.submatrix r c) = 0 := by
+  sorry
+
+private theorem det_minor_eq_head_mul_lowerRight_minor {k m n : Nat} {R : Type _}
+    [CommRing R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (hOff : offDiagZero A) (h00 : A 0 0 ≠ 0)
+    (r : Fin (k + 1) ↪ Fin (m + 1)) (c : Fin (k + 1) ↪ Fin (n + 1))
+    (hr0 : r 0 = 0) (hc0 : c 0 = 0) :
+    _root_.Matrix.det (A.submatrix r c) =
+      A 0 0 * _root_.Matrix.det
+        ((lowerRight A).submatrix (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0)) := by
+  sorry
+
+private theorem diagPrefixProduct_zero {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin m) (Fin n) R)
+    (hk : 0 ≤ Nat.min m n) :
+    diagPrefixProduct A 0 hk = 1 := by
+  sorry
+
+private theorem diagPrefixProduct_succ {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) (k : Nat)
+    (hk : k + 1 ≤ Nat.min m n) :
+    diagPrefixProduct A (k + 1) hk =
+      diagPrefixProduct A k (Nat.le_trans (Nat.le_succ k) hk) *
+        diagEntry A k (lt_of_lt_of_le (Nat.lt_succ_self k) hk) := by
+  sorry
+
+private theorem diagPrefixProduct_dvd_of_tail {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R]
+    {A : _root_.Matrix (Fin m) (Fin n) R}
+    (hChain : diagChain A)
+    (k : Nat) (hk : k + 1 ≤ Nat.min m n) :
+    diagPrefixProduct A k (Nat.le_trans (Nat.le_succ k) hk) ∣
+      diagPrefixProduct A (k + 1) hk := by
+  sorry
+
+private theorem diagPrefixProduct_dvd_minor_step {m n k : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R]
+    {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
+    (hOff : offDiagZero A) (hChain : diagChain A) (h00 : A 0 0 ≠ 0)
+    (hk : k ≤ Nat.min m n)
+    (hTail : ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n,
+      diagPrefixProduct (lowerRight A) k hk ∣
+        _root_.Matrix.det ((lowerRight A).submatrix r c)) :
+    ∀ r : Fin (k + 1) ↪ Fin (m + 1), ∀ c : Fin (k + 1) ↪ Fin (n + 1),
+      diagPrefixProduct A (k + 1) (succ_le_min_succ hk) ∣
+        _root_.Matrix.det (A.submatrix r c) := by
+  sorry
+
+private theorem diagPrefixProduct_dvd_minor {m n k : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R]
+    {A : _root_.Matrix (Fin m) (Fin n) R}
+    (hOff : offDiagZero A) (hChain : diagChain A)
+    (hk : k ≤ Nat.min m n) :
+    ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n,
+      diagPrefixProduct A k hk ∣ _root_.Matrix.det (A.submatrix r c) := by
+  sorry
 private theorem invariantFactors_length_le_min {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     (A : _root_.Matrix (Fin m) (Fin n) R) :
@@ -564,6 +807,10 @@ theorem SNFResult.eq_of_invariantFactors_eq {m n R : Type _}
   isSmithNormalForm_eq_of_invariantFactors_eq result₁.isSmith result₂.isSmith hInv
 
 end NormalForms.Matrix.Smith
+
+
+
+
 
 
 
