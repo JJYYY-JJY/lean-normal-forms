@@ -21,6 +21,33 @@ abbrev pidSmithColumnSpan {m n R : Type _}
   unfold pidSmithColumnSpan NormalForms.Matrix.Smith.smithColumnSpan
   rfl
 
+noncomputable def pidUnimodularMulVecEquiv {m R : Type _}
+    [Fintype m] [DecidableEq m] [EuclideanDomain R]
+    (U : _root_.Matrix m m R) (hU : NormalForms.Matrix.Certificates.Unimodular U) :
+    (m -> R) ≃ₗ[R] (m -> R) := by
+  letI := _root_.Matrix.invertibleOfIsUnitDet U hU
+  exact U.toLinearEquiv' inferInstance
+
+@[simp] theorem pidSmithColumnSpan_mul_right_unimodular {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [EuclideanDomain R]
+    {A : _root_.Matrix m n R} {V : _root_.Matrix n n R}
+    (hV : NormalForms.Matrix.Certificates.Unimodular V) :
+    pidSmithColumnSpan (A * V) = pidSmithColumnSpan A := by
+  unfold pidSmithColumnSpan NormalForms.Matrix.Smith.smithColumnSpan
+  rw [_root_.Matrix.mulVecLin_mul]
+  have hsurj : Function.Surjective V.mulVecLin := by
+    intro v
+    refine ⟨V⁻¹.mulVecLin v, ?_⟩
+    simp [_root_.Matrix.mul_nonsing_inv V hV]
+  rw [LinearMap.range_comp_of_range_eq_top _ (LinearMap.range_eq_top.mpr hsurj)]
+
+@[simp] theorem pidSmithColumnSpan_mul_left_unimodular {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [EuclideanDomain R]
+    {A : _root_.Matrix m n R} {U : _root_.Matrix m m R}
+    (_hU : NormalForms.Matrix.Certificates.Unimodular U) :
+    pidSmithColumnSpan (U * A) = Submodule.map U.mulVecLin (pidSmithColumnSpan A) := by
+  unfold pidSmithColumnSpan NormalForms.Matrix.Smith.smithColumnSpan
+  rw [_root_.Matrix.mulVecLin_mul, LinearMap.range_comp]
 noncomputable def pidExecutableInvariantFactors {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
@@ -53,3 +80,5 @@ noncomputable def pidFullRankSmithNormalFormCoeffs {m n R : Type _}
   Submodule.smithNormalFormCoeffs b hfull'
 
 end NormalForms.Bridge.MathlibPID
+
+
