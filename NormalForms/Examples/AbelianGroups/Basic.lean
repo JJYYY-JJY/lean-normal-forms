@@ -688,6 +688,18 @@ theorem simpleSmithSNFOfCertificateRoundTripQXSmoke
 
 noncomputable def fullRankSNFPublic : SNFResult fullRankMatrixZ :=
   Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists fullRankMatrixZ)
+noncomputable def rankDeficientSNFPublic : SNFResult rankDeficientMatrixZ :=
+  Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists rankDeficientMatrixZ)
+
+noncomputable def unitBoundarySNFPublic : SNFResult unitBoundaryMatrixZ :=
+  Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists unitBoundaryMatrixZ)
+
+noncomputable def presentationSNFPublic : SNFResult presentationMatrixZ :=
+  Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists presentationMatrixZ)
+
+noncomputable def polynomialMatrixQXSNFPublic : SNFResult polynomialMatrixQX :=
+  Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists polynomialMatrixQX)
+
 
 
 theorem zeroMatrixSNFExists :
@@ -752,6 +764,58 @@ theorem fullRankSNFPublicRightUnimodularSmoke :
     (A := fullRankMatrixZ)
     (result := fullRankSNFPublic)
     (Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists fullRankMatrixZ))
+
+theorem rankDeficientSNFPublicSmoke :
+    smithNormalForm rankDeficientMatrixZ = some rankDeficientSNFPublic :=
+  Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists rankDeficientMatrixZ)
+
+theorem unitBoundarySNFPublicSmoke :
+    smithNormalForm unitBoundaryMatrixZ = some unitBoundarySNFPublic :=
+  Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists unitBoundaryMatrixZ)
+
+theorem presentationSNFPublicSmoke :
+    smithNormalForm presentationMatrixZ = some presentationSNFPublic :=
+  Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists presentationMatrixZ)
+
+theorem polynomialMatrixQXSNFPublicSmoke :
+    smithNormalForm polynomialMatrixQX = some polynomialMatrixQXSNFPublic :=
+  Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists polynomialMatrixQX)
+
+theorem fullRankPidSmithCoeffListSmoke :
+    NormalForms.Bridge.MathlibPID.pidSmithNormalFormCoeffList fullRankMatrixZ =
+      fullRankSNFPublic.invariantFactors := by
+  simpa using
+    NormalForms.Bridge.MathlibPID.pidSmithNormalFormCoeffList_eq_resultInvariantFactors
+      (A := fullRankMatrixZ) (result := fullRankSNFPublic) fullRankSNFPublicSmoke
+
+theorem rankDeficientPidSmithCoeffListSmoke :
+    NormalForms.Bridge.MathlibPID.pidSmithNormalFormCoeffList rankDeficientMatrixZ =
+      rankDeficientSNFPublic.invariantFactors := by
+  simpa using
+    NormalForms.Bridge.MathlibPID.pidSmithNormalFormCoeffList_eq_resultInvariantFactors
+      (A := rankDeficientMatrixZ) (result := rankDeficientSNFPublic) rankDeficientSNFPublicSmoke
+
+theorem unitBoundaryPidSmithCoeffListSmoke :
+    NormalForms.Bridge.MathlibPID.pidSmithNormalFormCoeffList unitBoundaryMatrixZ =
+      unitBoundarySNFPublic.invariantFactors := by
+  simpa using
+    NormalForms.Bridge.MathlibPID.pidSmithNormalFormCoeffList_eq_resultInvariantFactors
+      (A := unitBoundaryMatrixZ) (result := unitBoundarySNFPublic) unitBoundarySNFPublicSmoke
+
+theorem presentationPidSmithCoeffListSmoke :
+    NormalForms.Bridge.MathlibPID.pidSmithNormalFormCoeffList presentationMatrixZ =
+      presentationSNFPublic.invariantFactors := by
+  simpa using
+    NormalForms.Bridge.MathlibPID.pidSmithNormalFormCoeffList_eq_resultInvariantFactors
+      (A := presentationMatrixZ) (result := presentationSNFPublic) presentationSNFPublicSmoke
+
+theorem polynomialMatrixQXPidSmithCoeffListSmoke :
+    NormalForms.Bridge.MathlibPID.pidSmithNormalFormCoeffList polynomialMatrixQX =
+      polynomialMatrixQXSNFPublic.invariantFactors := by
+  simpa using
+    NormalForms.Bridge.MathlibPID.pidSmithNormalFormCoeffList_eq_resultInvariantFactors
+      (A := polynomialMatrixQX) (result := polynomialMatrixQXSNFPublic)
+      polynomialMatrixQXSNFPublicSmoke
 
 
 theorem fullRankRowSwapSmoke :
