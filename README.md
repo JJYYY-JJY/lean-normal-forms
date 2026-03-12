@@ -18,15 +18,14 @@ a minimal PID bridge helper layer.
 - Internal HNF recursion carries explicit unimodular left certificates end-to-end, and the public theorem `hermiteNormalForm_unimodular` exposes that certificate from `hermiteNormalForm`
 - HNF correctness and uniqueness are now proved, via `hermiteNormalForm_isHermite` and `isHermiteNormalForm_unique_of_left_equiv`
 - `CanonicalMod` instances are available for both `Int` and `Polynomial Rat`
-- `NormalForms.Matrix.Smith.Basic` now contains a real public Smith predicate,
-  a public invariant-factor reader, an executable recursive Smith kernel,
-  public `smithNormalForm` existence and left/right unimodularity extraction,
-  and the same-size pivot-state layer (`clearFirstColumnByPivotLoop`,
-  `clearFirstRowByPivotLoop`, `clearLeadByPivot`,
-  `prepareLeadColumnStepData`, `prepareLeadRowStepData`,
-  `prepareLeadColumn`, `prepareLeadRow`, `stabilizePivot`,
-  `improvePivotStepData`, `improvePivot`, and
-  `improvePivot_strict_descent`)
+- `NormalForms.Matrix.Hermite` is now split across `Defs`, `Transform`,
+  `Bezout`, `Algorithm`, and `Basic`, separating predicates, transform
+  certificates, Bezout gadgets, the recursive Fin kernel, and the public
+  wrapper layer
+- `NormalForms.Matrix.Smith` is now split across `Defs`, `Transform`,
+  `Algorithm`, and `Basic`, so the public Smith specification, two-sided
+  transport layer, recursive executable kernel, and result-packaging API no
+  longer live in one monolithic file
 - `NormalForms.Matrix.Smith.Uniqueness` now proves uniqueness from equal
   invariant factors, preservation of the first invariant factor under explicit
   two-sided unimodular equivalence, the completed decomposed
@@ -41,9 +40,11 @@ a minimal PID bridge helper layer.
 - GitHub Actions, citation metadata, Zenodo metadata, and an axiom-audit smoke script
 
 The current Lean files compute recursive HNF, package explicit certificates, and
-prove public HNF correctness and uniqueness. On the Smith side, the repository
-has moved well beyond a pure API freeze: the public predicate and invariant-factor
-reader are real, the executable recursive kernel and public
+prove public HNF correctness and uniqueness. The former monolithic Hermite and
+Smith implementation files are now physically split by concern, so the public
+facades sit on top of dedicated definition, transform, Bezout, and algorithm
+submodules. On the Smith side, the public predicate and invariant-factor reader
+are real, the executable recursive kernel and public
 `smithNormalForm` existence/isSmith/unimodularity/uniqueness theorems are in
 place, and the same-size lead-clearing, lead-preparation, stabilization, and
 single-step nondivisible pivot-improvement layers are verified over both `Int`
@@ -65,7 +66,10 @@ and API checks.
 lake exe cache get
 lake build
 lake env lean scripts/AxiomAudit.lean
+lake env lean NormalForms/Matrix/Hermite/Algorithm.lean
 lake env lean NormalForms/Matrix/Hermite/Basic.lean
+lake env lean NormalForms/Matrix/Smith/Defs.lean
+lake env lean NormalForms/Matrix/Smith/Algorithm.lean
 lake env lean NormalForms/Matrix/Smith/Basic.lean
 lake env lean NormalForms/Matrix/Smith/Uniqueness.lean
 lake env lean NormalForms/Examples/AbelianGroups/Basic.lean
@@ -76,12 +80,8 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 ## Layout
 
 - `NormalForms/Matrix/Elementary`: row and column operation skeletons, logs, and replay semantics
-- `NormalForms/Matrix/Hermite`: executable HNF predicate, internal Fin kernel, public result packaging, uniqueness, and `CanonicalMod`
-- `NormalForms/Matrix/Smith`: public Smith diagonal specification,
-  invariant-factor reader, certificate/result packaging API, internal recursive
-  scaffolding, same-size lead-clearing, lead-preparation, stabilization, pivot-
-  improvement foundations, two-sided transform helpers, uniqueness proofs, and
-  the current `SNFResult` / `smithNormalForm` boundary
+- `NormalForms/Matrix/Hermite`: split HNF stack with `Defs`, `Transform`, `Bezout`, `Algorithm`, `Basic`, and `Uniqueness`
+- `NormalForms/Matrix/Smith`: split SNF stack with `Defs`, `Transform`, `Algorithm`, `Basic`, and `Uniqueness`
 - `NormalForms/Matrix/Certificates`: reusable certificate shapes and unimodularity lemmas
 - `NormalForms/Bridge/MathlibPID`: minimal unimodular/column-span bridge helpers toward mathlib's PID results, with the full invariant-factor comparison still pending
 - `NormalForms/Examples/AbelianGroups`: sample matrices, executable HNF smoke
@@ -98,5 +98,3 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 - The initial research application is finitely generated abelian groups over `Z`
 
 For the full roadmap, milestones, and submission strategy, see `PLAN.md`.
-
-
