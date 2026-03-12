@@ -48,6 +48,7 @@ noncomputable def pidUnimodularMulVecEquiv {m R : Type _}
     pidSmithColumnSpan (U * A) = Submodule.map U.mulVecLin (pidSmithColumnSpan A) := by
   unfold pidSmithColumnSpan NormalForms.Matrix.Smith.smithColumnSpan
   rw [_root_.Matrix.mulVecLin_mul, LinearMap.range_comp]
+
 noncomputable def pidExecutableInvariantFactors {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
@@ -67,6 +68,50 @@ noncomputable def pidSmithNormalFormCoeffs {m n R : Type _}
     (A : _root_.Matrix m n R) :
     Fin (pidSmithNormalFormData A).1 -> R :=
   (pidSmithNormalFormData A).2.a
+
+noncomputable def pidSmithNormalFormCoeffList {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [NormalForms.Matrix.Hermite.CanonicalMod R]
+    (A : _root_.Matrix m n R) : List R :=
+  (Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists A)).invariantFactors
+
+@[simp] theorem pidSmithNormalFormCoeffList_eq_resultInvariantFactors {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [NormalForms.Matrix.Hermite.CanonicalMod R]
+    {A : _root_.Matrix m n R} {result : NormalForms.Matrix.Smith.SNFResult A}
+    (hresult : NormalForms.Matrix.Smith.smithNormalForm A = some result) :
+    pidSmithNormalFormCoeffList A = result.invariantFactors := by
+  let chosen := Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists A)
+  have hchosen : NormalForms.Matrix.Smith.smithNormalForm A = some chosen :=
+    Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists A)
+  have hEq : chosen = result := by
+    rw [hresult] at hchosen
+    injection hchosen with hEq'
+    exact hEq'.symm
+  unfold pidSmithNormalFormCoeffList
+  simpa using congrArg NormalForms.Matrix.Smith.SNFResult.invariantFactors hEq
+
+@[simp] theorem pidSmithNormalFormCoeffList_eq_of_isSmith {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [NormalForms.Matrix.Hermite.CanonicalMod R]
+    {S : _root_.Matrix m n R}
+    (hS : NormalForms.Matrix.Smith.IsSmithNormalForm S) :
+    pidSmithNormalFormCoeffList S = NormalForms.Matrix.Smith.smithInvariantFactors S := by
+  let result := Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists S)
+  have hresult : NormalForms.Matrix.Smith.smithNormalForm S = some result :=
+    Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists S)
+  have hEq : S = result.S := by
+    exact NormalForms.Matrix.Smith.isSmithNormalForm_unique_of_two_sided_equiv
+      hS
+      (NormalForms.Matrix.Smith.smithNormalForm_isSmith hresult)
+      (NormalForms.Matrix.Smith.smithNormalForm_leftUnimodular hresult)
+      (NormalForms.Matrix.Smith.smithNormalForm_rightUnimodular hresult)
+      result.two_sided_mul
+  simpa [pidSmithNormalFormCoeffList, NormalForms.Matrix.Smith.SNFResult.invariantFactors] using
+    congrArg NormalForms.Matrix.Smith.smithInvariantFactors hEq.symm
 
 noncomputable def pidFullRankSmithNormalFormCoeffs {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
