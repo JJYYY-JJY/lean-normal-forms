@@ -130,8 +130,12 @@ theorem firstNonzero?_some_ne_zero {R : Type _} [Zero R] [DecidableEq R] :
             | none =>
                 simp [htail] at hsome
             | some j' =>
-                simp [htail] at hsome
-                subst hsome
+                have hEq : j'.succ = j.succ := by
+                  simpa [htail] using hsome
+                have hEq' : j' = j := by
+                  apply Fin.ext
+                  exact Nat.succ.inj (congrArg Fin.val hEq)
+                subst hEq'
                 exact firstNonzero?_some_ne_zero (fun k => row k.succ) htail
       · cases i using Fin.cases with
         | zero =>
@@ -165,8 +169,12 @@ theorem firstNonzero?_some_eq_zero_of_lt {R : Type _} [Zero R] [DecidableEq R] :
                 | none =>
                     simp [htail] at hsome
                 | some k =>
-                    simp [htail] at hsome
-                    subst hsome
+                    have hk : k.succ = i'.succ := by
+                      simpa [htail] using hsome
+                    have hk' : k = i' := by
+                      apply Fin.ext
+                      exact Nat.succ.inj (congrArg Fin.val hk)
+                    subst hk'
                     exact firstNonzero?_some_eq_zero_of_lt (fun k => row k.succ) htail j'
                       (Fin.succ_lt_succ_iff.mp hj)
       · cases i using Fin.cases with
