@@ -36,7 +36,7 @@ theorem hnf_lower_row_firstCol_zero {m n : Nat} {R : Type _}
 theorem hnf_rowAbove_reduced_at_pivot {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin m) (Fin n) R} (hA : IsHermiteNormalFormFin A) :
-    ∀ {i j : Fin m} (hij : i < j) {p : Fin n},
+    ∀ {i j : Fin m} (_hij : i < j) {p : Fin n},
       firstNonzero? (fun k : Fin n => A j k) = some p ->
       A i p = A i p % A j p := by
   induction hA with
@@ -44,7 +44,7 @@ theorem hnf_rowAbove_reduced_at_pivot {m n : Nat} {R : Type _}
       intro i
       exact Fin.elim0 i
   | emptyCols A =>
-      intro i j hij p
+      intro i j _hij p
       exact Fin.elim0 p
   | zeroCol A hzero hTail ih =>
       intro i j hij p hrow
@@ -107,7 +107,7 @@ theorem hnf_rowAbove_reduced_at_pivot {m n : Nat} {R : Type _}
 
 
 private theorem lowerLeft_zero_of_mul_eq_pivot {m n : Nat} {R : Type _}
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
     {U : _root_.Matrix (Fin (m + 1)) (Fin (m + 1)) R}
     {A B : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
     (hpivot : A 0 0 ≠ 0)
@@ -188,12 +188,12 @@ private theorem topRow_eq_of_eq_add_lowerRows {m n : Nat} {R : Type _}
       simpa [hLowerRows i0] using hi0col0
     have hpFullA : firstNonzero? (fun j : Fin (n + 1) => A i0.succ j) = some p.succ := by
       rw [firstNonzero?, hi0col0]
-      simpa [hp]
+      simp [hp]
     have hpFullB : firstNonzero? (fun j : Fin (n + 1) => B i0.succ j) = some p.succ := by
       rw [firstNonzero?, hi0col0B]
       have hpB : firstNonzero? (fun j : Fin n => B i0.succ j.succ) = some p := by
         simpa [hLowerRows i0] using hp
-      simpa [hpB]
+      simp [hpB]
     have hsum :
         ∑ i : Fin m, c i * A i.succ p.succ = c i0 * A i0.succ p.succ := by
       refine Finset.sum_eq_single i0 ?_ ?_
@@ -251,7 +251,7 @@ private theorem topRow_eq_of_eq_add_lowerRows {m n : Nat} {R : Type _}
     intro i hactive
     have : i ∈ S := by
       simpa [S] using hactive
-    simpa [hEmpty] using this
+    simp [hEmpty] at this
   ext j
   have hsumzero : ∑ i : Fin m, c i * A i.succ j = 0 := by
     refine Finset.sum_eq_zero ?_
@@ -266,11 +266,11 @@ private theorem topRow_eq_of_eq_add_lowerRows {m n : Nat} {R : Type _}
         exact Option.not_isSome_iff_eq_none.mp hnotSome
       cases j using Fin.cases with
       | zero =>
-          simp [hci, hnf_lower_row_firstCol_zero hA i]
+          simp [hnf_lower_row_firstCol_zero hA i]
       | succ j =>
           have hrowzero : A i.succ j.succ = 0 := by
             exact firstNonzero?_eq_none (fun k : Fin n => A i.succ k.succ) hnone j
-          simp [hci, hrowzero]
+          simp [hrowzero]
   have hEqj := hcomb j
   rw [hsumzero, add_zero] at hEqj
   exact hEqj.symm
@@ -309,13 +309,15 @@ theorem isHermiteNormalFormFin_unique_of_left_equiv {m n : Nat} {R : Type _}
                 calc
                   U * tailCols A = tailCols (U * A) := by
                     symm
-                    simpa using tailCols_mul U A
-                  _ = tailCols H₂ := by simpa [hEq]
+                    exact tailCols_mul U A
+                  _ = tailCols H₂ := by
+                    simp [hEq]
               exact congrFun (congrFun hTailEq i) j
       | pivot B hpivot₂ hnorm₂ hbelow₂ hLower₂ hreduced₂ =>
           have hzeroMul : ∀ i, (U * A) i 0 = 0 := firstCol_zero_mul U A hzero
           have : H₂ 0 0 = 0 := by
-            simpa [hEq] using hzeroMul 0
+            have hzero0 := hzeroMul 0
+            simpa [hEq] using hzero0
           exact False.elim (hpivot₂ this)
   | pivot A hpivot hnorm hbelow hLower hreduced ih =>
       intro H₂ hH₂ U hU hEq
@@ -327,7 +329,7 @@ theorem isHermiteNormalFormFin_unique_of_left_equiv {m n : Nat} {R : Type _}
               _ = (U⁻¹ * U) * A := by rw [_root_.Matrix.mul_assoc]
               _ = A := by
                 rw [_root_.Matrix.nonsing_inv_mul _ hU]
-                simpa using (_root_.Matrix.one_mul A)
+                simp
           have hzeroMul : ∀ i, (U⁻¹ * H₂) i 0 = 0 := firstCol_zero_mul U⁻¹ H₂ hzero₂
           have : A 0 0 = 0 := by
             simpa [hInvEq] using hzeroMul 0
@@ -344,7 +346,7 @@ theorem isHermiteNormalFormFin_unique_of_left_equiv {m n : Nat} {R : Type _}
               _ = (U⁻¹ * U) * A := by rw [_root_.Matrix.mul_assoc]
               _ = A := by
                 rw [_root_.Matrix.nonsing_inv_mul _ hU]
-                simpa using (_root_.Matrix.one_mul A)
+                simp
           have hInv0 := lowerLeft_zero_of_mul_eq_pivot hpivot₂ hbelow₂ hbelow hInvEq
           have hLowerMul : lowerRight U * lowerRight A = lowerRight H₂ := by
             simpa [hEq] using (lowerRight_mul_of_lowerLeftZero (A := A) hU0).symm
