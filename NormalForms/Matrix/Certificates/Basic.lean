@@ -38,7 +38,7 @@ structure TwoSidedCertificate {m n R : Type _}
 
 @[simp] theorem unimodular_one {m R : Type _} [Fintype m] [DecidableEq m] [CommRing R] :
     Unimodular (1 : _root_.Matrix m m R) := by
-  simpa [Unimodular]
+  simp [Unimodular]
 
 @[simp] theorem unimodular_mul {m R : Type _} [Fintype m] [DecidableEq m] [CommRing R]
     {U V : _root_.Matrix m m R} (hU : Unimodular U) (hV : Unimodular V) :
@@ -58,9 +58,10 @@ theorem unimodular_rowOperationMatrix {m R : Type _}
           (B := _root_.Matrix.swap R i j)
           (_root_.Matrix.swap_mul_self (R := R) i j))
   | add src dst c =>
-      simpa [Unimodular, NormalForms.Matrix.Elementary.det_rowAddMatrix_of_ne src dst c hop]
+      simp [Unimodular, NormalForms.Matrix.Elementary.det_rowAddMatrix_of_ne src dst c hop]
   | smul i c =>
-      simpa [Unimodular, NormalForms.Matrix.Elementary.rowOperationMatrix, NormalForms.Matrix.Elementary.det_rowScaleMatrix i c] using hop
+      simpa [Unimodular, NormalForms.Matrix.Elementary.rowOperationMatrix,
+        NormalForms.Matrix.Elementary.det_rowScaleMatrix i c] using hop
 
 theorem unimodular_columnOperationMatrix {n R : Type _}
     [Fintype n] [DecidableEq n] [CommRing R]
@@ -75,19 +76,19 @@ theorem unimodular_columnOperationMatrix {n R : Type _}
           (B := _root_.Matrix.swap R i j)
           (_root_.Matrix.swap_mul_self (R := R) i j))
   | add src dst c =>
-      simpa [Unimodular, NormalForms.Matrix.Elementary.det_columnAddMatrix_of_ne src dst c hop]
+      simp [Unimodular, NormalForms.Matrix.Elementary.det_columnAddMatrix_of_ne src dst c hop]
   | smul i c =>
-      simpa [Unimodular, NormalForms.Matrix.Elementary.columnOperationMatrix, NormalForms.Matrix.Elementary.det_columnScaleMatrix i c] using hop
+      simpa [Unimodular, NormalForms.Matrix.Elementary.columnOperationMatrix,
+        NormalForms.Matrix.Elementary.det_columnScaleMatrix i c] using hop
 
 theorem leftAccumulator_unimodular_of_forall {m n R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    [Fintype m] [DecidableEq m] [CommRing R]
     (log : EOperationLog R m n)
     (hlog : log.Forall NormalForms.Matrix.Elementary.UnimodularStep) :
     Unimodular (NormalForms.Matrix.Elementary.leftAccumulator log) := by
   induction log with
   | nil =>
-      simpa [NormalForms.Matrix.Elementary.leftAccumulator] using
-        (unimodular_one : Unimodular (1 : _root_.Matrix m m R))
+      simp [NormalForms.Matrix.Elementary.leftAccumulator]
   | cons step log ih =>
       cases step with
       | row op =>
@@ -109,14 +110,13 @@ theorem leftAccumulator_unimodular_of_forall {m n R : Type _}
               NormalForms.Matrix.Elementary.UnimodularStep] using ih hpair.2
 
 theorem rightAccumulator_unimodular_of_forall {m n R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    [Fintype n] [DecidableEq n] [CommRing R]
     (log : EOperationLog R m n)
     (hlog : log.Forall NormalForms.Matrix.Elementary.UnimodularStep) :
     Unimodular (NormalForms.Matrix.Elementary.rightAccumulator log) := by
   induction log with
   | nil =>
-      simpa [NormalForms.Matrix.Elementary.rightAccumulator] using
-        (unimodular_one : Unimodular (1 : _root_.Matrix n n R))
+      simp [NormalForms.Matrix.Elementary.rightAccumulator]
   | cons step log ih =>
       cases step with
       | row op =>
