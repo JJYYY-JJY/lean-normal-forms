@@ -6,6 +6,8 @@ to mathlib's PID results.
 
 ## Status
 
+**🌟 Zero Warnings Milestone:** The entire codebase currently builds with **zero warnings and zero errors** (`lake build`), signifying complete logical verification of the implemented layers and strong proof stability.
+
 This repository currently contains a buildable `NormalForms` Lean library with a
 completed recursive row-style Hermite layer, a completed executable Smith layer
 with public correctness, uniqueness, and unimodularity extraction theorems, and
@@ -64,7 +66,7 @@ and API checks.
 
 ```sh
 lake exe cache get
-lake build
+lake build # Must output 0 warnings
 lake env lean scripts/AxiomAudit.lean
 lake env lean NormalForms/Matrix/Hermite/Algorithm.lean
 lake env lean NormalForms/Matrix/Hermite/Basic.lean

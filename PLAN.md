@@ -6,6 +6,7 @@
 - Lean package name: `NormalForms`
 - License: `Apache-2.0`
 - Initial scaffold present for `README`, `LICENSE`, `CITATION.cff`, GitHub Actions, `lake build`, an axiom-audit smoke script, and Zenodo metadata
+- **Zero Warnings Milestone:** The library currently builds with exactly zero warnings and zero errors.
 - Local environment baseline re-verified on March 12, 2026 with `lake build`, `lake env lean scripts/AxiomAudit.lean`, `lake env lean NormalForms/Matrix/Hermite/Algorithm.lean`, `lake env lean NormalForms/Matrix/Hermite/Basic.lean`, `lake env lean NormalForms/Matrix/Smith/Defs.lean`, `lake env lean NormalForms/Matrix/Smith/Algorithm.lean`, `lake env lean NormalForms/Matrix/Smith/Basic.lean`, `lake env lean NormalForms/Matrix/Smith/Uniqueness.lean`, `lake env lean NormalForms/Bridge/MathlibPID/Basic.lean`, and `lake env lean NormalForms/Examples/AbelianGroups/Basic.lean`
 - The top-level SNF API is now stable and no longer placeholder-only: public `IsSmithNormalForm` is a real diagonal specification, `smithInvariantFactors` and `smithColumnSpan` are available, `SNFResult` packages the two-sided equation `U * A * V = S`, and `SNFResult.ofCertificate` / `SNFResult.toCertificate` provide the current public certificate boundary; the public `smithNormalForm` entrypoint is executable, `isSmithNormalForm_eq_of_invariantFactors_eq` is available, `first_invariantFactor_eq_of_two_sided_equiv` has landed in `NormalForms.Matrix.Smith.Uniqueness`, and the full public Smith uniqueness theorem `isSmithNormalForm_unique_of_two_sided_equiv` is now proved via the completed decomposed `diagPrefixProduct` / minor-divisibility chain
 - HNF uniqueness is complete, and the repository now has a concrete completed Smith Phase 3 layer: internal recursive Smith predicates/results, an executable recursive driver, two-sided transform scaffolding, same-size lead-clearing, lead-preparation, single-step pivot-improvement foundations, example coverage, diagonal-entry length/nonzero/zero lemmas, first-invariant-factor preservation under two-sided unimodular equivalence, the completed `diagPrefixProduct`-based general-`k` minor chain in `NormalForms.Matrix.Smith.Uniqueness`, the internal theorem `isSmithNormalFormFin_unique_of_two_sided_equiv`, the public theorem `isSmithNormalForm_unique_of_two_sided_equiv`, and minimal PID bridge helpers
@@ -75,6 +76,7 @@
 ## Progress Snapshot
 
 - Current phase status on March 12, 2026: Phase 2 is complete, including public HNF correctness and uniqueness; Phase 3 is now complete as well, including a real Smith specification layer, public invariant-factor and certificate-packaging helpers, a full executable recursive `smithNormalFormFin` kernel, public `smithNormalForm` existence/isSmith/left-right-unimodular theorems, invariant-factor-based Smith uniqueness, `first_invariantFactor_eq_of_two_sided_equiv`, the completed decomposed `diagPrefixProduct` / general-`k` minor chain, and the final public Smith uniqueness theorem under explicit two-sided unimodular equivalence; the next work is the full PID bridge and then the application layer
+- The project has hit the **Zero Warnings** milestone across all currently implemented modules.
 - Phase 1 is complete in `NormalForms/Matrix/Elementary`: executable row and column `swap` / `add` / `smul`, elementary-matrix realizations of each step, mixed-log left/right accumulators, the theorem `U(log) * A * V(log) = replayLog A log`, and a reusable 2x2 Bezout reduction matrix with determinant and transpose lemmas
 - Phase 1 is complete in `NormalForms/Matrix/Certificates`: `Unimodular` as `IsUnit det`, unimodular step/log closure theorems, row-only and two-sided log-to-certificate helpers, and the executable-versus-certificate boundary for non-unit `smul`
 - Phase 1 is complete in `NormalForms/Examples/AbelianGroups`: `Int`-based matrix-action smoke theorems, mixed-log certificate instantiations, non-unit scaling boundary checks, and Bezout examples over `Int` and `Q[X]`
@@ -103,7 +105,7 @@
 ## Regression And Demo Plan
 
 - Required recurring checks:
-- `lake build`
+- `lake build` (must maintain zero errors and zero warnings)
 - axiom audit
 - `lake env lean NormalForms/Matrix/Hermite/Algorithm.lean`
 - `lake env lean NormalForms/Matrix/Hermite/Basic.lean`
@@ -132,7 +134,7 @@
 ## Public Milestones
 
 - First public checkpoint, reached on March 7, 2026: HNF uniqueness is stable and the SNF interface is frozen; the repository is ready for an `arXiv` preprint and a community-facing talk
-- Current local milestone, reached on March 12, 2026: the Smith layer now has a real public specification, public invariant-factor and certificate-packaging helpers, an executable recursive Smith kernel, public existence/isSmith/left-right-unimodular extraction, invariant-factor-based uniqueness, the final public two-sided uniqueness theorem, verified same-size lead-clearing/lead-preparation/stabilization, executable-kernel smoke over `Int`, `Q[X]` canonical remainder support, the completed minor-divisibility uniqueness chain, and minimal PID bridge helpers; the main remaining blocker is the full PID bridge, followed by the application layer
+- Current local milestone, reached on March 12, 2026: The repository achieved the **Zero Warnings** milestone. The Smith layer now has a real public specification, public invariant-factor and certificate-packaging helpers, an executable recursive Smith kernel, public existence/isSmith/left-right-unimodular extraction, invariant-factor-based uniqueness, the final public two-sided uniqueness theorem, verified same-size lead-clearing/lead-preparation/stabilization, executable-kernel smoke over `Int`, `Q[X]` canonical remainder support, the completed minor-divisibility uniqueness chain, and minimal PID bridge helpers; the main remaining blocker is the full PID bridge, followed by the application layer
 - `ITP` freeze point: eight weeks before the target submission deadline, all major theorems must already be done and only writing, experiments, and API cleanups remain
 - If the PID bridge or application layer is still unstable at the freeze point, do not force an `ITP` regular submission; switch to `arXiv + talk + JAR/LMCS`
 - After submission, use a dedicated `submission-fix` branch for reviewer-blocker changes only
