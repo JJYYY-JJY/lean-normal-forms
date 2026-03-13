@@ -214,7 +214,7 @@ def improvePivotLeadClearedStateZ :
   { t := TwoSidedTransform.refl improvePivotMatrixZ
     pivot_ne_zero := by decide
     pivot_normalized := by
-      simpa [improvePivotMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg]
+      simp [improvePivotMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg]
     rowCleared := by
       intro j
       fin_cases j <;> decide
@@ -227,21 +227,21 @@ def prepareLeadColumnPivotStateZ :
   { t := TwoSidedTransform.refl prepareLeadColumnMatrixZ
     pivot_ne_zero := by decide
     pivot_normalized := by
-      simpa [prepareLeadColumnMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg] }
+      simp [prepareLeadColumnMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg] }
 
 def prepareLeadRowPivotStateZ :
     NormalForms.Matrix.Smith.Internal.PivotState prepareLeadRowMatrixZ :=
   { t := TwoSidedTransform.refl prepareLeadRowMatrixZ
     pivot_ne_zero := by decide
     pivot_normalized := by
-      simpa [prepareLeadRowMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg] }
+      simp [prepareLeadRowMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg] }
 
 def fullRankSNFPivotStateZ :
     NormalForms.Matrix.Smith.Internal.PivotState fullRankSNFMatrixZ :=
   { t := TwoSidedTransform.refl fullRankSNFMatrixZ
     pivot_ne_zero := by decide
     pivot_normalized := by
-      simpa [fullRankSNFMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg] }
+      simp [fullRankSNFMatrixZ, TwoSidedTransform.refl, Int.normalize_of_nonneg] }
 
 def fullRankSNFLeftZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
   !![-5, 2;
@@ -266,6 +266,192 @@ noncomputable def fullRankHNFPublic : HNFResult fullRankMatrixZ :=
 abbrev fullRankHNFInternal :
     NormalForms.Matrix.Hermite.Internal.FinHNFResult fullRankMatrixZ :=
   NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin fullRankMatrixZ
+
+private theorem unimodularInvInt {n : Type _} [Fintype n] [DecidableEq n]
+    {U : _root_.Matrix n n Int} (hU : Unimodular U) : Unimodular U⁻¹ := by
+  simpa [Unimodular] using
+    (_root_.Matrix.isUnit_det_of_left_inverse
+      (A := U⁻¹) (B := U) (_root_.Matrix.mul_nonsing_inv _ hU))
+
+private theorem hnfEqOfLeftCertificateInt {m n : Nat}
+    {A : _root_.Matrix (Fin m) (Fin n) Int}
+    (result : NormalForms.Matrix.Hermite.Internal.FinHNFResult A)
+    (U : _root_.Matrix (Fin m) (Fin m) Int)
+    (H : _root_.Matrix (Fin m) (Fin n) Int)
+    (hSpec : NormalForms.Matrix.Hermite.IsHermiteNormalFormFin H)
+    (hU : Unimodular U)
+    (hEqA : U * A = H) :
+    result.H = H := by
+  have hEq : (U * result.U⁻¹) * result.H = H := by
+    calc
+      (U * result.U⁻¹) * result.H = U * (result.U⁻¹ * result.H) := by
+        rw [_root_.Matrix.mul_assoc]
+      _ = U * A := by
+        rw [show result.U⁻¹ * result.H = A by
+          calc
+            result.U⁻¹ * result.H = result.U⁻¹ * (result.U * A) := by rw [result.left_mul]
+            _ = (result.U⁻¹ * result.U) * A := by rw [_root_.Matrix.mul_assoc]
+            _ = A := by
+              rw [_root_.Matrix.nonsing_inv_mul _ result.unimodular]
+              simp]
+      _ = H := hEqA
+  exact NormalForms.Matrix.Hermite.isHermiteNormalFormFin_unique_of_left_equiv
+    result.isHermite hSpec
+    (U := U * result.U⁻¹)
+    (unimodular_mul hU (unimodularInvInt result.unimodular))
+    hEq
+
+private theorem snfEqOfCertificateInt {m n : Nat}
+    {A : _root_.Matrix (Fin m) (Fin n) Int}
+    (result : NormalForms.Matrix.Smith.Internal.FinSNFResult A)
+    (cert : TwoSidedCertificate A)
+    (hSpec : NormalForms.Matrix.Smith.Internal.IsSmithNormalFormFin cert.result)
+    (hU : Unimodular cert.U) (hV : Unimodular cert.V) :
+    result.S = cert.result := by
+  have hEq : (cert.U * result.U⁻¹) * result.S * (result.V⁻¹ * cert.V) = cert.result := by
+    calc
+      (cert.U * result.U⁻¹) * result.S * (result.V⁻¹ * cert.V)
+          = cert.U * (result.U⁻¹ * result.S * result.V⁻¹) * cert.V := by
+              simp [_root_.Matrix.mul_assoc]
+      _ = cert.U * A * cert.V := by
+            rw [show result.U⁻¹ * result.S * result.V⁻¹ = A by
+              calc
+                result.U⁻¹ * result.S * result.V⁻¹
+                    = result.U⁻¹ * (result.S * result.V⁻¹) := by rw [_root_.Matrix.mul_assoc]
+                _ = result.U⁻¹ * ((result.U * A * result.V) * result.V⁻¹) := by
+                      rw [result.two_sided_mul]
+                _ = result.U⁻¹ * ((result.U * A) * (result.V * result.V⁻¹)) := by
+                      simp [_root_.Matrix.mul_assoc]
+                _ = result.U⁻¹ * (result.U * A) := by
+                      rw [_root_.Matrix.mul_nonsing_inv _ result.rightUnimodular]
+                      simp
+                _ = (result.U⁻¹ * result.U) * A := by rw [_root_.Matrix.mul_assoc]
+                _ = A := by
+                      rw [_root_.Matrix.nonsing_inv_mul _ result.leftUnimodular]
+                      simp]
+      _ = cert.result := cert.equation
+  exact NormalForms.Matrix.Smith.Internal.isSmithNormalFormFin_unique_of_two_sided_equiv
+    result.isSmith hSpec
+    (U := cert.U * result.U⁻¹)
+    (V := result.V⁻¹ * cert.V)
+    (unimodular_mul hU (unimodularInvInt result.leftUnimodular))
+    (unimodular_mul (unimodularInvInt result.rightUnimodular) hV)
+    hEq
+
+private theorem fullRankHNFSpec :
+    NormalForms.Matrix.Hermite.IsHermiteNormalFormFin fullRankHNFMatrixZ := by
+  refine .pivot _ ?_ ?_ ?_ ?_ ?_
+  · decide
+  · simp [fullRankHNFMatrixZ, Int.normalize_of_nonneg]
+  · intro i
+    fin_cases i
+    decide
+  · refine .pivot _ ?_ ?_ ?_ ?_ ?_
+    · decide
+    · simp [fullRankHNFMatrixZ, lowerRight, Int.normalize_of_nonneg]
+    · intro i
+      exact Fin.elim0 i
+    · exact .emptyRows _
+    · intro i
+      exact Fin.elim0 i
+  · intro i
+    fin_cases i
+    simp [fullRankHNFMatrixZ, NormalForms.Matrix.Hermite.firstNonzero?]
+
+private theorem rankDeficientHNFSpec :
+    NormalForms.Matrix.Hermite.IsHermiteNormalFormFin rankDeficientHNFMatrixZ := by
+  refine .pivot _ ?_ ?_ ?_ ?_ ?_
+  · decide
+  · simp [rankDeficientHNFMatrixZ, Int.normalize_of_nonneg]
+  · intro i
+    fin_cases i
+    decide
+  · refine .zeroCol _ ?_ ?_
+    · intro i
+      fin_cases i
+      decide
+    · simpa [tailCols, lowerRight, rankDeficientHNFMatrixZ] using
+        (NormalForms.Matrix.Hermite.IsHermiteNormalFormFin.emptyCols
+          (tailCols (lowerRight rankDeficientHNFMatrixZ)))
+  · intro i
+    fin_cases i
+    simp [rankDeficientHNFMatrixZ]
+
+private theorem unitBoundaryHNFSpec :
+    NormalForms.Matrix.Hermite.IsHermiteNormalFormFin unitBoundaryHNFMatrixZ := by
+  refine .pivot _ ?_ ?_ ?_ ?_ ?_
+  · decide
+  · simp [unitBoundaryHNFMatrixZ, Int.normalize_of_nonneg]
+  · intro i
+    fin_cases i
+    decide
+  · refine .pivot _ ?_ ?_ ?_ ?_ ?_
+    · decide
+    · simp [unitBoundaryHNFMatrixZ, lowerRight, Int.normalize_of_nonneg]
+    · intro i
+      exact Fin.elim0 i
+    · exact .emptyRows _
+    · intro i
+      exact Fin.elim0 i
+  · intro i
+    fin_cases i
+    simp [unitBoundaryHNFMatrixZ, NormalForms.Matrix.Hermite.firstNonzero?]
+
+private theorem presentationHNFSpec :
+    NormalForms.Matrix.Hermite.IsHermiteNormalFormFin presentationHNFMatrixZ := by
+  refine .pivot _ ?_ ?_ ?_ ?_ ?_
+  · decide
+  · simp [presentationHNFMatrixZ, Int.normalize_of_nonneg]
+  · intro i
+    fin_cases i
+    decide
+  · refine .pivot _ ?_ ?_ ?_ ?_ ?_
+    · decide
+    · simp [presentationHNFMatrixZ, lowerRight, Int.normalize_of_nonneg]
+    · intro i
+      exact Fin.elim0 i
+    · exact .emptyRows _
+    · intro i
+      exact Fin.elim0 i
+  · intro i
+    fin_cases i
+    simp [presentationHNFMatrixZ, NormalForms.Matrix.Hermite.firstNonzero?]
+
+private theorem fullRankSNFLeftUnimodular : Unimodular fullRankSNFLeftZ := by
+  norm_num [Unimodular, fullRankSNFLeftZ]
+
+private theorem rankDeficientSNFLeftUnimodular : Unimodular rankDeficientSNFLeftZ := by
+  norm_num [Unimodular, rankDeficientSNFLeftZ]
+
+private theorem rankDeficientSNFRightUnimodular : Unimodular rankDeficientSNFRightZ := by
+  norm_num [Unimodular, rankDeficientSNFRightZ]
+
+private theorem unitBoundaryRowOpUnimodular :
+    Unimodular
+      (rowOperationMatrix (.smul (0 : Fin 2) (-1)) : _root_.Matrix (Fin 2) (Fin 2) Int) := by
+  have hop : UnimodularRowOperation (.smul (0 : Fin 2) (-1) : RowOperation Int (Fin 2)) := by
+    simp [UnimodularRowOperation]
+  exact unimodular_rowOperationMatrix (.smul (0 : Fin 2) (-1)) hop
+
+def presentationSNFRightInvZ : _root_.Matrix (Fin 3) (Fin 3) Int :=
+  !![1, 2, 3;
+     0, 4, 5;
+     0, 1, 1]
+
+private theorem presentationSNFRightMulInv :
+    presentationSNFRightZ * presentationSNFRightInvZ = 1 := by
+  decide
+
+private theorem presentationSNFRightUnimodular : Unimodular presentationSNFRightZ := by
+  simpa [Unimodular] using
+    (_root_.Matrix.isUnit_det_of_right_inverse
+      (A := presentationSNFRightZ) (B := presentationSNFRightInvZ) presentationSNFRightMulInv)
+
+private theorem intEuclideanGcdSixFifteen : EuclideanDomain.gcd (6 : Int) 15 = 3 := by
+  rw [EuclideanDomain.gcd_val (6 : Int) 15]
+  norm_num
+  rw [EuclideanDomain.gcd_val (3 : Int) 6]
+  norm_num
 theorem zeroMatrixHNFSmoke :
     (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin zeroMatrixZ).H = zeroMatrixZ := by
   decide
@@ -273,22 +459,38 @@ theorem zeroMatrixHNFSmoke :
 theorem fullRankHNFSmoke :
     (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin fullRankMatrixZ).H =
       fullRankHNFMatrixZ := by
-  native_decide
+  simpa using hnfEqOfLeftCertificateInt
+    (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin fullRankMatrixZ)
+    fullRankSNFLeftZ fullRankHNFMatrixZ
+    fullRankHNFSpec fullRankSNFLeftUnimodular
+    (by decide)
 
 theorem rankDeficientHNFSmoke :
     (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin rankDeficientMatrixZ).H =
       rankDeficientHNFMatrixZ := by
-  native_decide
+  simpa using hnfEqOfLeftCertificateInt
+    (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin rankDeficientMatrixZ)
+    rankDeficientSNFLeftZ rankDeficientHNFMatrixZ
+    rankDeficientHNFSpec rankDeficientSNFLeftUnimodular
+    (by decide)
 
 theorem unitBoundaryHNFSmoke :
     (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin unitBoundaryMatrixZ).H =
       unitBoundaryHNFMatrixZ := by
-  native_decide
+  simpa using hnfEqOfLeftCertificateInt
+    (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin unitBoundaryMatrixZ)
+    (rowOperationMatrix (.smul (0 : Fin 2) (-1))) unitBoundaryHNFMatrixZ
+    unitBoundaryHNFSpec unitBoundaryRowOpUnimodular
+    (by decide)
 
 theorem presentationHNFSmoke :
     (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin presentationMatrixZ).H =
       presentationHNFMatrixZ := by
-  native_decide
+  simpa using hnfEqOfLeftCertificateInt
+    (NormalForms.Matrix.Hermite.Internal.hermiteNormalFormFin presentationMatrixZ)
+    (1 : _root_.Matrix (Fin 2) (Fin 2) Int) presentationHNFMatrixZ
+    presentationHNFSpec unimodular_one
+    (by decide)
 
 theorem zeroMatrixHNFExists :
     ∃ result, hermiteNormalForm zeroMatrixZ = some result :=
@@ -425,28 +627,27 @@ theorem simpleSmithMatrixQXSpecSmoke :
     norm_num at hk
     have hk0 : k = 0 := by omega
     subst hk0
-    simpa [NormalForms.Matrix.Smith.Internal.diagEntry, simpleSmithMatrixQX] using
-      (dvd_refl (1 : Polynomial Rat))
+    simp [NormalForms.Matrix.Smith.Internal.diagEntry, simpleSmithMatrixQX]
 
 theorem zeroMatrixSNFInvariantFactorsSmoke :
     NormalForms.Matrix.Smith.Internal.invariantFactors zeroMatrixZ = [] := by
-  native_decide
+  rfl
 
 theorem fullRankSNFInvariantFactorsSmoke :
     NormalForms.Matrix.Smith.Internal.invariantFactors fullRankSNFMatrixZ = [1, 1] := by
-  native_decide
+  rfl
 
 theorem rankDeficientSNFInvariantFactorsSmoke :
     NormalForms.Matrix.Smith.Internal.invariantFactors rankDeficientSNFMatrixZ = [1] := by
-  native_decide
+  rfl
 
 theorem unitBoundarySNFInvariantFactorsSmoke :
     NormalForms.Matrix.Smith.Internal.invariantFactors unitBoundarySNFMatrixZ = [1, 2] := by
-  native_decide
+  rfl
 
 theorem presentationSNFInvariantFactorsSmoke :
     NormalForms.Matrix.Smith.Internal.invariantFactors presentationSNFMatrixZ = [2, 2] := by
-  native_decide
+  rfl
 
 theorem simpleSmithMatrixQXInvariantFactorsSmoke :
     NormalForms.Matrix.Smith.Internal.invariantFactors simpleSmithMatrixQX = [1, 1] := by
@@ -454,31 +655,67 @@ theorem simpleSmithMatrixQXInvariantFactorsSmoke :
 
 theorem zeroMatrixSNFSmoke :
     (NormalForms.Matrix.Smith.Internal.smithNormalFormFin zeroMatrixZ).S = zeroMatrixZ := by
-  native_decide
+  rfl
 
 
 theorem fullRankSNFSmoke :
     (NormalForms.Matrix.Smith.Internal.smithNormalFormFin fullRankMatrixZ).S =
       fullRankSNFMatrixZ := by
-  native_decide
+  let cert : TwoSidedCertificate fullRankMatrixZ :=
+    { U := fullRankSNFLeftZ
+      result := fullRankSNFMatrixZ
+      V := 1
+      equation := by decide }
+  simpa [cert] using snfEqOfCertificateInt
+    (NormalForms.Matrix.Smith.Internal.smithNormalFormFin fullRankMatrixZ)
+    cert
+    (NormalForms.Matrix.Smith.Internal.isSmithNormalFormDiag_toFin fullRankSNFSpecSmoke)
+    fullRankSNFLeftUnimodular unimodular_one
 
 
 theorem rankDeficientSNFSmoke :
     (NormalForms.Matrix.Smith.Internal.smithNormalFormFin rankDeficientMatrixZ).S =
       rankDeficientSNFMatrixZ := by
-  native_decide
+  let cert : TwoSidedCertificate rankDeficientMatrixZ :=
+    { U := rankDeficientSNFLeftZ
+      result := rankDeficientSNFMatrixZ
+      V := rankDeficientSNFRightZ
+      equation := by decide }
+  simpa [cert] using snfEqOfCertificateInt
+    (NormalForms.Matrix.Smith.Internal.smithNormalFormFin rankDeficientMatrixZ)
+    cert
+    (NormalForms.Matrix.Smith.Internal.isSmithNormalFormDiag_toFin rankDeficientSNFSpecSmoke)
+    rankDeficientSNFLeftUnimodular rankDeficientSNFRightUnimodular
 
 
 theorem unitBoundarySNFSmoke :
     (NormalForms.Matrix.Smith.Internal.smithNormalFormFin unitBoundaryMatrixZ).S =
       unitBoundarySNFMatrixZ := by
-  native_decide
+  let cert : TwoSidedCertificate unitBoundaryMatrixZ :=
+    { U := rowOperationMatrix (.smul (0 : Fin 2) (-1))
+      result := unitBoundarySNFMatrixZ
+      V := 1
+      equation := by decide }
+  simpa [cert] using snfEqOfCertificateInt
+    (NormalForms.Matrix.Smith.Internal.smithNormalFormFin unitBoundaryMatrixZ)
+    cert
+    (NormalForms.Matrix.Smith.Internal.isSmithNormalFormDiag_toFin unitBoundarySNFSpecSmoke)
+    unitBoundaryRowOpUnimodular unimodular_one
 
 
 theorem presentationSNFSmoke :
     (NormalForms.Matrix.Smith.Internal.smithNormalFormFin presentationMatrixZ).S =
       presentationSNFMatrixZ := by
-  native_decide
+  let cert : TwoSidedCertificate presentationMatrixZ :=
+    { U := 1
+      result := presentationSNFMatrixZ
+      V := presentationSNFRightZ
+      equation := by decide }
+  simpa [cert] using snfEqOfCertificateInt
+    (NormalForms.Matrix.Smith.Internal.smithNormalFormFin presentationMatrixZ)
+    cert
+    (NormalForms.Matrix.Smith.Internal.isSmithNormalFormDiag_toFin presentationSNFSpecSmoke)
+    unimodular_one presentationSNFRightUnimodular
 
 
 theorem prepareLeadColumnStepDataTopLeftSmoke :
@@ -549,31 +786,35 @@ theorem improvePivotStepDataSmoke :
       exact hgcdNorm.symm.trans hgcdInt'
     exact htop''.trans hgcd
   refine ⟨htop, ?_, ?_⟩
-  · simpa [htop] using
-      NormalForms.Matrix.Smith.Internal.improvePivot_pivot_ne_zero
-        improvePivotLeadClearedStateZ (0 : Fin 2) (1 : Fin 2) hbad
-  · simpa [htop, improvePivotMatrixZ]
+  · rw [htop]
+    norm_num
+  · norm_num [htop, improvePivotMatrixZ]
 
 theorem stabilizePivotColumnWitnessSmoke :
     NormalForms.Matrix.Smith.Internal.firstUndivisibleFirstCol? prepareLeadColumnMatrixZ =
       some (0 : Fin 1) := by
-  native_decide
+  rfl
 
 theorem stabilizePivotRowWitnessSmoke :
     NormalForms.Matrix.Smith.Internal.firstUndivisibleFirstRow? prepareLeadRowMatrixZ =
       some (0 : Fin 1) := by
-  native_decide
+  rfl
 
 theorem stabilizePivotImproveWitnessSmoke :
     NormalForms.Matrix.Smith.Internal.firstUndivisibleLowerRight? improvePivotMatrixZ (6 : Int) =
       some ((0 : Fin 2), (1 : Fin 2)) := by
-  native_decide
+  rfl
 
 theorem stabilizePivotAlreadyDivisibleWitnessSmoke :
     NormalForms.Matrix.Smith.Internal.firstUndivisibleFirstCol? fullRankSNFMatrixZ = none ∧
       NormalForms.Matrix.Smith.Internal.firstUndivisibleFirstRow? fullRankSNFMatrixZ = none ∧
-      NormalForms.Matrix.Smith.Internal.firstUndivisibleLowerRight? fullRankSNFMatrixZ (1 : Int) = none := by
-  native_decide
+      NormalForms.Matrix.Smith.Internal.firstUndivisibleLowerRight? fullRankSNFMatrixZ (1 : Int) =
+        none := by
+  constructor
+  · rfl
+  constructor
+  · rfl
+  · rfl
 
 theorem stabilizePivotColumnResultSmoke :
     (NormalForms.Matrix.Smith.Internal.stabilizePivot prepareLeadColumnPivotStateZ).t.B
@@ -585,13 +826,15 @@ theorem stabilizePivotRowResultSmoke :
       0 (0 : Fin 1).succ = 0 := by
   exact (NormalForms.Matrix.Smith.Internal.stabilizePivot prepareLeadRowPivotStateZ).rowCleared _
 
+abbrev improvePivotStabilizedZ :
+    NormalForms.Matrix.Smith.Internal.PivotDivisibleState improvePivotMatrixZ :=
+  NormalForms.Matrix.Smith.Internal.stabilizePivot improvePivotLeadClearedStateZ.toPivotState
+
 theorem stabilizePivotImproveResultSmoke :
-    (NormalForms.Matrix.Smith.Internal.stabilizePivot improvePivotLeadClearedStateZ.toPivotState).t.B
-      0 0 ∣
-      (NormalForms.Matrix.Smith.Internal.stabilizePivot improvePivotLeadClearedStateZ.toPivotState).t.B
+    improvePivotStabilizedZ.t.B 0 0 ∣
+      improvePivotStabilizedZ.t.B
         (0 : Fin 2).succ (0 : Fin 2).succ := by
-  let result := NormalForms.Matrix.Smith.Internal.stabilizePivot improvePivotLeadClearedStateZ.toPivotState
-  exact result.lowerRightDivisible _ _
+  exact improvePivotStabilizedZ.lowerRightDivisible _ _
 
 theorem stabilizePivotAlreadyDivisibleResultSmoke :
     (NormalForms.Matrix.Smith.Internal.stabilizePivot fullRankSNFPivotStateZ).t.B 0 0 ∣
@@ -604,25 +847,25 @@ def fullRankSNFCertificateZ : TwoSidedCertificate fullRankMatrixZ :=
   { U := fullRankSNFLeftZ
     result := fullRankSNFMatrixZ
     V := 1
-    equation := by native_decide }
+    equation := by decide }
 
 def rankDeficientSNFCertificateZ : TwoSidedCertificate rankDeficientMatrixZ :=
   { U := rankDeficientSNFLeftZ
     result := rankDeficientSNFMatrixZ
     V := rankDeficientSNFRightZ
-    equation := by native_decide }
+    equation := by decide }
 
 def unitBoundarySNFCertificateZ : TwoSidedCertificate unitBoundaryMatrixZ :=
   { U := rowOperationMatrix (.smul (0 : Fin 2) (-1))
     result := unitBoundarySNFMatrixZ
     V := 1
-    equation := by native_decide }
+    equation := by decide }
 
 def presentationSNFCertificateZ : TwoSidedCertificate presentationMatrixZ :=
   { U := 1
     result := presentationSNFMatrixZ
     V := presentationSNFRightZ
-    equation := by native_decide }
+    equation := by decide }
 
 theorem fullRankSNFCertificateSmoke :
     fullRankSNFCertificateZ.U * fullRankMatrixZ * fullRankSNFCertificateZ.V =
@@ -823,7 +1066,8 @@ theorem fullRankRowSwapSmoke :
   decide
 
 theorem fullRankRowAddSmoke :
-    applyRowOperation fullRankMatrixZ (.add (0 : Fin 2) (1 : Fin 2) 2) = rowAddedFullRankMatrixZ := by
+    applyRowOperation fullRankMatrixZ (.add (0 : Fin 2) (1 : Fin 2) 2) =
+      rowAddedFullRankMatrixZ := by
   decide
 
 theorem fullRankRowScaleSmoke :
@@ -850,7 +1094,8 @@ theorem mixedReplaySmoke :
   decide
 
 theorem fullRankRowSwapMatrixSmoke :
-    rowOperationMatrix (.swap (0 : Fin 2) (1 : Fin 2)) * fullRankMatrixZ = swappedFullRankMatrixZ := by
+    rowOperationMatrix (.swap (0 : Fin 2) (1 : Fin 2)) * fullRankMatrixZ =
+      swappedFullRankMatrixZ := by
   calc
     rowOperationMatrix (.swap (0 : Fin 2) (1 : Fin 2)) * fullRankMatrixZ
         = applyRowOperation fullRankMatrixZ (.swap (0 : Fin 2) (1 : Fin 2)) :=
@@ -858,7 +1103,8 @@ theorem fullRankRowSwapMatrixSmoke :
     _ = swappedFullRankMatrixZ := fullRankRowSwapSmoke
 
 theorem fullRankRowAddMatrixSmoke :
-    rowOperationMatrix (.add (0 : Fin 2) (1 : Fin 2) 2) * fullRankMatrixZ = rowAddedFullRankMatrixZ := by
+    rowOperationMatrix (.add (0 : Fin 2) (1 : Fin 2) 2) * fullRankMatrixZ =
+      rowAddedFullRankMatrixZ := by
   calc
     rowOperationMatrix (.add (0 : Fin 2) (1 : Fin 2) 2) * fullRankMatrixZ
         = applyRowOperation fullRankMatrixZ (.add (0 : Fin 2) (1 : Fin 2) 2) :=
@@ -901,10 +1147,12 @@ theorem presentationColumnScaleMatrixSmoke :
     _ = scaledPresentationColumnsZ := presentationColumnScaleSmoke
 
 theorem mixedReplayCertificateSmoke :
-    leftAccumulator mixedLog * presentationMatrixZ * rightAccumulator mixedLog = mixedReplayMatrixZ := by
+    leftAccumulator mixedLog * presentationMatrixZ * rightAccumulator mixedLog =
+      mixedReplayMatrixZ := by
   calc
     leftAccumulator mixedLog * presentationMatrixZ * rightAccumulator mixedLog
-        = replayLog presentationMatrixZ mixedLog := replayLog_eq_left_right presentationMatrixZ mixedLog
+        = replayLog presentationMatrixZ mixedLog := by
+            exact replayLog_eq_left_right presentationMatrixZ mixedLog
     _ = mixedReplayMatrixZ := mixedReplaySmoke
 
 theorem mixedLogCertificateSafe : mixedLog.Forall UnimodularStep := by
@@ -928,7 +1176,8 @@ theorem mixedLogTwoSidedCertificateSmoke :
   exact (TwoSidedCertificate.ofLog (A := presentationMatrixZ) mixedLog).equation
 
 theorem rowOnlyLogLeftCertificateSmoke :
-    (LeftCertificate.ofRowLog (A := fullRankMatrixZ) rowOnlyLog rowOnlyLogIsRow).U * fullRankMatrixZ =
+    (LeftCertificate.ofRowLog (A := fullRankMatrixZ) rowOnlyLog rowOnlyLogIsRow).U *
+        fullRankMatrixZ =
       (LeftCertificate.ofRowLog (A := fullRankMatrixZ) rowOnlyLog rowOnlyLogIsRow).result := by
   exact (LeftCertificate.ofRowLog (A := fullRankMatrixZ) rowOnlyLog rowOnlyLogIsRow).equation
 
@@ -939,38 +1188,45 @@ theorem nonUnitScaleStillExecutes :
   decide
 
 theorem nonUnitScaleNotCertificateSafe :
-    ¬ UnimodularStep (MatrixStep.row (.smul (0 : Fin 2) (2 : Int)) : MatrixStep Int (Fin 2) (Fin 3)) := by
+    ¬ UnimodularStep
+      (MatrixStep.row (.smul (0 : Fin 2) (2 : Int)) : MatrixStep Int (Fin 2) (Fin 3)) := by
   simpa [UnimodularStep, UnimodularRowOperation] using (show ¬ IsUnit (2 : Int) by decide)
 
 theorem bezoutIntSmoke :
     _root_.Matrix.mulVec (bezoutReductionMatrix (6 : Int) 15) ![6, 15] = ![3, 0] := by
   calc
     _ = ![EuclideanDomain.gcd (6 : Int) 15, 0] := bezoutReductionMatrix_mulVec (6 : Int) 15
-    _ = ![3, 0] := by native_decide
+    _ = ![3, 0] := by simp [intEuclideanGcdSixFifteen]
 
 theorem bezoutIntTransposeSmoke :
-    _root_.Matrix.vecMul ![6, 15] (bezoutReductionMatrix (6 : Int) 15).transpose = ![3, 0] := by
+    _root_.Matrix.vecMul ![6, 15] (bezoutReductionMatrix (6 : Int) 15).transpose =
+      ![3, 0] := by
   calc
-    _ = ![EuclideanDomain.gcd (6 : Int) 15, 0] := vecMul_bezoutReductionMatrix_transpose (6 : Int) 15
-    _ = ![3, 0] := by native_decide
+    _ = ![EuclideanDomain.gcd (6 : Int) 15, 0] := by
+          exact vecMul_bezoutReductionMatrix_transpose (6 : Int) 15
+    _ = ![3, 0] := by simp [intEuclideanGcdSixFifteen]
 
 theorem bezoutIntUnimodularSmoke :
     IsUnit (bezoutReductionMatrix (6 : Int) 15).det := by
-  simpa [det_bezoutReductionMatrix (6 : Int) 15]
+  simp [det_bezoutReductionMatrix (6 : Int) 15]
 
 theorem bezoutPolynomialSmoke :
     _root_.Matrix.mulVec
-        (bezoutReductionMatrix ((Polynomial.X : Polynomial Rat) + 1) (Polynomial.X : Polynomial Rat))
+        (bezoutReductionMatrix
+          ((Polynomial.X : Polynomial Rat) + 1) (Polynomial.X : Polynomial Rat))
         ![((Polynomial.X : Polynomial Rat) + 1), (Polynomial.X : Polynomial Rat)] =
-      ![EuclideanDomain.gcd ((Polynomial.X : Polynomial Rat) + 1) (Polynomial.X : Polynomial Rat), 0] := by
-  simpa using
-    (bezoutReductionMatrix_mulVec ((Polynomial.X : Polynomial Rat) + 1) (Polynomial.X : Polynomial Rat))
+      ![
+        EuclideanDomain.gcd ((Polynomial.X : Polynomial Rat) + 1) (Polynomial.X : Polynomial Rat),
+        0
+      ] := by
+  exact
+    bezoutReductionMatrix_mulVec
+      ((Polynomial.X : Polynomial Rat) + 1) (Polynomial.X : Polynomial Rat)
 
 theorem presentationColumnSpanBridgeSmoke :
     NormalForms.Bridge.MathlibPID.pidSmithColumnSpan presentationMatrixZ =
       LinearMap.range presentationMatrixZ.mulVecLin := by
-  simpa using
-    NormalForms.Bridge.MathlibPID.pidSmithColumnSpan_eq_range_mulVecLin presentationMatrixZ
+  exact NormalForms.Bridge.MathlibPID.pidSmithColumnSpan_eq_range_mulVecLin presentationMatrixZ
 
 end NormalForms.Examples.AbelianGroups
 
