@@ -63,11 +63,11 @@ private theorem zero_topRow_mul_diagLiftMatrix {m n : Nat} {R : Type _}
 
 
 private theorem dvd_matrix_mul_of_right {l m n : Type _} {R : Type _}
-    [Fintype l] [Fintype m] [Fintype n]
-    [DecidableEq l] [DecidableEq m] [DecidableEq n] [CommRing R]
+    [Fintype m] [CommRing R]
     {d : R} {A : _root_.Matrix l m R} {B : _root_.Matrix m n R}
     (hB : ∀ i j, d ∣ B i j) :
     ∀ i j, d ∣ (A * B) i j := by
+  classical
   intro i j
   rw [_root_.Matrix.mul_apply]
   refine Finset.dvd_sum ?_
@@ -80,11 +80,11 @@ private theorem dvd_matrix_mul_of_right {l m n : Type _} {R : Type _}
 
 
 private theorem dvd_matrix_mul_of_left {l m n : Type _} {R : Type _}
-    [Fintype l] [Fintype m] [Fintype n]
-    [DecidableEq l] [DecidableEq m] [DecidableEq n] [CommRing R]
+    [Fintype m] [CommRing R]
     {d : R} {A : _root_.Matrix l m R} {B : _root_.Matrix m n R}
     (hA : ∀ i j, d ∣ A i j) :
     ∀ i j, d ∣ (A * B) i j := by
+  classical
   intro i j
   rw [_root_.Matrix.mul_apply]
   refine Finset.dvd_sum ?_
@@ -96,7 +96,7 @@ private theorem dvd_matrix_mul_of_left {l m n : Type _} {R : Type _}
     _ = d * (x * B k j) := by ring
 
 private theorem mod_ne_zero_of_not_dvd {R : Type _} [EuclideanDomain R]
-    {a b : R} (ha : a ≠ 0) (hnot : ¬ a ∣ b) :
+    {a b : R} (_ha : a ≠ 0) (hnot : ¬ a ∣ b) :
     b % a ≠ 0 := by
   intro hmod
   exact hnot ((EuclideanDomain.mod_eq_zero).1 hmod)
@@ -373,7 +373,7 @@ theorem prepareLeadColumnStepData_pivot_normalized {m n : Nat} {R : Type _}
     (prepareLeadColumnStepData t i).B 0 0 =
       normalize ((prepareLeadColumnStepData t i).B 0 0) := by
   rw [prepareLeadColumnStepData_topLeft_eq_normalize_gcd t i hwit]
-  simpa using (normalize_idem (EuclideanDomain.gcd (t.B 0 0) (t.B i.succ 0))).symm
+  simp
 
 
 theorem prepareLeadColumnStepData_preserves_prefix_zero {m n : Nat} {R : Type _}
@@ -416,7 +416,7 @@ theorem prepareLeadRowStepData_pivot_normalized {m n : Nat} {R : Type _}
     (prepareLeadRowStepData t j).B 0 0 =
       normalize ((prepareLeadRowStepData t j).B 0 0) := by
   rw [prepareLeadRowStepData_topLeft_eq_normalize_gcd t j hwit]
-  simpa using (normalize_idem (EuclideanDomain.gcd (t.B 0 0) (t.B 0 j.succ))).symm
+  simp
 
 
 theorem prepareLeadRowStepData_preserves_prefix_zero {m n : Nat} {R : Type _}
@@ -657,9 +657,9 @@ theorem prepareLeadRow_factors_card_lt {m n : Nat} {R : Type _}
 def injectLowerRightWitnessToFirstColData {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 2)) R}
-    (s : LeadClearedState A) (i : Fin (m + 1)) (j : Fin (n + 1)) : TwoSidedTransform A :=
+    (s : LeadClearedState A) (_i : Fin (m + 1)) (j : Fin (n + 1)) : TwoSidedTransform A :=
   s.t.trans
-    (TwoSidedTransform.addCols s.t.B j.succ 0 (1 : R) (by simpa using (Fin.succ_ne_zero j)))
+    (TwoSidedTransform.addCols s.t.B j.succ 0 (1 : R) (by simp))
 
 
 theorem injectLowerRightWitnessToFirstCol_topLeft {m n : Nat} {R : Type _}
@@ -730,7 +730,7 @@ theorem improvePivot_pivot_normalized {m n : Nat} {R : Type _}
     (improvePivotStepData s i j).B 0 0 =
       normalize ((improvePivotStepData s i j).B 0 0) := by
   rw [improvePivot_topLeft_eq_normalize_gcd s i j hbad]
-  simpa using (normalize_idem (EuclideanDomain.gcd (s.t.B 0 0) (s.t.B i.succ j.succ))).symm
+  simp
 
 
 theorem improvePivot_strict_descent {m n : Nat} {R : Type _}
@@ -822,7 +822,7 @@ private def clearFirstColumnByPivotStepData {m n : Nat} {R : Type _}
     (t : TwoSidedTransform A) (i : Fin m) : TwoSidedTransform A :=
   t.trans
     (TwoSidedTransform.addRows t.B 0 i.succ (clearFirstColumnCoeff t.B i)
-      (by simpa [eq_comm] using (Fin.succ_ne_zero i)))
+      (by simp [eq_comm]))
 
 
 private def clearFirstRowByPivotStepData {m n : Nat} {R : Type _}
@@ -831,7 +831,7 @@ private def clearFirstRowByPivotStepData {m n : Nat} {R : Type _}
     (t : TwoSidedTransform A) (j : Fin n) : TwoSidedTransform A :=
   t.trans
     (TwoSidedTransform.addCols t.B 0 j.succ (clearFirstRowCoeff t.B j)
-      (by simpa [eq_comm] using (Fin.succ_ne_zero j)))
+      (by simp [eq_comm]))
 
 
 private def clearFirstColumnByPivotTransform {m n : Nat} {R : Type _}
@@ -854,7 +854,7 @@ private def clearFirstRowByPivotTransform {m n : Nat} {R : Type _}
     (s : PivotState A) (i : Fin m) :
     (clearFirstColumnByPivotTransform s i).B 0 0 = s.t.B 0 0 := by
   have hne : (0 : Fin (m + 1)) ≠ i.succ := by
-    simpa [eq_comm] using (Fin.succ_ne_zero i)
+    simp [eq_comm]
   change (clearFirstColumnByPivotStepData s.t i).B 0 0 = s.t.B 0 0
   simp [clearFirstColumnByPivotStepData, TwoSidedTransform.trans, TwoSidedTransform.addRows,
     applyRowOperation, hne]
@@ -866,7 +866,7 @@ private def clearFirstRowByPivotTransform {m n : Nat} {R : Type _}
     (s : PivotState A) (j : Fin n) :
     (clearFirstRowByPivotTransform s j).B 0 0 = s.t.B 0 0 := by
   have hne : (0 : Fin (n + 1)) ≠ j.succ := by
-    simpa [eq_comm] using (Fin.succ_ne_zero j)
+    simp [eq_comm]
   change (clearFirstRowByPivotStepData s.t j).B 0 0 = s.t.B 0 0
   simp [clearFirstRowByPivotStepData, TwoSidedTransform.trans, TwoSidedTransform.addCols,
     applyColumnOperation, hne]
@@ -876,7 +876,7 @@ def clearFirstColumnByPivotStep {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
     (s : PivotState A) (i : Fin m)
-    (hdiv : s.t.B 0 0 ∣ s.t.B i.succ 0) :
+    (_hdiv : s.t.B 0 0 ∣ s.t.B i.succ 0) :
     PivotState A :=
   let t := clearFirstColumnByPivotTransform s i
   { t := t
@@ -891,7 +891,7 @@ def clearFirstRowByPivotStep {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
     (s : PivotState A) (j : Fin n)
-    (hdiv : s.t.B 0 0 ∣ s.t.B 0 j.succ) :
+    (_hdiv : s.t.B 0 0 ∣ s.t.B 0 j.succ) :
     PivotState A :=
   let t := clearFirstRowByPivotTransform s j
   { t := t
@@ -918,7 +918,7 @@ theorem clearFirstColumnByPivotStep_topRow {m n : Nat} {R : Type _}
     (s : PivotState A) (i : Fin m) (hdiv : s.t.B 0 0 ∣ s.t.B i.succ 0) (j : Fin (n + 1)) :
     (clearFirstColumnByPivotStep s i hdiv).t.B 0 j = s.t.B 0 j := by
   have hne : (0 : Fin (m + 1)) ≠ i.succ := by
-    simpa [eq_comm] using (Fin.succ_ne_zero i)
+    simp [eq_comm]
   change (clearFirstColumnByPivotStepData s.t i).B 0 j = s.t.B 0 j
   simp [clearFirstColumnByPivotStepData, TwoSidedTransform.trans, TwoSidedTransform.addRows,
     applyRowOperation, hne]
@@ -996,7 +996,7 @@ theorem clearFirstRowByPivotStep_firstCol {m n : Nat} {R : Type _}
     (s : PivotState A) (j : Fin n) (hdiv : s.t.B 0 0 ∣ s.t.B 0 j.succ) (i : Fin (m + 1)) :
     (clearFirstRowByPivotStep s j hdiv).t.B i 0 = s.t.B i 0 := by
   have hne : (0 : Fin (n + 1)) ≠ j.succ := by
-    simpa [eq_comm] using (Fin.succ_ne_zero j)
+    simp [eq_comm]
   change (clearFirstRowByPivotStepData s.t j).B i 0 = s.t.B i 0
   simp [clearFirstRowByPivotStepData, TwoSidedTransform.trans, TwoSidedTransform.addCols,
     applyColumnOperation, hne]
@@ -1083,7 +1083,7 @@ private theorem clearFirstColumnByPivotStepData_topLeft {m n : Nat} {R : Type _}
     (t : TwoSidedTransform A) (i : Fin m)
     (htop : t.B 0 0 ≠ 0)
     (hnorm : t.B 0 0 = normalize (t.B 0 0))
-    (hdiv : t.B 0 0 ∣ t.B i.succ 0) :
+    (_hdiv : t.B 0 0 ∣ t.B i.succ 0) :
     (clearFirstColumnByPivotStepData t i).B 0 0 = t.B 0 0 := by
   let s : PivotState A :=
     { t := t
@@ -1166,7 +1166,7 @@ private theorem clearFirstRowByPivotStepData_topLeft {m n : Nat} {R : Type _}
     (t : TwoSidedTransform A) (j : Fin n)
     (htop : t.B 0 0 ≠ 0)
     (hnorm : t.B 0 0 = normalize (t.B 0 0))
-    (hdiv : t.B 0 0 ∣ t.B 0 j.succ) :
+    (_hdiv : t.B 0 0 ∣ t.B 0 j.succ) :
     (clearFirstRowByPivotStepData t j).B 0 0 = t.B 0 0 := by
   let s : PivotState A :=
     { t := t
@@ -1729,7 +1729,10 @@ def stabilizePivot {m n : Nat} {R : Type _}
                     (firstUndivisibleFirstRow?_some_not_dvd state.t.B hrow)
                 exact recurse next hlt
             | none =>
-                let hcolDiv : ∀ i : Fin 0, state.t.B 0 0 ∣ state.t.B i.succ 0 := fun i => Fin.elim0 i
+                let hcolDiv :
+                    ∀ i : Fin 0, state.t.B 0 0 ∣ state.t.B i.succ 0 := by
+                  intro i
+                  exact Fin.elim0 i
                 let hrowDiv := firstUndivisibleFirstRow?_eq_none state.t.B hrow
                 let sClear := clearLeadByPivot state hcolDiv hrowDiv
                 exact sClear.toPivotDivisibleState (fun i => Fin.elim0 i)
@@ -1746,7 +1749,10 @@ def stabilizePivot {m n : Nat} {R : Type _}
                 exact recurse next hlt
             | none =>
                 let hcolDiv := firstUndivisibleFirstCol?_eq_none state.t.B hcol
-                let hrowDiv : ∀ j : Fin 0, state.t.B 0 0 ∣ state.t.B 0 j.succ := fun j => Fin.elim0 j
+                let hrowDiv :
+                    ∀ j : Fin 0, state.t.B 0 0 ∣ state.t.B 0 j.succ := by
+                  intro j
+                  exact Fin.elim0 j
                 let sClear := clearLeadByPivot state hcolDiv hrowDiv
                 exact sClear.toPivotDivisibleState (fun i j => Fin.elim0 j)
         | succ n =>
@@ -1855,9 +1861,12 @@ def smithNormalFormFin {m n : Nat} {R : Type _}
                 zero_topRow_mul_diagLiftMatrix (A := tAfterLeft.B) lowerRes.V hAfterLeftRow j
             have hFinalCol : ∀ i : Fin m, tFinal.B i.succ 0 = 0 := by
               intro i
-              rw [show tFinal.B i.succ 0 = tAfterLeft.B i.succ 0 by
-                simpa [tFinal, tLiftRight, TwoSidedTransform.diagLiftRight, TwoSidedTransform.trans] using
-                  mul_diagLiftMatrix_firstCol tAfterLeft.B lowerRes.V i.succ]
+              have hfirstCol : tFinal.B i.succ 0 = tAfterLeft.B i.succ 0 := by
+                change
+                  (tAfterLeft.B * diagLiftMatrix lowerRes.V) i.succ 0 =
+                    tAfterLeft.B i.succ 0
+                exact mul_diagLiftMatrix_firstCol tAfterLeft.B lowerRes.V i.succ
+              rw [hfirstCol]
               exact hAfterLeftCol i
             have hFinalLower : lowerRight tFinal.B = lowerRes.S := by
               calc
@@ -1865,9 +1874,7 @@ def smithNormalFormFin {m n : Nat} {R : Type _}
                     = lowerRight (tAfterLeft.B * diagLiftMatrix lowerRes.V) := by
                         rfl
                 _ = lowerRight tAfterLeft.B * lowerRes.V := by
-                      simpa [tFinal, tLiftRight, TwoSidedTransform.diagLiftRight,
-                        TwoSidedTransform.trans] using
-                        lowerRight_mul_diagLiftMatrix tAfterLeft.B lowerRes.V
+                      exact lowerRight_mul_diagLiftMatrix tAfterLeft.B lowerRes.V
                 _ = (lowerRes.U * lowerRight state.t.B) * lowerRes.V := by
                       simp [tAfterLeft, tLiftLeft, TwoSidedTransform.diagLiftLeft,
                         TwoSidedTransform.trans, lowerRight_diagLiftMatrix_mul]

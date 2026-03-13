@@ -262,14 +262,18 @@ private theorem minor_dvd_of_left_mul {k m n : Nat} {R : Type _}
       ∀ r' : Fin k ↪ Fin n, ∀ c' : Fin k ↪ Fin m,
         d ∣ _root_.Matrix.det (M.transpose.submatrix r' c') := by
     intro r' c'
-    have hEq : _root_.Matrix.det (M.transpose.submatrix r' c') = _root_.Matrix.det (M.submatrix c' r') := by
+    have hEq :
+        _root_.Matrix.det (M.transpose.submatrix r' c') =
+          _root_.Matrix.det (M.submatrix c' r') := by
       simpa [_root_.Matrix.transpose_submatrix] using
         (_root_.Matrix.det_transpose (M := M.submatrix c' r'))
     rw [hEq]
     exact hM c' r'
   have hRight : d ∣ _root_.Matrix.det ((M.transpose * U.transpose).submatrix c r) :=
     minor_dvd_of_right_mul (M := M.transpose) (N := U.transpose) (d := d) hTranspose c r
-  have hEq : _root_.Matrix.det ((M.transpose * U.transpose).submatrix c r) = _root_.Matrix.det ((U * M).submatrix r c) := by
+  have hEq :
+      _root_.Matrix.det ((M.transpose * U.transpose).submatrix c r) =
+        _root_.Matrix.det ((U * M).submatrix r c) := by
     calc
       _root_.Matrix.det ((M.transpose * U.transpose).submatrix c r)
           = _root_.Matrix.det (((U * M).submatrix r c).transpose) := by
@@ -462,7 +466,8 @@ private theorem det_minor_head_factor_of_offDiagZero {k m n : Nat} {R : Type _}
     (hr0 : r 0 = 0) (hc0 : c 0 = 0) :
     _root_.Matrix.det (A.submatrix r c) =
       A 0 0 * _root_.Matrix.det
-        ((lowerRight A).submatrix (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0)) := by
+        ((lowerRight A).submatrix
+          (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0)) := by
   let M := A.submatrix r c
   let f : Fin (k + 1) → R := fun j =>
     (-1) ^ (j : ℕ) * M 0 j * _root_.Matrix.det (M.submatrix Fin.succ (Fin.succAbove j))
@@ -490,7 +495,8 @@ private theorem det_minor_head_factor_of_offDiagZero {k m n : Nat} {R : Type _}
     _ = A 0 0 * _root_.Matrix.det (lowerRight (A.submatrix r c)) := by
       rfl
     _ = A 0 0 * _root_.Matrix.det
-          ((lowerRight A).submatrix (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0)) := by
+          ((lowerRight A).submatrix
+            (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0)) := by
       rw [submatrix_lowerRight_eq_submatrix_tail A r c hr0 hc0]
 private theorem det_minor_zero_of_missing_head_row {k m n : Nat} {R : Type _}
     [CommRing R]
@@ -529,7 +535,8 @@ private theorem det_minor_eq_head_mul_lowerRight_minor {k m n : Nat} {R : Type _
     (hr0 : r 0 = 0) (hc0 : c 0 = 0) :
     _root_.Matrix.det (A.submatrix r c) =
       A 0 0 * _root_.Matrix.det
-        ((lowerRight A).submatrix (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0)) := by
+        ((lowerRight A).submatrix
+          (tailEmbeddingOfHeadZero r hr0) (tailEmbeddingOfHeadZero c hc0)) := by
   let _ := h00
   simpa using det_minor_head_factor_of_offDiagZero (A := A) hOff r c hr0 hc0
 
@@ -627,7 +634,8 @@ private theorem diagPrefixProduct_dvd_minor_step {m n k : Nat} {R : Type _}
           exact hTail r' c'
         have hmul :
             diagPrefixProduct A (k + 1) (succ_le_min_succ hk) ∣
-              A 0 0 * _root_.Matrix.det ((A.submatrix r c).submatrix i.succAbove (Fin.succAbove j)) := by
+              A 0 0 * _root_.Matrix.det
+                ((A.submatrix r c).submatrix i.succAbove (Fin.succAbove j)) := by
           rw [hprefix]
           exact mul_dvd_mul (dvd_refl _) hminor
         simpa [hi, hj, mul_assoc, mul_left_comm, mul_comm] using
@@ -688,14 +696,17 @@ private theorem diagPrefixProduct_dvd_minor_step {m n k : Nat} {R : Type _}
       have hentry : A 0 0 ∣ B 0 j := by
         by_cases hEqIdx : (r' 0).1 = (c' j).1
         · have hkHead : (r' 0).1 < Nat.min m n := by
-            exact lt_min_iff.mpr ⟨(r' 0).is_lt, by simpa [hEqIdx] using (c' j).is_lt⟩
+            exact lt_min_iff.mpr ⟨(r' 0).is_lt, by simp [hEqIdx]⟩
           have hdiag : A 0 0 ∣ diagEntry (lowerRight A) (r' 0).1 hkHead := by
             rw [diagEntry_lowerRight (A := A) (r' 0).1 hkHead]
             exact headDiag_dvd_diagEntry_of_diagChain hChain (r' 0).1 hkHead
-          have hcEq : c' j = ⟨(r' 0).1, by simpa [hEqIdx] using (c' j).is_lt⟩ := by
+          have hcEq : c' j = ⟨(r' 0).1, by simp [hEqIdx]⟩ := by
             ext
-            simpa [hEqIdx]
-          simpa [B, diagEntry, hcEq] using hdiag
+            simp [hEqIdx]
+          change A 0 0 ∣ (lowerRight A) (r' 0) (c' j)
+          rw [hcEq]
+          change A 0 0 ∣ diagEntry (lowerRight A) (r' 0).1 hkHead
+          exact hdiag
         · have hzeroEntry : B 0 j = 0 := by
             exact offDiagZero_lowerRight hOff (r' 0) (c' j) hEqIdx
           rw [hzeroEntry]
@@ -736,18 +747,15 @@ private theorem diagPrefixProduct_dvd_minor {m n k : Nat} {R : Type _}
   induction k generalizing m n A with
   | zero =>
       intro r c
-      simpa [diagPrefixProduct_zero (A := A) hk] using
-        (one_dvd (_root_.Matrix.det (A.submatrix r c)))
+      simp [diagPrefixProduct_zero (A := A) hk]
   | succ k ih =>
       cases m with
       | zero =>
-          have : False := by simpa using hk
-          exact this.elim
+          simp at hk
       | succ m =>
           cases n with
           | zero =>
-              have : False := by simpa using hk
-              exact this.elim
+              simp at hk
           | succ n =>
               have hkTail : k ≤ Nat.min m n := by
                 refine le_min_iff.mpr ?_
@@ -804,10 +812,9 @@ private theorem invariantFactors_length_le_min {m n : Nat} {R : Type _}
           by_cases h0 : normalize (A 0 0) = 0
           · simp [invariantFactors, h0]
           · rw [invariantFactors]
-            simp [h0]
             have hlen : (invariantFactors (lowerRight A)).length ≤ Nat.min m n :=
               ih (lowerRight A)
-            exact ⟨le_trans hlen (Nat.min_le_left _ _), le_trans hlen (Nat.min_le_right _ _)⟩
+            simpa [h0, Nat.add_min_add_right] using Nat.succ_le_succ hlen
 
 private theorem lt_min_of_succ_lt_min_succ {a b k : Nat}
     (hk : k + 1 < Nat.min (a + 1) (b + 1)) :
@@ -856,10 +863,10 @@ private theorem diagEntry_eq_zero_of_invariantFactors_length_le {m n : Nat} {R :
   induction hA generalizing k with
   | emptyRows A =>
       intro hkLen hk
-      simpa using hk
+      simp at hk
   | emptyCols A =>
       intro hkLen hk
-      simpa using hk
+      simp at hk
   | zeroLead A hzero hrow hcol hLowerZero =>
       intro hkLen hk
       cases k with
@@ -892,19 +899,19 @@ private theorem diagEntry_dvd_of_diagChain {m n : Nat} {R : Type _}
   induction m generalizing n with
   | zero =>
       intro i j hij hi hj
-      simpa using hi
+      simp at hi
   | succ m ih =>
       cases n with
       | zero =>
           intro i j hij hi hj
-          simpa using hi
+          simp at hi
       | succ n =>
           intro i j hij hi hj
           cases i with
           | zero =>
               cases j with
               | zero =>
-                  simpa [diagEntry] using dvd_rfl (A 0 0)
+                  simp [diagEntry]
               | succ j =>
                   have hj' : j < Nat.min m n := lt_min_of_succ_lt_min_succ hj
                   simpa [diagEntry] using headDiag_dvd_diagEntry_of_diagChain hChain j hj'
@@ -1099,7 +1106,8 @@ private theorem invariantFactors_length_eq_of_two_sided_equiv {m n : Nat} {R : T
     have hPrefixEq := diagPrefixProduct_eq_of_two_sided_equiv hA hB hU hV hEq
       (invariantFactors A).length hk
     have hANe := diagPrefixProduct_ne_zero_of_le_invariantFactors_length hA
-      (invariantFactors A).length (le_rfl : (invariantFactors A).length ≤ (invariantFactors A).length) hk
+      (invariantFactors A).length
+      (le_rfl : (invariantFactors A).length ≤ (invariantFactors A).length) hk
     have hBZero := diagPrefixProduct_eq_zero_of_invariantFactors_length_lt hB
       (invariantFactors A).length hlt hk
     exact hANe (hPrefixEq.trans hBZero)
@@ -1110,7 +1118,8 @@ private theorem invariantFactors_length_eq_of_two_sided_equiv {m n : Nat} {R : T
     have hPrefixEq := diagPrefixProduct_eq_of_two_sided_equiv hA hB hU hV hEq
       (invariantFactors B).length hk
     have hBNe := diagPrefixProduct_ne_zero_of_le_invariantFactors_length hB
-      (invariantFactors B).length (le_rfl : (invariantFactors B).length ≤ (invariantFactors B).length) hk
+      (invariantFactors B).length
+      (le_rfl : (invariantFactors B).length ≤ (invariantFactors B).length) hk
     have hAZero := diagPrefixProduct_eq_zero_of_invariantFactors_length_lt hA
       (invariantFactors B).length hlt hk
     exact hBNe (hPrefixEq.symm.trans hAZero)
@@ -1165,29 +1174,27 @@ theorem isSmithNormalFormFin_unique_of_two_sided_equiv {m n : Nat} {R : Type _}
   ext i j
   by_cases hij : i.1 = j.1
   · have hk : i.1 < Nat.min m n := by
-      exact lt_min_iff.mpr ⟨i.is_lt, by simpa [hij] using j.is_lt⟩
+      exact lt_min_iff.mpr ⟨i.is_lt, by simp [hij]⟩
     have hDiag := diagEntry_eq_of_two_sided_equiv hA hB hU hV hEq i.1 hk
     have hi : i = ⟨i.1, Nat.lt_of_lt_of_le hk (Nat.min_le_left _ _)⟩ := by
       ext
       rfl
     have hj : j = ⟨i.1, Nat.lt_of_lt_of_le hk (Nat.min_le_right _ _)⟩ := by
       ext
-      simpa [hij]
+      simp [hij]
     have hAij : A i j = diagEntry A i.1 hk := by
       cases i with
       | mk iv hi' =>
           cases j with
           | mk jv hj' =>
-              simp at hij
-              subst hij
+              cases hij
               simp [diagEntry]
     have hBij : diagEntry B i.1 hk = B i j := by
       cases i with
       | mk iv hi' =>
           cases j with
           | mk jv hj' =>
-              simp at hij
-              subst hij
+              cases hij
               simp [diagEntry]
     calc
       A i j = diagEntry A i.1 hk := hAij
@@ -1356,12 +1363,14 @@ theorem isSmithNormalForm_unique_of_two_sided_equiv {m n R : Type _}
           _root_.Matrix.reindex en en V
           = _root_.Matrix.reindex em en (U * A) *
               _root_.Matrix.reindex en en V := by
-              simpa [Matrix.reindexLinearEquiv, _root_.Matrix.mul_assoc] using
+              have h :=
                 congrArg (fun X => X * _root_.Matrix.reindex en en V)
                   (Matrix.reindexLinearEquiv_mul R R em em en U A)
+              exact h
       _ = _root_.Matrix.reindex em en ((U * A) * V) := by
-            simpa [Matrix.reindexLinearEquiv] using
-              (Matrix.reindexLinearEquiv_mul R R em en en (U * A) V)
+            have h :=
+              Matrix.reindexLinearEquiv_mul R R em en en (U * A) V
+            exact h
       _ = _root_.Matrix.reindex em en B := by
             simpa [_root_.Matrix.mul_assoc] using congrArg (_root_.Matrix.reindex em en) hEq
   have hUniqueFin :

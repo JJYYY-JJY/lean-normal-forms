@@ -170,7 +170,9 @@ theorem firstNonzeroEntry?_eq_none {m n : Nat} {R : Type _}
               exact ih hk' hgo' i' hi' j'
             · have : i' = ⟨k, Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk⟩ := Fin.ext hEq
               subst this
-              cases hrow : firstNonzero? (fun s : Fin n => A ⟨k, Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk⟩ s) with
+              cases hrow :
+                  firstNonzero?
+                    (fun s : Fin n => A ⟨k, Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk⟩ s) with
               | none =>
                   exact firstNonzero?_eq_none _ hrow j'
               | some p =>
@@ -199,22 +201,21 @@ theorem firstNonzeroEntry?_some_ne_zero {m n : Nat} {R : Type _}
         induction k with
         | zero =>
             intro hk p h
-            simpa [firstNonzeroEntry?.goRows] using h
+            simp [firstNonzeroEntry?.goRows] at h
         | succ k ih =>
             intro hk p h
             let hk' : k ≤ m := Nat.le_of_lt (Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk)
             cases hgo : firstNonzeroEntry?.goRows A k hk' with
             | some q =>
-                simp [firstNonzeroEntry?.goRows, hgo] at h
-                cases h
+                have hp : q = p := by
+                  simpa [firstNonzeroEntry?.goRows, hgo] using h
+                cases hp
                 exact ih hk' hgo
             | none =>
                 let i : Fin m := ⟨k, Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk⟩
                 cases hrow : firstNonzero? (fun j : Fin n => A i j) with
                 | none =>
-                    have : none = some p := by
-                      simpa [firstNonzeroEntry?.goRows, hgo, i, hrow] using h
-                    cases this
+                    simp [firstNonzeroEntry?.goRows, hgo, i, hrow] at h
                 | some j =>
                     have h' : some (i, j) = some p := by
                       simpa [firstNonzeroEntry?.goRows, hgo, i, hrow] using h
@@ -228,7 +229,7 @@ def firstUndivisible? {R : Type _}
     {n : Nat} -> R -> (Fin n -> R) -> Option (Fin n)
   | 0, _, _ => none
   | _ + 1, d, row =>
-      if hmod : row 0 % d = 0 then
+      if _hmod : row 0 % d = 0 then
         Option.map Fin.succ (firstUndivisible? d fun j => row j.succ)
       else
         some 0
@@ -262,14 +263,15 @@ theorem firstUndivisible?_some_not_dvd {R : Type _}
       · rw [firstUndivisible?, hmod] at hsome
         cases i using Fin.cases with
         | zero =>
-            simp at hsome
+                simp at hsome
         | succ j =>
             cases htail : firstUndivisible? d (fun k => row k.succ) with
             | none =>
                 simp [htail] at hsome
             | some j' =>
-                simp [htail] at hsome
-                subst hsome
+                have hj' : j' = j := by
+                  simpa [htail] using hsome
+                subst hj'
                 exact firstUndivisible?_some_not_dvd d (fun k => row k.succ) htail
       · cases i using Fin.cases with
         | zero =>
@@ -326,9 +328,7 @@ theorem firstUndivisibleLowerRight?_eq_none {m n : Nat} {R : Type _}
                 | none =>
                     rfl
                 | some p =>
-                    have : some p = none := by
-                      simpa [firstUndivisibleLowerRight?.goRows, hgoRows] using hgo
-                    cases this
+                    simp [firstUndivisibleLowerRight?.goRows, hgoRows] at hgo
               exact ih hk' hgo' i' hi' j'
             · let i0 : Fin m := ⟨k, Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk⟩
               have : i' = i0 := Fin.ext hEq
@@ -372,14 +372,15 @@ theorem firstUndivisibleLowerRight?_some_not_dvd {m n : Nat} {R : Type _}
         induction k with
         | zero =>
             intro hk p h
-            simpa [firstUndivisibleLowerRight?.goRows] using h
+            simp [firstUndivisibleLowerRight?.goRows] at h
         | succ k ih =>
             intro hk p h
             let hk' : k ≤ m := Nat.le_of_lt (Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk)
             cases hgo : firstUndivisibleLowerRight?.goRows A d k hk' with
             | some q =>
-                simp [firstUndivisibleLowerRight?.goRows, hgo] at h
-                cases h
+                have hp : q = p := by
+                  simpa [firstUndivisibleLowerRight?.goRows, hgo] using h
+                cases hp
                 exact ih hk' hgo
             | none =>
                 let i : Fin m := ⟨k, Nat.lt_of_lt_of_le (Nat.lt_succ_self k) hk⟩
@@ -391,16 +392,19 @@ theorem firstUndivisibleLowerRight?_some_not_dvd {m n : Nat} {R : Type _}
                     rw [hnone] at h
                     cases h
                 | some j =>
-                    have h' := h
-                    simp [firstUndivisibleLowerRight?.goRows, hgo] at h'
+                    have h' :
+                        ∃ a,
+                          firstUndivisible? d (fun j : Fin n => A i.succ j.succ) = some a ∧
+                            (i, a) = p := by
+                      simpa [firstUndivisibleLowerRight?.goRows, hgo] using h
                     rcases h' with ⟨a, ha, hp⟩
                     have ha' : a = j := by
                       have hs : some a = some j := by
                         simpa [i] using ha.symm.trans hrow
                       exact Option.some.inj hs
                     subst a
-                    have hp' : p = (i, j) := hp.symm
-                    cases hp'
+                    have hpair : (i, j) = p := hp
+                    cases hpair
                     exact firstUndivisible?_some_not_dvd d (fun s : Fin n => A i.succ s.succ) hrow
       exact rowWitness m (Nat.le_refl m) hsome'
 
@@ -523,17 +527,17 @@ theorem isSmithNormalFormFin_toDiag {m n : Nat} {R : Type _}
       · intro i
         exact Fin.elim0 i
       · intro k hk
-        simpa using hk
+        simp at hk
       · intro k hk
-        simpa using hk
+        simp at hk
   case emptyCols A =>
       refine ⟨?_, ?_, ?_⟩
       · intro i j
         exact Fin.elim0 j
       · intro k hk
-        simpa using hk
+        simp at hk
       · intro k hk
-        simpa using hk
+        simp at hk
   case zeroLead m' n' A hzero hrow hcol hLowerZero =>
       refine ⟨?_, ?_, ?_⟩
       · intro i j hij
@@ -553,7 +557,7 @@ theorem isSmithNormalFormFin_toDiag {m n : Nat} {R : Type _}
       · intro k hk
         cases k with
         | zero =>
-            simpa [diagEntry, hzero]
+            simp [diagEntry, hzero]
         | succ k =>
             have hk' : k < Nat.min m' n' := lt_min_of_succ_lt_min_succ hk
             rw [← diagEntry_lowerRight (A := A) k hk']
@@ -592,7 +596,7 @@ theorem isSmithNormalFormFin_toDiag {m n : Nat} {R : Type _}
             | succ j =>
                 exact hOffLower i j (by
                   intro hEq
-                  exact hij (by simpa [hEq]))
+                  exact hij (by simp [hEq]))
       · intro k hk
         cases k with
         | zero =>

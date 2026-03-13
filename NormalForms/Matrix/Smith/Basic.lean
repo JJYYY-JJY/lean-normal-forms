@@ -82,15 +82,19 @@ noncomputable def smithNormalForm {m n R : Type _}
             _root_.Matrix.reindex em.symm en.symm (result.U * Afin * result.V) =
               _root_.Matrix.reindex em.symm en.symm (result.U * Afin) *
                 _root_.Matrix.reindex en.symm en.symm result.V := by
-          simpa [Matrix.reindexLinearEquiv, Matrix.mul_assoc] using
-            (Matrix.reindexLinearEquiv_mul R R em.symm en.symm en.symm
-              (result.U * Afin) result.V)
+          have h :=
+            Matrix.reindexLinearEquiv_mul R R em.symm en.symm en.symm
+              (result.U * Afin) result.V
+          convert h using 1
+          simp [Matrix.reindexLinearEquiv, Matrix.mul_assoc]
         have hmulLeft :
             _root_.Matrix.reindex em.symm en.symm (result.U * Afin) =
               _root_.Matrix.reindex em.symm em.symm result.U *
                 _root_.Matrix.reindex em.symm en.symm Afin := by
-          simpa [Matrix.reindexLinearEquiv] using
-            (Matrix.reindexLinearEquiv_mul R R em.symm em.symm en.symm result.U Afin)
+          have h :=
+            Matrix.reindexLinearEquiv_mul R R em.symm em.symm en.symm result.U Afin
+          convert h using 1
+          simp [Matrix.reindexLinearEquiv]
         have hEq := congrArg (_root_.Matrix.reindex em.symm en.symm) result.two_sided_mul
         calc
           _root_.Matrix.reindex em.symm em.symm result.U * A *
