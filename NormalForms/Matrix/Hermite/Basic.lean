@@ -46,7 +46,9 @@ noncomputable def hermiteNormalForm {m n R : Type _}
       left_mul := by
         simpa [Matrix.reindexLinearEquiv, Afin] using
           (Matrix.reindexLinearEquiv_mul R R em.symm em.symm en.symm result.U Afin).trans
-            (by simpa [Matrix.reindexLinearEquiv, Afin] using congrArg (_root_.Matrix.reindex em.symm en.symm) result.left_mul)
+            (by
+              simpa [Matrix.reindexLinearEquiv, Afin] using
+                congrArg (_root_.Matrix.reindex em.symm en.symm) result.left_mul)
       isHermite := by
         unfold IsHermiteNormalForm
         convert result.isHermite using 1

@@ -88,14 +88,14 @@ theorem unimodular_diagLiftMatrix {m : Nat} {R : Type _} [CommRing R]
   have hmul : diagLiftMatrix U * diagLiftMatrix U⁻¹ = 1 := by
     calc
       diagLiftMatrix U * diagLiftMatrix U⁻¹ = diagLiftMatrix (U * U⁻¹) := by
-        simpa using diagLiftMatrix_mul U U⁻¹
+        rw [diagLiftMatrix_mul]
       _ = diagLiftMatrix (1 : _root_.Matrix (Fin m) (Fin m) R) := by
         rw [_root_.Matrix.mul_nonsing_inv _ hU]
       _ = 1 := diagLiftMatrix_one
   have hmul' : diagLiftMatrix U⁻¹ * diagLiftMatrix U = 1 := by
     calc
       diagLiftMatrix U⁻¹ * diagLiftMatrix U = diagLiftMatrix (U⁻¹ * U) := by
-        simpa using diagLiftMatrix_mul U⁻¹ U
+        rw [diagLiftMatrix_mul]
       _ = diagLiftMatrix (1 : _root_.Matrix (Fin m) (Fin m) R) := by
         rw [_root_.Matrix.nonsing_inv_mul _ hU]
       _ = 1 := diagLiftMatrix_one
@@ -290,7 +290,7 @@ private theorem topBezoutMatrix_mul_inv_topBlock {m : Nat} {R : Type _}
     let M := topBezoutMatrix (m := m) a b * topBezoutMatrixInv (m := m) a b
     M 0 0 = 1 ∧ M 0 1 = 0 ∧ M 1 0 = 0 ∧ M 1 1 = 1 := by
   have hBezout : Unimodular (bezoutReductionMatrix a b) := by
-    simpa [Unimodular, det_bezoutReductionMatrix]
+    simp [Unimodular, det_bezoutReductionMatrix]
   have hMulTop : bezoutReductionMatrix a b * (bezoutReductionMatrix a b)⁻¹ = 1 := by
     exact _root_.Matrix.mul_nonsing_inv _ hBezout
   dsimp
@@ -327,17 +327,15 @@ private theorem topBezoutMatrix_mul_inv_unitBlock {m : Nat} {R : Type _}
     [EuclideanDomain R] [DecidableEq R]
     (a b : R) (i j : Fin m) :
     let M := topBezoutMatrix (m := m) a b * topBezoutMatrixInv (m := m) a b
-    M i.succ.succ j.succ.succ = (1 : _root_.Matrix (Fin (m + 2)) (Fin (m + 2)) R) i.succ.succ j.succ.succ := by
+    M i.succ.succ j.succ.succ =
+      (1 : _root_.Matrix (Fin (m + 2)) (Fin (m + 2)) R) i.succ.succ j.succ.succ := by
   have hTail :
       ((1 : _root_.Matrix (Fin m) (Fin m) R) * (1 : _root_.Matrix (Fin m) (Fin m) R)) i j =
         (1 : _root_.Matrix (Fin m) (Fin m) R) i j := by
-    simpa using congrFun
-      (congrFun
-        (show (1 : _root_.Matrix (Fin m) (Fin m) R) * (1 : _root_.Matrix (Fin m) (Fin m) R) =
-            (1 : _root_.Matrix (Fin m) (Fin m) R) by simp) i) j
+    simp
   dsimp
   rw [_root_.Matrix.mul_apply, Fin.sum_univ_succ, Fin.sum_univ_succ]
-  simpa [_root_.Matrix.one_apply] using hTail
+  simp [_root_.Matrix.one_apply]
 
 
 theorem topBezoutMatrix_mul_inv {m : Nat} {R : Type _}

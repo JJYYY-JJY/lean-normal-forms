@@ -31,14 +31,14 @@ open NormalForms.Matrix.Certificates
 theorem hnf_rowBelow_zero_at_pivot {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin m) (Fin n) R} (hA : IsHermiteNormalFormFin A) :
-    ∀ {i j : Fin m} (hij : i < j) {p : Fin n},
+    ∀ {i j : Fin m} (_hij : i < j) {p : Fin n},
       firstNonzero? (fun k : Fin n => A i k) = some p -> A j p = 0 := by
   induction hA with
   | emptyRows A =>
       intro i
       exact Fin.elim0 i
   | emptyCols A =>
-      intro i j hij p
+      intro i j _hij p
       exact Fin.elim0 p
   | zeroCol A hzero hTail ih =>
       intro i j hij p hsome
@@ -53,8 +53,9 @@ theorem hnf_rowBelow_zero_at_pivot {m n : Nat} {R : Type _}
           | none =>
               simp [htaili] at hsome
           | some q =>
-              simp [htaili] at hsome
-              subst hsome
+              have hp : q = p := by
+                simpa [htaili] using hsome
+              subst hp
               exact ih hij htaili
   | pivot A hpivot hnorm hbelow hLower hreduced ih =>
       intro i j hij p hsome
@@ -72,22 +73,23 @@ theorem hnf_rowBelow_zero_at_pivot {m n : Nat} {R : Type _}
           cases j using Fin.cases with
           | zero =>
               exact False.elim (Nat.not_lt_zero _ hij)
-          | succ j =>
-              have hij' : i < j := Fin.succ_lt_succ_iff.mp hij
-              cases p using Fin.cases with
-              | zero =>
-                  have h0i := hbelow i
-                  simp [firstNonzero?, h0i] at hsome
-              | succ p =>
-                  have h0i := hbelow i
-                  rw [firstNonzero?, h0i] at hsome
-                  cases htaili : firstNonzero? (fun k : Fin _ => A i.succ k.succ) with
-                  | none =>
-                      simp [htaili] at hsome
-                  | some q =>
-                      simp [htaili] at hsome
-                      subst hsome
-                      exact ih hij' htaili
+           | succ j =>
+               have hij' : i < j := Fin.succ_lt_succ_iff.mp hij
+               cases p using Fin.cases with
+               | zero =>
+                   have h0i := hbelow i
+                   simp [firstNonzero?, h0i] at hsome
+               | succ p =>
+                   have h0i := hbelow i
+                   rw [firstNonzero?, h0i] at hsome
+                   cases htaili : firstNonzero? (fun k : Fin _ => A i.succ k.succ) with
+                   | none =>
+                       simp [htaili] at hsome
+                   | some q =>
+                       have hp : q = p := by
+                         simpa [htaili] using hsome
+                       subst hp
+                       exact ih hij' htaili
 
 
 @[simp] theorem applyRowOperation_swap_succ_one_top {m n : Nat} {R : Type _}
@@ -180,7 +182,7 @@ def clearFirstColumnStep {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
     (i : Fin (m + 1)) (t : LeftTransform A) : LeftTransform A :=
-  if hzero : t.B i.succ 0 = 0 then
+  if _hzero : t.B i.succ 0 = 0 then
     t
   else
     let tSwap := t.trans (LeftTransform.swap t.B i.succ (1 : Fin (m + 2)))
@@ -230,13 +232,13 @@ def reduceTopRowLoop {m n : Nat} {R : Type _}
 
 
 theorem applyRowOperation_reduceTop_pivot {m n : Nat} {R : Type _}
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
     (A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R)
     (i : Fin (m + 1)) (j : Fin n) :
     applyRowOperation A (.add i.succ 0 (topReductionCoeff A i j)) 0 j.succ =
       A 0 j.succ % A i.succ j.succ := by
-  simpa [applyRowOperation, topReductionCoeff, EuclideanDomain.mod_eq_sub_mul_div, sub_eq_add_neg,
-    mul_comm, mul_left_comm, mul_assoc]
+  simp [applyRowOperation, topReductionCoeff, EuclideanDomain.mod_eq_sub_mul_div, sub_eq_add_neg,
+    mul_comm]
 
 
 theorem clearFirstColumnStep_topLeft_ne_zero {m n : Nat} {R : Type _}
@@ -336,7 +338,7 @@ theorem clearFirstColumnStep_topLeft_normalized {m n : Nat} {R : Type _}
     have hclear : clearFirstColumnStep i t = tNorm := by
       simp [clearFirstColumnStep, hzero, tNorm, tBez, tSwap]
     rw [hclear, hnormTop]
-    simpa using (normalize_idem (tBez.B 0 0)).symm
+    simp
 
 
 theorem clearFirstColumnStep_prefix_zero {m n : Nat} {R : Type _}
@@ -353,7 +355,7 @@ theorem clearFirstColumnStep_prefix_zero {m n : Nat} {R : Type _}
     · simpa [clearFirstColumnStep, hzero] using hprefix j hj'
     · have : j = i := Fin.ext hEq
       subst this
-      simpa [clearFirstColumnStep, hzero]
+      simp [clearFirstColumnStep, hzero]
   · let tSwap := t.trans (LeftTransform.swap t.B i.succ (1 : Fin (m + 2)))
     let tBez := tSwap.trans (LeftTransform.topBezout tSwap.B)
     let tNorm := tBez.trans
@@ -372,7 +374,8 @@ theorem clearFirstColumnStep_prefix_zero {m n : Nat} {R : Type _}
     · cases j using Fin.cases with
       | zero =>
           calc
-            (clearFirstColumnStep i t).B 1 0 = tNorm.B 1 0 := by simpa [hclear]
+            (clearFirstColumnStep i t).B 1 0 = tNorm.B 1 0 := by
+              simp [hclear]
             _ = tBez.B 1 0 := hbelowEq 0
             _ = 0 := hrowOneZero
       | succ j =>
@@ -390,7 +393,7 @@ theorem clearFirstColumnStep_prefix_zero {m n : Nat} {R : Type _}
                 (A := tSwap.B) j hswapZero)
           calc
             (clearFirstColumnStep i t).B j.succ.succ 0 = tNorm.B j.succ.succ 0 := by
-              simpa [hclear]
+              simp [hclear]
             _ = tBez.B j.succ.succ 0 := hbelowEq j.succ
             _ = 0 := hbezoutZero
     · have : j = i := Fin.ext hEq
@@ -398,15 +401,18 @@ theorem clearFirstColumnStep_prefix_zero {m n : Nat} {R : Type _}
       cases i using Fin.cases with
       | zero =>
           calc
-            (clearFirstColumnStep 0 t).B 1 0 = tNorm.B 1 0 := by simpa [hclear]
+            (clearFirstColumnStep 0 t).B 1 0 = tNorm.B 1 0 := by
+              simp [hclear]
             _ = tBez.B 1 0 := hbelowEq 0
             _ = 0 := hrowOneZero
       | succ i =>
           have hrowOneBefore : t.B 1 0 = 0 := by
-            exact hprefix 0 (by simpa using i.succ.is_lt)
+            exact hprefix 0 (by simp)
           have hswapEq : tSwap.B i.succ.succ 0 = t.B 1 0 := by
-            simpa [tSwap, LeftTransform.swap, LeftTransform.trans] using
-              congrFun (applyRowOperation_swap_succ_one_target t.B i.succ) 0
+            change
+              applyRowOperation t.B (.swap i.succ.succ (1 : Fin (m + 2))) i.succ.succ 0 =
+                t.B 1 0
+            exact congrFun (applyRowOperation_swap_succ_one_target t.B i.succ) 0
           have hswapZero : tSwap.B i.succ.succ 0 = 0 := by
             rw [hswapEq]
             exact hrowOneBefore
@@ -416,7 +422,7 @@ theorem clearFirstColumnStep_prefix_zero {m n : Nat} {R : Type _}
                 (A := tSwap.B) i hswapZero)
           calc
             (clearFirstColumnStep i.succ t).B i.succ.succ 0 = tNorm.B i.succ.succ 0 := by
-              simpa [hclear]
+              simp [hclear]
             _ = tBez.B i.succ.succ 0 := hbelowEq i.succ
             _ = 0 := hbezoutZero
 
@@ -490,7 +496,7 @@ theorem reduceTopRowStep_topLeft {m n : Nat} {R : Type _}
   | none =>
       rfl
   | some j =>
-      simp [hrow, LeftTransform.add, LeftTransform.trans,
+      simp [LeftTransform.add, LeftTransform.trans,
         applyRowOperation, topReductionCoeff, hzero]
 
 
@@ -505,7 +511,7 @@ theorem reduceTopRowStep_lowerRow {m n : Nat} {R : Type _}
       rfl
   | some p =>
       ext s
-      simp [hrow, LeftTransform.add, LeftTransform.trans, applyRowOperation]
+      simp [LeftTransform.add, LeftTransform.trans, applyRowOperation]
 
 
 theorem reduceTopRowStep_topEntry_eq_of_source_zero {m n : Nat} {R : Type _}
@@ -519,7 +525,7 @@ theorem reduceTopRowStep_topEntry_eq_of_source_zero {m n : Nat} {R : Type _}
   | none =>
       rfl
   | some p =>
-      simp [hrow, LeftTransform.add, LeftTransform.trans,
+      simp [LeftTransform.add, LeftTransform.trans,
         applyRowOperation, topReductionCoeff, hsrc]
 
 
@@ -542,7 +548,7 @@ theorem reduceTopRowStep_preserves_reduced {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin (m + 2)) (Fin (n + 1)) R}
     (i r : Fin (m + 1)) (t : LeftTransform A) {q : Fin n}
-    (hrow : firstNonzero? (fun s : Fin n => t.B r.succ s.succ) = some q)
+    (_hrow : firstNonzero? (fun s : Fin n => t.B r.succ s.succ) = some q)
     (hreduced : t.B 0 q.succ = t.B 0 q.succ % t.B r.succ q.succ)
     (hsrcZero : t.B i.succ q.succ = 0) :
     (reduceTopRowStep i t).B 0 q.succ =
@@ -749,7 +755,8 @@ def hermiteNormalFormFin {m n : Nat} {R : Type _}
                 unimodular := tailRes.unimodular
                 isHermite := ?_ }
             refine IsHermiteNormalFormFin.zeroCol _ ?_ ?_
-            · exact firstCol_zero_mul tailRes.U A (firstNonzero?_eq_none (fun i : Fin (m + 1) => A i 0) hcol)
+            · exact firstCol_zero_mul tailRes.U A <|
+                firstNonzero?_eq_none (fun i : Fin (m + 1) => A i 0) hcol
             · simpa [tailCols_mul, tailRes.left_mul] using tailRes.isHermite
           · cases m with
             | zero =>
@@ -793,7 +800,9 @@ def hermiteNormalFormFin {m n : Nat} {R : Type _}
                       tSwap.trans <|
                         LeftTransform.unitSmul tSwap.B 0 (normUnit (tSwap.B 0 0) : R)
                           (normUnit (tSwap.B 0 0)).isUnit
-                    have hi0 : A i 0 ≠ 0 := firstNonzero?_some_ne_zero (fun i : Fin (m + 2) => A i 0) hfirst
+                    have hi0 : A i 0 ≠ 0 := by
+                      exact firstNonzero?_some_ne_zero
+                        (fun i : Fin (m + 2) => A i 0) hfirst
                     have hNormEq : tNorm.B 0 0 = normalize (A i 0) := by
                       by_cases hi : i = 0
                       · subst hi
@@ -817,9 +826,11 @@ def hermiteNormalFormFin {m n : Nat} {R : Type _}
                     let tFinal :=
                       reduceTopRowLoop (A := A) (m := m) (n := n) (m + 1) le_rfl tAfterLift
                     have hClearTopNonzero : tClear.B 0 0 ≠ 0 := by
-                      exact clearFirstColumnLoop_topLeft_ne_zero (m + 1) le_rfl tNorm hNormTopNonzero
+                      exact clearFirstColumnLoop_topLeft_ne_zero
+                        (m + 1) le_rfl tNorm hNormTopNonzero
                     have hClearTopNormalized : tClear.B 0 0 = normalize (tClear.B 0 0) := by
-                      exact clearFirstColumnLoop_topLeft_normalized (m + 1) le_rfl tNorm hNormTopNormalized
+                      exact clearFirstColumnLoop_topLeft_normalized
+                        (m + 1) le_rfl tNorm hNormTopNormalized
                     have hClearBelow : ∀ r : Fin (m + 1), tClear.B r.succ 0 = 0 := by
                       intro r
                       exact clearFirstColumnLoop_prefix_zero (m + 1) le_rfl tNorm r r.is_lt

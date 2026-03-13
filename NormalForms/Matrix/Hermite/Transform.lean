@@ -278,8 +278,8 @@ theorem replayLog_tailCols_liftColsSucc {m n : Nat} {R : Type _}
 
 
 theorem replayLog_lowerRight_liftRowsColsSucc {m n : Nat} {R : Type _}
-    [DecidableEq (Fin (m + 1))] [DecidableEq (Fin (n + 1))] [DecidableEq (Fin m)] [DecidableEq (Fin n)]
-    [Add R] [Mul R]
+    [DecidableEq (Fin (m + 1))] [DecidableEq (Fin (n + 1))]
+    [DecidableEq (Fin m)] [DecidableEq (Fin n)] [Add R] [Mul R]
     (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
     (log : OperationLog R (Fin m) (Fin n)) (hrow : log.Forall IsRowStep) :
     lowerRight (replayLog A (liftRowsColsSucc log)) = replayLog (lowerRight A) log := by
@@ -295,7 +295,9 @@ theorem replayLog_lowerRight_liftRowsColsSucc {m n : Nat} {R : Type _}
           cases op with
           | swap i j =>
               calc
-                lowerRight (replayLog (applyRowOperation A (.swap i.succ j.succ)) (mapLog Fin.succ Fin.succ rest))
+                lowerRight
+                    (replayLog (applyRowOperation A (.swap i.succ j.succ))
+                      (mapLog Fin.succ Fin.succ rest))
                     = replayLog (lowerRight (applyRowOperation A (.swap i.succ j.succ))) rest :=
                         ih (applyRowOperation A (.swap i.succ j.succ)) hpair.2
                 _ = replayLog (applyRowOperation (lowerRight A) (.swap i j)) rest := by
@@ -304,8 +306,12 @@ theorem replayLog_lowerRight_liftRowsColsSucc {m n : Nat} {R : Type _}
                           (lowerRight_applyRowOperation_lift A (.swap i j))
           | add src dst c =>
               calc
-                lowerRight (replayLog (applyRowOperation A (.add src.succ dst.succ c)) (mapLog Fin.succ Fin.succ rest))
-                    = replayLog (lowerRight (applyRowOperation A (.add src.succ dst.succ c))) rest :=
+                lowerRight
+                    (replayLog (applyRowOperation A (.add src.succ dst.succ c))
+                      (mapLog Fin.succ Fin.succ rest))
+                    =
+                      replayLog (lowerRight (applyRowOperation A (.add src.succ dst.succ c)))
+                        rest :=
                         ih (applyRowOperation A (.add src.succ dst.succ c)) hpair.2
                 _ = replayLog (applyRowOperation (lowerRight A) (.add src dst c)) rest := by
                       simpa [mapRowOperation] using
@@ -313,7 +319,9 @@ theorem replayLog_lowerRight_liftRowsColsSucc {m n : Nat} {R : Type _}
                           (lowerRight_applyRowOperation_lift A (.add src dst c))
           | smul i c =>
               calc
-                lowerRight (replayLog (applyRowOperation A (.smul i.succ c)) (mapLog Fin.succ Fin.succ rest))
+                lowerRight
+                    (replayLog (applyRowOperation A (.smul i.succ c))
+                      (mapLog Fin.succ Fin.succ rest))
                     = replayLog (lowerRight (applyRowOperation A (.smul i.succ c))) rest :=
                         ih (applyRowOperation A (.smul i.succ c)) hpair.2
                 _ = replayLog (applyRowOperation (lowerRight A) (.smul i c)) rest := by
