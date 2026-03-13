@@ -173,7 +173,7 @@ def TwoSidedTransform.diagLiftLeft {m n : Nat} {R : Type _}
   { U := diagLiftMatrix U
     B := diagLiftMatrix U * A
     V := 1
-    two_sided_mul := by simp [Matrix.mul_assoc]
+    two_sided_mul := by simp
     leftUnimodular := unimodular_diagLiftMatrix hU
     rightUnimodular := unimodular_one }
 
@@ -186,7 +186,7 @@ def TwoSidedTransform.diagLiftRight {m n : Nat} {R : Type _}
   { U := 1
     B := A * diagLiftMatrix V
     V := diagLiftMatrix V
-    two_sided_mul := by simp [Matrix.mul_assoc]
+    two_sided_mul := by simp
     leftUnimodular := unimodular_one
     rightUnimodular := unimodular_diagLiftMatrix hV }
 
