@@ -23,3 +23,7 @@ paper/rendered/
 paper/scripts/__pycache__/
 paper/.mpl-cache/
 .elan/
+.github/copilot-instructions.md
+.github/agents/lean-reviewer.agent.md
+.github/instructions/lean.instructions.md
+.github/prompts/fix-lean.prompt.md
