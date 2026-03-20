@@ -24,21 +24,6 @@ private noncomputable def pidExecutableResult {m n R : Type _}
     (A : _root_.Matrix m n R) : NormalForms.Matrix.Smith.SNFResult A :=
   Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists A)
 
-noncomputable def pidExecutableInvariantFactorCount {m n R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
-    [NormalForms.Matrix.Hermite.CanonicalMod R]
-    (A : _root_.Matrix m n R) : Nat :=
-  (pidExecutableResult A).invariantFactors.length
-
-noncomputable def pidExecutableInvariantFactorFn {m n R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
-    [NormalForms.Matrix.Hermite.CanonicalMod R]
-    (A : _root_.Matrix m n R) :
-    Fin (pidExecutableInvariantFactorCount A) → R :=
-  fun i => (pidExecutableResult A).invariantFactors.get i
-
 @[simp] theorem pidExecutableResult_spec {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
@@ -47,13 +32,16 @@ noncomputable def pidExecutableInvariantFactorFn {m n R : Type _}
     NormalForms.Matrix.Smith.smithNormalForm A = some (pidExecutableResult A) :=
   Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists A)
 
-@[simp] theorem pidExecutableInvariantFactorCount_eq_length {m n R : Type _}
+@[simp] private theorem pidExecutableInvariantFactorCount_eq_result_length {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) :
     pidExecutableInvariantFactorCount A = (pidExecutableResult A).invariantFactors.length :=
-  rfl
+  by
+    rw [pidExecutableInvariantFactorCount_eq_length,
+      pidSmithNormalFormCoeffList_eq_resultInvariantFactors
+        (A := A) (result := pidExecutableResult A) (pidExecutableResult_spec A)]
 
 @[simp] theorem pidExecutableResult_eq_of_hresult {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
@@ -688,8 +676,7 @@ theorem pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
     (A : _root_.Matrix m n Int) :
     (pidExecutableSmithCoeffNatAbsList A).length = pidExecutableInvariantFactorCount A := by
   rw [NormalForms.Bridge.MathlibPID.pidExecutableSmithCoeffNatAbsList_length]
-  unfold pidSmithNormalFormCoeffList pidExecutableInvariantFactorCount pidExecutableResult
-  rfl
+  exact (pidExecutableInvariantFactorCount_eq_length A).symm
 
 @[simp] theorem pidExecutableSmithCoeffNatAbsList_length_of_finrank_eq_card
     {m n : Type _}
@@ -714,10 +701,10 @@ noncomputable def pidExecutableQuotientEquivPiSpan {m n R : Type _}
     ((i : Fin (pidExecutableInvariantFactorCount A)) →
       R ⧸ Ideal.span ({pidExecutableInvariantFactorFn A i} : Set R))
   have hzero : Fintype.card m - (pidExecutableResult A).invariantFactors.length = 0 := by
-    rw [← pidExecutableInvariantFactorCount_eq_length (A := A), hcount]
+    rw [← pidExecutableInvariantFactorCount_eq_result_length (A := A), hcount]
     simp
   have hzeroBase : Fintype.card m - pidExecutableInvariantFactorCount A = 0 := by
-    simpa [pidExecutableInvariantFactorCount_eq_length (A := A)] using hzero
+    simpa [pidExecutableInvariantFactorCount_eq_result_length (A := A)] using hzero
   let eFree : (Fin (Fintype.card m - pidExecutableInvariantFactorCount A) → R) ≃ₗ[R] (Fin 0 → R) :=
     LinearEquiv.funCongrLeft R R (finCongr hzeroBase.symm)
   let eTail :

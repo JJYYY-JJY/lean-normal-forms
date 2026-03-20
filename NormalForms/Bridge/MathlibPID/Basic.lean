@@ -87,6 +87,21 @@ noncomputable def pidSmithNormalFormCoeffList {m n R : Type _}
     (A : _root_.Matrix m n R) : List R :=
   (Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists A)).invariantFactors
 
+noncomputable def pidExecutableInvariantFactorCount {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [NormalForms.Matrix.Hermite.CanonicalMod R]
+    (A : _root_.Matrix m n R) : Nat :=
+  (pidSmithNormalFormCoeffList A).length
+
+noncomputable def pidExecutableInvariantFactorFn {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [NormalForms.Matrix.Hermite.CanonicalMod R]
+    (A : _root_.Matrix m n R) :
+    Fin (pidExecutableInvariantFactorCount A) → R :=
+  fun i => (pidSmithNormalFormCoeffList A).get i
+
 @[simp] theorem pidSmithNormalFormCoeffList_eq_resultInvariantFactors {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
@@ -103,6 +118,14 @@ noncomputable def pidSmithNormalFormCoeffList {m n R : Type _}
     exact hEq'.symm
   unfold pidSmithNormalFormCoeffList
   simpa using congrArg NormalForms.Matrix.Smith.SNFResult.invariantFactors hEq
+
+@[simp] theorem pidExecutableInvariantFactorCount_eq_length {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [NormalForms.Matrix.Hermite.CanonicalMod R]
+    (A : _root_.Matrix m n R) :
+    pidExecutableInvariantFactorCount A = (pidSmithNormalFormCoeffList A).length :=
+  rfl
 
 @[simp] theorem pidSmithNormalFormCoeffList_eq_of_isSmith {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
