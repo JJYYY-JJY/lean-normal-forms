@@ -6,7 +6,9 @@ import Mathlib.LinearAlgebra.FreeModule.Finite.Quotient
 # PID Quotient Bridge
 
 Semantic bridge theorems between the executable Smith layer and mathlib's
-module-theoretic quotient decompositions.
+module-theoretic quotient decompositions, together with the current full-rank
+count theorem and executable-vs-mathlib `PiSpan` / `DirectSum` / `PiZMod`
+compatibility equivalences.
 -/
 
 namespace NormalForms.Bridge.MathlibPID
@@ -635,6 +637,69 @@ noncomputable def pidExecutableQuotientEquivPiZModProd {m n : Type _}
   exact
     (pidExecutableQuotientEquivPiSpanProd A).toAddEquiv.trans <|
       AddEquiv.prodCongr eTors (AddEquiv.refl _)
+
+private theorem intFunction_infinite_of_pos (k : Nat) (hk : 0 < k) :
+    Infinite (Fin k → Int) := by
+  let j : Fin k := ⟨0, hk⟩
+  refine Infinite.of_injective (fun z : Int => fun i => if i = j then z else 0) ?_
+  intro a b hab
+  have := congrArg (fun f => f j) hab
+  simpa [j] using this
+
+theorem pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
+    {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [NormalForms.Matrix.Hermite.CanonicalMod Int]
+    (A : _root_.Matrix m n Int)
+    (hfull : Module.finrank Int (pidSmithColumnSpan A) = Fintype.card m) :
+    pidExecutableInvariantFactorCount A = Fintype.card m := by
+  let b := Pi.basisFun Int m
+  have hfull' :
+      Module.finrank Int (pidSmithColumnSpan A) =
+        Module.finrank Int (m → Int) := by
+    simpa [Module.finrank_eq_card_basis b] using hfull
+  have hfiniteQ :
+      Finite ((m → Int) ⧸ pidSmithColumnSpan A) :=
+    Submodule.finiteQuotientOfFreeOfRankEq
+      (pidSmithColumnSpan A) hfull'
+  let tors := (i : Fin (pidExecutableInvariantFactorCount A)) →
+      ZMod (pidExecutableInvariantFactorFn A i).natAbs
+  let tail := Fin (Fintype.card m - pidExecutableInvariantFactorCount A) → Int
+  have hfiniteRhs : Finite (tors × tail) := by
+    exact Finite.of_equiv
+      ((m → Int) ⧸ pidSmithColumnSpan A)
+      (pidExecutableQuotientEquivPiZModProd A).toEquiv
+  have hfiniteTail : Finite tail := by
+    exact Finite.of_injective (fun y : tail => ((0 : tors), y)) (by
+      intro x y hxy
+      simpa using congrArg Prod.snd hxy)
+  by_cases hzero : Fintype.card m - pidExecutableInvariantFactorCount A = 0
+  · exact le_antisymm
+      (pidExecutableInvariantFactorCount_le_card_rows A)
+      (Nat.sub_eq_zero_iff_le.mp hzero)
+  · have hInf : Infinite tail := intFunction_infinite_of_pos _ (Nat.pos_of_ne_zero hzero)
+    let _ : Finite tail := hfiniteTail
+    exfalso
+    exact hInf.false
+
+@[simp] theorem pidExecutableSmithCoeffNatAbsList_length_eq_count {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [NormalForms.Matrix.Hermite.CanonicalMod Int]
+    (A : _root_.Matrix m n Int) :
+    (pidExecutableSmithCoeffNatAbsList A).length = pidExecutableInvariantFactorCount A := by
+  rw [NormalForms.Bridge.MathlibPID.pidExecutableSmithCoeffNatAbsList_length]
+  unfold pidSmithNormalFormCoeffList pidExecutableInvariantFactorCount pidExecutableResult
+  rfl
+
+@[simp] theorem pidExecutableSmithCoeffNatAbsList_length_of_finrank_eq_card
+    {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [NormalForms.Matrix.Hermite.CanonicalMod Int]
+    (A : _root_.Matrix m n Int)
+    (hfull : Module.finrank Int (pidSmithColumnSpan A) = Fintype.card m) :
+    (pidExecutableSmithCoeffNatAbsList A).length = Fintype.card m := by
+  rw [pidExecutableSmithCoeffNatAbsList_length_eq_count,
+    pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card A hfull]
 
 noncomputable def pidExecutableQuotientEquivPiSpan {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]

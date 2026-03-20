@@ -5,7 +5,8 @@ import Mathlib.Data.List.Sort
 # PID Bridge Shapes
 
 Bridge-side helpers for comparing executable Smith data with PID-style
-`Basis.SmithNormalForm` readouts.
+`Basis.SmithNormalForm` readouts, including normalized full-rank `Int`
+coefficient lists on both the executable and mathlib sides.
 -/
 
 namespace NormalForms.Bridge.MathlibPID
@@ -122,6 +123,35 @@ noncomputable def pidSmithNormalFormCoeffList {m n R : Type _}
       result.two_sided_mul
   simpa [pidSmithNormalFormCoeffList, NormalForms.Matrix.Smith.SNFResult.invariantFactors] using
     congrArg NormalForms.Matrix.Smith.smithInvariantFactors hEq.symm
+
+/-- Executable-side normalized coefficient list for `Int` matrices.
+
+This reads the chosen executable Smith result via `pidSmithNormalFormCoeffList`,
+applies `Int.natAbs`, and sorts the resulting list in ascending order.
+-/
+noncomputable def pidExecutableSmithCoeffNatAbsList {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [NormalForms.Matrix.Hermite.CanonicalMod Int]
+    (A : _root_.Matrix m n Int) : List Nat :=
+  ((pidSmithNormalFormCoeffList A).map Int.natAbs).insertionSort (· ≤ ·)
+
+@[simp] theorem pidExecutableSmithCoeffNatAbsList_length {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [NormalForms.Matrix.Hermite.CanonicalMod Int]
+    (A : _root_.Matrix m n Int) :
+    (pidExecutableSmithCoeffNatAbsList A).length = (pidSmithNormalFormCoeffList A).length := by
+  unfold pidExecutableSmithCoeffNatAbsList
+  rw [List.length_insertionSort, List.length_map]
+
+theorem pidExecutableSmithCoeffNatAbsList_eq_resultInvariantFactors {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [NormalForms.Matrix.Hermite.CanonicalMod Int]
+    {A : _root_.Matrix m n Int} {result : NormalForms.Matrix.Smith.SNFResult A}
+    (hresult : NormalForms.Matrix.Smith.smithNormalForm A = some result) :
+    pidExecutableSmithCoeffNatAbsList A =
+      (result.invariantFactors.map Int.natAbs).insertionSort (· ≤ ·) := by
+  simp [pidExecutableSmithCoeffNatAbsList,
+    pidSmithNormalFormCoeffList_eq_resultInvariantFactors (result := result) hresult]
 
 noncomputable def pidFullRankSmithNormalFormCoeffs {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
