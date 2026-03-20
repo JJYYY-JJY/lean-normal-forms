@@ -62,6 +62,15 @@ noncomputable def pidSmithNormalFormData {m n R : Type _}
     Σ k : ℕ, Module.Basis.SmithNormalForm (pidSmithColumnSpan A) m k :=
   Submodule.smithNormalForm (Pi.basisFun R m) (pidSmithColumnSpan A)
 
+noncomputable def pidSmithNormalFormOfLEData {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix m n R) :
+    Σ o k : ℕ,
+      Module.Basis.SmithNormalForm
+        ((pidSmithColumnSpan A).comap (⊤ : Submodule R (m -> R)).subtype) (Fin o) k :=
+  (pidSmithColumnSpan A).smithNormalFormOfLE (Pi.basisFun R m) ⊤ le_top
+
 noncomputable def pidSmithNormalFormCoeffs {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
