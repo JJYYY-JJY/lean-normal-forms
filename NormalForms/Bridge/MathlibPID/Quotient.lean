@@ -662,6 +662,22 @@ noncomputable def pidExecutableQuotientEquivPiSpan {m n R : Type _}
   )
   exact (pidExecutableQuotientEquivPiSpanProd A).trans eTail
 
+noncomputable def pidExecutableQuotientEquivPiZMod {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [NormalForms.Matrix.Hermite.CanonicalMod Int]
+    (A : _root_.Matrix m n Int)
+    (hcount : pidExecutableInvariantFactorCount A = Fintype.card m) :
+    ((m → Int) ⧸ pidSmithColumnSpan A) ≃+
+      ((i : Fin (pidExecutableInvariantFactorCount A)) →
+        ZMod (pidExecutableInvariantFactorFn A i).natAbs) := by
+  let eTors :
+      ((i : Fin (pidExecutableInvariantFactorCount A)) →
+          Int ⧸ Ideal.span ({pidExecutableInvariantFactorFn A i} : Set Int)) ≃+
+        ((i : Fin (pidExecutableInvariantFactorCount A)) →
+          ZMod (pidExecutableInvariantFactorFn A i).natAbs) :=
+    AddEquiv.piCongrRight fun i => ↑(Int.quotientSpanEquivZMod (pidExecutableInvariantFactorFn A i))
+  exact (pidExecutableQuotientEquivPiSpan A hcount).toAddEquiv.trans eTors
+
 noncomputable def pidExecutableQuotientEquivDirectSum {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
@@ -707,5 +723,20 @@ noncomputable def pidFullRankMathlibDirectSumEquivExecutable {m n R : Type _}
   exact
     ((Submodule.quotientEquivDirectSum (F := R) b (N := pidSmithColumnSpan A) hfull').symm).trans
       (pidExecutableQuotientEquivDirectSum A hcount)
+
+noncomputable def pidFullRankMathlibPiZModEquivExecutable {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [NormalForms.Matrix.Hermite.CanonicalMod Int]
+    (A : _root_.Matrix m n Int)
+    (hfull_mathlib : Module.finrank Int (pidSmithColumnSpan A) = Fintype.card m)
+    (hcount : pidExecutableInvariantFactorCount A = Fintype.card m) :
+    ((i : m) → ZMod (pidFullRankSmithNormalFormCoeffs A hfull_mathlib i).natAbs) ≃+
+      ((i : Fin (pidExecutableInvariantFactorCount A)) →
+        ZMod (pidExecutableInvariantFactorFn A i).natAbs) := by
+  let b := Pi.basisFun Int m
+  let hfull' : Module.finrank Int (pidSmithColumnSpan A) = Module.finrank Int (m → Int) := by
+    simpa [Module.finrank_eq_card_basis b] using hfull_mathlib
+  exact ((pidSmithColumnSpan A).quotientEquivPiZMod b hfull').symm.trans
+    (pidExecutableQuotientEquivPiZMod A hcount)
 
 end NormalForms.Bridge.MathlibPID

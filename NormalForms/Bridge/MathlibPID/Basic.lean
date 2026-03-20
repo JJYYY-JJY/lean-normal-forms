@@ -1,4 +1,5 @@
 import NormalForms.Matrix.Smith
+import Mathlib.Data.List.Sort
 
 /-!
 # PID Bridge Shapes
@@ -132,5 +133,28 @@ noncomputable def pidFullRankSmithNormalFormCoeffs {m n R : Type _}
   let hfull' : Module.finrank R (pidSmithColumnSpan A) = Module.finrank R (m -> R) := by
     simpa [Module.finrank_eq_card_basis b] using hfull
   Submodule.smithNormalFormCoeffs b hfull'
+
+/-- Mathlib-side normalized coeff list for full-rank `Int` submodules.
+
+This reads the chosen `mathlib` Smith witness coefficients via
+`pidFullRankSmithNormalFormCoeffs`, applies `Int.natAbs`, and sorts the resulting
+list in ascending order. Unlike `pidSmithNormalFormCoeffList`, this is a
+mathlib-side readout rather than an executable-SNF readout.
+-/
+noncomputable def pidFullRankMathlibSmithCoeffNatAbsList {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    (A : _root_.Matrix m n Int)
+    (hfull : Module.finrank Int (pidSmithColumnSpan A) = Fintype.card m) : List Nat :=
+  (((Finset.univ : Finset m).toList.map fun i =>
+      Int.natAbs (pidFullRankSmithNormalFormCoeffs A hfull i))).insertionSort (· ≤ ·)
+
+@[simp] theorem pidFullRankMathlibSmithCoeffNatAbsList_length {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    (A : _root_.Matrix m n Int)
+    (hfull : Module.finrank Int (pidSmithColumnSpan A) = Fintype.card m) :
+    (pidFullRankMathlibSmithCoeffNatAbsList A hfull).length = Fintype.card m := by
+  unfold pidFullRankMathlibSmithCoeffNatAbsList
+  rw [List.length_insertionSort]
+  simp
 
 end NormalForms.Bridge.MathlibPID
