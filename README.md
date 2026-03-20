@@ -1,8 +1,8 @@
 # lean-normal-forms
 
 Executable Hermite normal form and Smith-normal-form infrastructure in Lean 4
-over Euclidean domains, with certified matrix certificates and a planned bridge
-to mathlib's PID results.
+over Euclidean domains, with certified matrix certificates and a semantic PID
+bridge to mathlib's quotient/decomposition results.
 
 ## Status
 
@@ -11,7 +11,7 @@ to mathlib's PID results.
 This repository currently contains a buildable `NormalForms` Lean library with a
 completed recursive row-style Hermite layer, a completed executable Smith layer
 with public correctness, uniqueness, and unimodularity extraction theorems, and
-a minimal PID bridge helper layer.
+a semantic PID quotient bridge layer.
 
 - Public API for `IsHermiteNormalForm`, `IsSmithNormalForm`, `HNFResult`,
   `SNFResult`, `smithInvariantFactors`, `smithColumnSpan`,
@@ -34,6 +34,14 @@ a minimal PID bridge helper layer.
   `diagPrefixProduct` / minor-divisibility chain, the internal theorem
   `isSmithNormalFormFin_unique_of_two_sided_equiv`, and the public theorem
   `isSmithNormalForm_unique_of_two_sided_equiv`
+- `NormalForms.Bridge.MathlibPID.Basic` now exposes both the original raw bridge
+  helpers and the current `pidSmithNormalFormOfLEData` helper for future
+  coefficient-level comparison work
+- `NormalForms.Bridge.MathlibPID.Quotient` now proves the semantic PID bridge:
+  executable invariant-factor readout, quotient transport through the chosen
+  executable `SNFResult`, quotient decomposition into torsion-plus-free parts,
+  `ℤ`-specific `ZMod` specialization, and full-rank compatibility equivalences
+  with mathlib's `quotientEquivPiSpan` / `quotientEquivDirectSum`
 - Elementary row/column operations, mixed-log certificate helpers, and a reusable 2x2 Bezout reduction gadget
 - Smoke examples over `Int` and `Q[X]`, including public HNF certificate
   checks, internal Smith diagonal-spec, invariant-factor, and same-size-step
@@ -50,8 +58,13 @@ are real, the executable recursive kernel and public
 `smithNormalForm` existence/isSmith/unimodularity/uniqueness theorems are in
 place, and the same-size lead-clearing, lead-preparation, stabilization, and
 single-step nondivisible pivot-improvement layers are verified over both `Int`
-and `Q[X]`. The Smith Phase 3 uniqueness closure is now done; the remaining
-project work shifts to the full PID bridge and the application layer.
+and `Q[X]`. The Smith Phase 3 uniqueness closure is now done, and the current
+PID bridge is semantic rather than coefficient-by-coefficient: quotients are
+transported to the executable Smith result and decomposed into torsion factors
+plus a free part, while full-rank cases are related back to mathlib's existing
+PID quotient theorems. The remaining project work shifts to richer bridge smoke
+examples, coefficient-level comparison against mathlib witness lists, and the
+application layer.
 
 One deliberate implementation boundary is worth calling out: the public Smith
 wrappers over arbitrary `Fintype` indices are defined by reindexing through
@@ -74,6 +87,7 @@ lake env lean NormalForms/Matrix/Smith/Defs.lean
 lake env lean NormalForms/Matrix/Smith/Algorithm.lean
 lake env lean NormalForms/Matrix/Smith/Basic.lean
 lake env lean NormalForms/Matrix/Smith/Uniqueness.lean
+lake env lean NormalForms/Bridge/MathlibPID/Quotient.lean
 lake env lean NormalForms/Examples/AbelianGroups/Basic.lean
 ```
 
@@ -85,10 +99,11 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 - `NormalForms/Matrix/Hermite`: split HNF stack with `Defs`, `Transform`, `Bezout`, `Algorithm`, `Basic`, and `Uniqueness`
 - `NormalForms/Matrix/Smith`: split SNF stack with `Defs`, `Transform`, `Algorithm`, `Basic`, and `Uniqueness`
 - `NormalForms/Matrix/Certificates`: reusable certificate shapes and unimodularity lemmas
-- `NormalForms/Bridge/MathlibPID`: minimal unimodular/column-span bridge helpers toward mathlib's PID results, with the full invariant-factor comparison still pending
+- `NormalForms/Bridge/MathlibPID`: raw PID bridge helpers in `Basic` plus semantic quotient/decomposition bridge theorems in `Quotient`
 - `NormalForms/Examples/AbelianGroups`: sample matrices, executable HNF smoke
   checks, internal `Int` and `Q[X]` Smith spec/invariant-factor/same-size-step
-  smoke, and public Smith certificate/result packaging smoke
+  smoke, public Smith certificate/result packaging smoke, and the current
+  bridge-facing examples
 - `paper/`: manuscript planning notes
 - `artifact/`: artifact packaging notes
 
@@ -96,7 +111,10 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 
 - Executable algorithms are scoped to `EuclideanDomain`
 - Exact executable canonicality statements use a lightweight `CanonicalMod` mixin to capture canonical Euclidean remainders
-- PID-level statements are scoped to specifications and bridge theorems
+- PID-level statements are scoped to specifications and bridge theorems; the
+  currently completed bridge is semantic (quotients/direct sums), while direct
+  coefficient-list equality against mathlib's chosen `smithNormalFormCoeffs`
+  remains future work
 - The initial research application is finitely generated abelian groups over `Z`
 
 For the full roadmap, milestones, and submission strategy, see `PLAN.md`.

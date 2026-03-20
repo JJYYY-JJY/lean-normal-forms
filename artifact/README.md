@@ -12,31 +12,33 @@ Planned contents:
 Current status:
 
 - executable row-style HNF is complete, including the recursive kernel,
-  explicit left certificates via `LeftTransform`, and public certificate
-  packaging through `HNFResult.toCertificate`
-- HNF correctness and uniqueness are proved, with exact uniqueness isolated
-  behind the `CanonicalMod` interface for canonical remainder representatives
-- `CanonicalMod` is currently instantiated for both `Int` and `Polynomial Rat`
-- the Smith layer is no longer placeholder-only: `IsSmithNormalForm` is a real
-  diagonal specification, `smithInvariantFactors` and `smithColumnSpan` are
-  available, the internal recursive predicate/result shell is in place,
-  `TwoSidedTransform` provides reusable two-sided certificate scaffolding, and
-  `SNFResult.ofCertificate` / `SNFResult.toCertificate` define the current
-  public certificate boundary
-- the current internal Smith milestone is a verified same-size lead-reduction
-  foundation: pivot-state records, raw first-row/first-column clearing steps,
-  pure-data clearing loops, external invariant theorems, and `clearLeadByPivot`
-- `smithNormalForm` currently still returns `none`, so the executable Smith
-  kernel is not yet end-to-end; the remaining work is nondivisible pivot
-  improvement, outer recursion, public unimodularity helper theorems, and Smith
-  uniqueness
-- the PID bridge remains a placeholder API for future work rather than a
-  completed comparison theorem layer
-- the example layer already includes internal Smith diagonal/invariant-factor
-  smoke theorems over `Int` and `Q[X]` together with public packaging smoke for
-  `SNFResult.ofCertificate`; concrete public `simp` across `Fintype.equivFin`
-  is intentionally avoided for elaboration stability
-- the current local verification baseline on March 11, 2026 includes
+  explicit left certificates via `LeftTransform`, public correctness, public
+  uniqueness, and certificate packaging through `HNFResult.toCertificate`
+- `CanonicalMod` is instantiated for both `Int` and `Polynomial Rat`
+- the executable Smith layer is complete through public existence/isSmith,
+  left/right unimodularity extraction, invariant-factor-based uniqueness, and
+  the final public theorem
+  `isSmithNormalForm_unique_of_two_sided_equiv`
+- `smithNormalForm` is executable and end-to-end; `SNFResult` packages the
+  two-sided equation `U * A * V = S`, and `SNFResult.ofCertificate` /
+  `SNFResult.toCertificate` define the current public certificate boundary
+- the same-size Smith support layer is verified: pivot states, raw first-row /
+  first-column clearing steps, pure-data clearing loops, lead preparation,
+  single-step improvement, and stabilization are all in place
+- the PID bridge is no longer placeholder-only:
+  - `NormalForms.Bridge.MathlibPID.Basic` provides the raw column-span and
+    `smithNormalFormOfLE` helper layer
+  - `NormalForms.Bridge.MathlibPID.Quotient` provides the semantic bridge:
+    executable invariant-factor readout, quotient transport through the chosen
+    executable Smith result, coordinatewise `Submodule.pi` identification for
+    Smith matrices, general torsion-plus-free quotient decompositions,
+    `ℤ`-specialized `ZMod` decompositions, and full-rank compatibility
+    equivalences with mathlib's `quotientEquivPiSpan` /
+    `quotientEquivDirectSum`
+- the example layer still centers on internal Smith diagonal/invariant-factor
+  smoke over `Int` and `Q[X]` together with public packaging smoke; dedicated
+  semantic quotient bridge smoke is the next example-facing documentation gap
+- the current local verification baseline on March 19, 2026 includes
   `lake build`, `lake env lean scripts/AxiomAudit.lean`,
-  `lake env lean NormalForms/Matrix/Smith/Basic.lean`, and
+  `lake env lean NormalForms/Bridge/MathlibPID/Quotient.lean`, and
   `lake env lean NormalForms/Examples/AbelianGroups/Basic.lean`
