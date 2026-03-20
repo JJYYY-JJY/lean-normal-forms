@@ -27,18 +27,22 @@ Current status:
   single-step improvement, and stabilization are all in place
 - the PID bridge is no longer placeholder-only:
   - `NormalForms.Bridge.MathlibPID.Basic` provides the raw column-span and
-    `smithNormalFormOfLE` helper layer
+    `smithNormalFormOfLE` helper layer together with executable-side and
+    mathlib-side normalized `Int` coefficient-list readouts
   - `NormalForms.Bridge.MathlibPID.Quotient` provides the semantic bridge:
     executable invariant-factor readout, quotient transport through the chosen
     executable Smith result, coordinatewise `Submodule.pi` identification for
     Smith matrices, general torsion-plus-free quotient decompositions,
-    `ℤ`-specialized `ZMod` decompositions, and full-rank compatibility
-    equivalences with mathlib's `quotientEquivPiSpan` /
-    `quotientEquivDirectSum`
-- the example layer still centers on internal Smith diagonal/invariant-factor
-  smoke over `Int` and `Q[X]` together with public packaging smoke; dedicated
-  semantic quotient bridge smoke is the next example-facing documentation gap
-- the current local verification baseline on March 19, 2026 includes
+    `ℤ`-specialized `ZMod` decompositions, the full-rank executable
+    invariant-factor count theorem, and full-rank compatibility equivalences
+    with mathlib's `quotientEquivPiSpan` / `quotientEquivDirectSum` /
+    `quotientEquivPiZMod`
+- the example layer now includes internal Smith diagonal/invariant-factor smoke
+  over `Int` and `Q[X]`, public packaging smoke, semantic quotient bridge
+  smoke, full-rank executable-vs-mathlib `PiZMod` compatibility smoke, and
+  normalized executable-vs-mathlib coefficient-list length-comparison smoke
+- the current local verification baseline on March 20, 2026 includes
   `lake build`, `lake env lean scripts/AxiomAudit.lean`,
+  `lake env lean NormalForms/Bridge/MathlibPID/Basic.lean`,
   `lake env lean NormalForms/Bridge/MathlibPID/Quotient.lean`, and
   `lake env lean NormalForms/Examples/AbelianGroups/Basic.lean`
