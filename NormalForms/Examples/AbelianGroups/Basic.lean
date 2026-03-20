@@ -1,6 +1,7 @@
 import NormalForms.Matrix.Hermite
 import NormalForms.Matrix.Smith
 import NormalForms.Bridge.MathlibPID
+import Mathlib.LinearAlgebra.Matrix.Rank
 
 /-!
 # Abelian Group Examples
@@ -191,6 +192,10 @@ def unitBoundarySNFMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
 def presentationSNFMatrixZ : _root_.Matrix (Fin 2) (Fin 3) Int :=
   !![2, 0, 0;
      0, 2, 0]
+
+def mixedTorsionFreeMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
+  !![2, 0;
+     0, 0]
 
 noncomputable def simpleSmithMatrixQX : _root_.Matrix (Fin 2) (Fin 2) (Polynomial Rat) :=
   !![(1 : Polynomial Rat), 0;
@@ -1223,10 +1228,211 @@ theorem bezoutPolynomialSmoke :
     bezoutReductionMatrix_mulVec
       ((Polynomial.X : Polynomial Rat) + 1) (Polynomial.X : Polynomial Rat)
 
+private theorem invariantFactors_length_le_min {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) :
+    (NormalForms.Matrix.Smith.Internal.invariantFactors A).length ≤ Nat.min m n := by
+  induction m generalizing n with
+  | zero =>
+      simp [NormalForms.Matrix.Smith.Internal.invariantFactors]
+  | succ m ih =>
+      cases n with
+      | zero =>
+          simp [NormalForms.Matrix.Smith.Internal.invariantFactors]
+      | succ n =>
+          by_cases h0 : normalize (A 0 0) = 0
+          · simp [NormalForms.Matrix.Smith.Internal.invariantFactors, h0]
+          · rw [NormalForms.Matrix.Smith.Internal.invariantFactors]
+            have hlen :
+                (NormalForms.Matrix.Smith.Internal.invariantFactors
+                  (NormalForms.Matrix.Hermite.lowerRight A)).length ≤
+                  Nat.min m n :=
+              ih (NormalForms.Matrix.Hermite.lowerRight A)
+            simpa [h0, Nat.add_min_add_right] using Nat.succ_le_succ hlen
+
+private theorem pidExecutableInvariantFactorCount_le_card_rows_local
+    {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [NormalForms.Matrix.Hermite.CanonicalMod Int]
+    (A : _root_.Matrix m n Int) :
+    NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount A ≤ Fintype.card m := by
+  unfold NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount
+  change
+    (smithInvariantFactors (Classical.choose (smithNormalForm_exists A)).S).length ≤
+      Fintype.card m
+  simp only [smithInvariantFactors]
+  exact le_trans (invariantFactors_length_le_min _) (Nat.min_le_left _ _)
+
+private theorem intFunction_infinite_of_pos (k : Nat) (hk : 0 < k) :
+    Infinite (Fin k → Int) := by
+  let j : Fin k := ⟨0, hk⟩
+  refine Infinite.of_injective (fun z : Int => fun i => if i = j then z else 0) ?_
+  intro a b hab
+  have := congrArg (fun f => f j) hab
+  simpa [j] using this
+
+private theorem pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
+    {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [NormalForms.Matrix.Hermite.CanonicalMod Int]
+    (A : _root_.Matrix m n Int)
+    (hfull : Module.finrank Int (NormalForms.Bridge.MathlibPID.pidSmithColumnSpan A) =
+      Fintype.card m) :
+    NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount A = Fintype.card m := by
+  let b := Pi.basisFun Int m
+  have hfull' :
+      Module.finrank Int (NormalForms.Bridge.MathlibPID.pidSmithColumnSpan A) =
+        Module.finrank Int (m → Int) := by
+    simpa [Module.finrank_eq_card_basis b] using hfull
+  have hfiniteQ :
+      Finite ((m → Int) ⧸ NormalForms.Bridge.MathlibPID.pidSmithColumnSpan A) :=
+    Submodule.finiteQuotientOfFreeOfRankEq
+      (NormalForms.Bridge.MathlibPID.pidSmithColumnSpan A) hfull'
+  let tors := (i :
+      Fin (NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount A)) →
+        ZMod (NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorFn A i).natAbs
+  let tail := Fin (Fintype.card m -
+      NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount A) → Int
+  have hfiniteRhs : Finite (tors × tail) := by
+    exact Finite.of_equiv
+      ((m → Int) ⧸ NormalForms.Bridge.MathlibPID.pidSmithColumnSpan A)
+      (NormalForms.Bridge.MathlibPID.pidExecutableQuotientEquivPiZModProd A).toEquiv
+  have hfiniteTail : Finite tail := by
+    exact Finite.of_injective (fun y : tail => ((0 : tors), y)) (by
+      intro x y hxy
+      simpa using congrArg Prod.snd hxy)
+  by_cases hzero :
+      Fintype.card m -
+          NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount A = 0
+  · exact le_antisymm
+      (pidExecutableInvariantFactorCount_le_card_rows_local A)
+      (Nat.sub_eq_zero_iff_le.mp hzero)
+  · have hInf : Infinite tail := intFunction_infinite_of_pos _ (Nat.pos_of_ne_zero hzero)
+    let _ : Finite tail := hfiniteTail
+    exfalso
+    exact hInf.false
+
+private def presentationColumnSpanBasisVec₁ : Fin 2 → Int :=
+  ![2, 0]
+
+private def presentationColumnSpanBasisVec₂ : Fin 2 → Int :=
+  ![0, 8]
+
+theorem fullRankMatrixZUnimodularSmoke :
+    Unimodular fullRankMatrixZ := by
+  let B : _root_.Matrix (Fin 2) (Fin 2) Int :=
+    !![-5, 2;
+       3, -1]
+  have hmul : fullRankMatrixZ * B = 1 := by
+    decide
+  simpa [Unimodular] using
+    (_root_.Matrix.isUnit_det_of_right_inverse
+      (A := fullRankMatrixZ) (B := B) hmul)
+
+theorem fullRankColumnSpanTopSmoke :
+    NormalForms.Bridge.MathlibPID.pidSmithColumnSpan fullRankMatrixZ = ⊤ := by
+  calc
+    NormalForms.Bridge.MathlibPID.pidSmithColumnSpan fullRankMatrixZ
+        = NormalForms.Bridge.MathlibPID.pidSmithColumnSpan
+            (1 : _root_.Matrix (Fin 2) (Fin 2) Int) := by
+              simpa [Matrix.one_mul] using
+                (NormalForms.Bridge.MathlibPID.pidSmithColumnSpan_mul_right_unimodular
+                  (A := (1 : _root_.Matrix (Fin 2) (Fin 2) Int))
+                  (V := fullRankMatrixZ) fullRankMatrixZUnimodularSmoke)
+    _ = ⊤ := by
+          rw [NormalForms.Bridge.MathlibPID.pidSmithColumnSpan_eq_range_mulVecLin,
+            Matrix.mulVecLin_one, LinearMap.range_id]
+
+theorem fullRankColumnSpanFinrankSmoke :
+    Module.finrank Int (NormalForms.Bridge.MathlibPID.pidSmithColumnSpan fullRankMatrixZ) = 2 := by
+  rw [fullRankColumnSpanTopSmoke, finrank_top, Module.finrank_pi]
+  decide
+
+private theorem presentationColumnSpanFinrankSmoke :
+    Module.finrank Int
+      (NormalForms.Bridge.MathlibPID.pidSmithColumnSpan presentationMatrixZ) = 2 := by
+  let M := NormalForms.Bridge.MathlibPID.pidSmithColumnSpan presentationMatrixZ
+  let a : M := ⟨presentationColumnSpanBasisVec₁, by
+    refine ⟨![1, 0, 0], ?_⟩
+    decide⟩
+  let b : M := ⟨presentationColumnSpanBasisVec₂, by
+    refine ⟨![-2, 1, 0], ?_⟩
+    decide⟩
+  have hlin : LinearIndependent Int ![a, b] := by
+    rw [Fintype.linearIndependent_iff]
+    intro g hg i
+    fin_cases i
+    · have h0 := congrArg (fun x : M => ((x : Fin 2 → Int) 0)) hg
+      have h0' : g 0 = 0 := by
+        simpa
+          [a, b, presentationColumnSpanBasisVec₁, presentationColumnSpanBasisVec₂] using h0
+      simpa using h0'
+    · have h1 := congrArg (fun x : M => ((x : Fin 2 → Int) 1)) hg
+      have h1' : g 1 = 0 := by
+        simpa
+          [a, b, presentationColumnSpanBasisVec₁, presentationColumnSpanBasisVec₂] using h1
+      simpa using h1'
+  have hlower : 2 ≤ Module.finrank Int M := by
+    simpa using hlin.fintype_card_le_finrank
+  have hupper : Module.finrank Int M ≤ 2 := by
+    simpa using (Submodule.finrank_le M)
+  exact le_antisymm hupper hlower
+
+theorem fullRankPidExecutableInvariantFactorCountSmoke :
+    NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount fullRankMatrixZ = 2 := by
+  exact pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
+    fullRankMatrixZ fullRankColumnSpanFinrankSmoke
+
+theorem presentationPidExecutableInvariantFactorCountSmoke :
+    NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount presentationMatrixZ = 2 := by
+  exact pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
+    presentationMatrixZ presentationColumnSpanFinrankSmoke
+
+theorem fullRankSNFPublicInvariantFactorLengthSmoke :
+    fullRankSNFPublic.invariantFactors.length = 2 := by
+  simpa [fullRankSNFPublic, NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount] using
+    fullRankPidExecutableInvariantFactorCountSmoke
+
+theorem presentationSNFPublicInvariantFactorLengthSmoke :
+    presentationSNFPublic.invariantFactors.length = 2 := by
+  simpa
+    [presentationSNFPublic, NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount] using
+    presentationPidExecutableInvariantFactorCountSmoke
+
+noncomputable def presentationPidExecutableQuotientEquivPiCoordsSmoke :=
+  NormalForms.Bridge.MathlibPID.pidExecutableQuotientEquivPiCoords presentationMatrixZ
+
+noncomputable def presentationPidExecutableQuotientEquivPiSpanProdSmoke :=
+  NormalForms.Bridge.MathlibPID.pidExecutableQuotientEquivPiSpanProd presentationMatrixZ
+
+noncomputable def presentationPidExecutableQuotientEquivPiZModProdSmoke :=
+  NormalForms.Bridge.MathlibPID.pidExecutableQuotientEquivPiZModProd presentationMatrixZ
+
+noncomputable def presentationPidExecutableQuotientEquivPiSpanSmoke :=
+  NormalForms.Bridge.MathlibPID.pidExecutableQuotientEquivPiSpan presentationMatrixZ
+    presentationPidExecutableInvariantFactorCountSmoke
+
+noncomputable def presentationPidExecutableQuotientEquivDirectSumSmoke :=
+  NormalForms.Bridge.MathlibPID.pidExecutableQuotientEquivDirectSum presentationMatrixZ
+    presentationPidExecutableInvariantFactorCountSmoke
+
+noncomputable def mixedPidExecutableQuotientEquivPiSpanProdSmoke :=
+  NormalForms.Bridge.MathlibPID.pidExecutableQuotientEquivPiSpanProd mixedTorsionFreeMatrixZ
+
+noncomputable def mixedPidExecutableQuotientEquivPiZModProdSmoke :=
+  NormalForms.Bridge.MathlibPID.pidExecutableQuotientEquivPiZModProd mixedTorsionFreeMatrixZ
+
+noncomputable def fullRankPidFullRankMathlibQuotientEquivExecutableSmoke :=
+  NormalForms.Bridge.MathlibPID.pidFullRankMathlibQuotientEquivExecutable fullRankMatrixZ
+    fullRankColumnSpanFinrankSmoke fullRankPidExecutableInvariantFactorCountSmoke
+
+noncomputable def fullRankPidFullRankMathlibDirectSumEquivExecutableSmoke :=
+  NormalForms.Bridge.MathlibPID.pidFullRankMathlibDirectSumEquivExecutable fullRankMatrixZ
+    fullRankColumnSpanFinrankSmoke fullRankPidExecutableInvariantFactorCountSmoke
+
 theorem presentationColumnSpanBridgeSmoke :
     NormalForms.Bridge.MathlibPID.pidSmithColumnSpan presentationMatrixZ =
       LinearMap.range presentationMatrixZ.mulVecLin := by
   exact NormalForms.Bridge.MathlibPID.pidSmithColumnSpan_eq_range_mulVecLin presentationMatrixZ
 
 end NormalForms.Examples.AbelianGroups
-
