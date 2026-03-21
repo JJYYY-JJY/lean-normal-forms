@@ -1,6 +1,10 @@
 import NormalForms.Matrix.Hermite
 import NormalForms.Matrix.Smith
 import NormalForms.Bridge.MathlibPID
+import Mathlib.Algebra.Exact
+import Mathlib.Algebra.BigOperators.Fin
+import Mathlib.Algebra.BigOperators.Group.Finset.Defs
+import Mathlib.Data.List.OfFn
 import Mathlib.LinearAlgebra.Matrix.Rank
 
 /-!
@@ -36,6 +40,7 @@ open NormalForms.Matrix.Elementary
 open NormalForms.Matrix.Certificates
 open NormalForms.Matrix.Hermite
 open NormalForms.Matrix.Smith
+open NormalForms.Bridge.MathlibPID
 
 def zeroMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
   0
@@ -1238,6 +1243,280 @@ private def presentationColumnSpanBasisVec₁ : Fin 2 → Int :=
 private def presentationColumnSpanBasisVec₂ : Fin 2 → Int :=
   ![0, 8]
 
+private def unitBoundaryColumnSpanBasisVec₁ : Fin 2 → Int :=
+  ![1, 0]
+
+private def unitBoundaryColumnSpanBasisVec₂ : Fin 2 → Int :=
+  ![0, 2]
+
+private def twoTorsionSubtypeEquiv {A B : Type _}
+    [AddCommGroup A] [AddCommGroup B] [Module ℤ A] [Module ℤ B]
+    (e : A ≃+ B) :
+    {x : A // (2 : Int) • x = 0} ≃ {y : B // (2 : Int) • y = 0} where
+  toFun x := ⟨e x, by
+    let e' := e.toIntLinearEquiv (modM := inferInstance) (modM₂ := inferInstance)
+    have hz : e' ((2 : Int) • (x : A)) = 0 := by
+      simpa [x.property] using e'.map_zero
+    have hmap : e' ((2 : Int) • (x : A)) = (2 : Int) • e' (x : A) := by
+      simpa [e'] using map_zsmul e.toAddMonoidHom (2 : Int) (x : A)
+    calc
+      (2 : Int) • e' (x : A) = e' ((2 : Int) • (x : A)) := hmap.symm
+      _ = 0 := hz⟩
+  invFun y := ⟨e.symm y, by
+    let e' := e.symm.toIntLinearEquiv (modM := inferInstance) (modM₂ := inferInstance)
+    have hz : e' ((2 : Int) • (y : B)) = 0 := by
+      simpa [y.property] using e'.map_zero
+    have hmap : e' ((2 : Int) • (y : B)) = (2 : Int) • e' (y : B) := by
+      simpa [e'] using map_zsmul e.symm.toAddMonoidHom (2 : Int) (y : B)
+    calc
+      (2 : Int) • e' (y : B) = e' ((2 : Int) • (y : B)) := hmap.symm
+      _ = 0 := hz⟩
+  left_inv x := by simp
+  right_inv y := by simp
+
+private theorem pidExecutableSmithCoeffNatAbsList_pairwise {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [CanonicalMod Int]
+    (A : _root_.Matrix m n Int) :
+    (pidExecutableSmithCoeffNatAbsList A).Pairwise (· ≤ ·) := by
+  simpa [pidExecutableSmithCoeffNatAbsList] using
+    (List.pairwise_insertionSort (r := (· ≤ ·))
+      ((pidSmithNormalFormCoeffList A).map Int.natAbs))
+
+private theorem pidFullRankMathlibSmithCoeffNatAbsList_pairwise {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    (A : _root_.Matrix m n Int)
+    (hfull : Module.finrank Int (pidSmithColumnSpan A) = Fintype.card m) :
+    (pidFullRankMathlibSmithCoeffNatAbsList A hfull).Pairwise (· ≤ ·) := by
+  simpa [pidFullRankMathlibSmithCoeffNatAbsList] using
+    (List.pairwise_insertionSort (r := (· ≤ ·))
+      (((Finset.univ : Finset m).toList.map fun i =>
+        Int.natAbs (pidFullRankSmithNormalFormCoeffs A hfull i))))
+
+private theorem pidExecutableSmithCoeffNatAbsList_prod {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [CanonicalMod Int]
+    (A : _root_.Matrix m n Int) :
+    (pidExecutableSmithCoeffNatAbsList A).prod =
+      ∏ i : Fin (pidExecutableInvariantFactorCount A),
+        (pidExecutableInvariantFactorFn A i).natAbs := by
+  let l := pidSmithNormalFormCoeffList A
+  have hsortProd :
+      ((List.ofFn fun i : Fin l.length => (l.get i).natAbs).insertionSort (· ≤ ·)).prod =
+        ∏ i : Fin l.length, (l.get i).natAbs := by
+    calc
+      ((List.ofFn fun i : Fin l.length => (l.get i).natAbs).insertionSort (· ≤ ·)).prod
+          = (List.ofFn fun i : Fin l.length => (l.get i).natAbs).prod := by
+              simpa [List.prod] using
+                (List.perm_insertionSort (r := (· ≤ ·))
+                  (List.ofFn fun i : Fin l.length => (l.get i).natAbs)).foldr_eq
+                  (f := (· * ·)) (b := 1)
+      _ = ∏ i : Fin l.length, (l.get i).natAbs := by
+            exact Fin.prod_ofFn (fun i : Fin l.length => (l.get i).natAbs)
+  simpa [l, pidExecutableSmithCoeffNatAbsList, pidExecutableInvariantFactorCount,
+    pidExecutableInvariantFactorFn, List.ofFn_getElem_eq_map] using hsortProd
+
+private theorem pidFullRankMathlibSmithCoeffNatAbsList_prod {m n : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    (A : _root_.Matrix m n Int)
+    (hfull : Module.finrank Int (pidSmithColumnSpan A) = Fintype.card m) :
+    (pidFullRankMathlibSmithCoeffNatAbsList A hfull).prod =
+      ∏ i : m, (pidFullRankSmithNormalFormCoeffs A hfull i).natAbs := by
+  calc
+    (pidFullRankMathlibSmithCoeffNatAbsList A hfull).prod
+        = (((Finset.univ : Finset m).toList.map fun i =>
+            Int.natAbs (pidFullRankSmithNormalFormCoeffs A hfull i)).prod) := by
+              simpa [pidFullRankMathlibSmithCoeffNatAbsList, List.prod] using
+                (List.perm_insertionSort (r := (· ≤ ·))
+                  (((Finset.univ : Finset m).toList.map fun i =>
+                    Int.natAbs (pidFullRankSmithNormalFormCoeffs A hfull i)))).foldr_eq
+                  (f := (· * ·)) (b := 1)
+    _ = ∏ i : m, (pidFullRankSmithNormalFormCoeffs A hfull i).natAbs := by
+          exact Finset.prod_map_toList (s := (Finset.univ : Finset m))
+            (f := fun i => Int.natAbs (pidFullRankSmithNormalFormCoeffs A hfull i))
+
+private theorem pairwise_eq_one_one_of_length_two_prod_one {l : List Nat}
+    (hlen : l.length = 2)
+    (hsorted : l.Pairwise (· ≤ ·))
+    (hprod : l.prod = 1) :
+    l = [1, 1] := by
+  rcases List.length_eq_two.mp hlen with ⟨a, b, rfl⟩
+  haveI : IsTrans Nat (· ≤ ·) := ⟨fun _ _ _ => Nat.le_trans⟩
+  have hsorted' : a ≤ b := by
+    simpa using
+      (List.pairwise_cons_cons_iff_of_trans (R := (· ≤ ·)) (a := a) (b := b) (l := [])).1
+        hsorted
+  have hprod' : a = 1 ∧ b = 1 := by
+    simpa [List.prod] using hprod
+  have ha : a = 1 := hprod'.1
+  have hb : b = 1 := hprod'.2
+  simp [ha, hb]
+
+private theorem pairwise_eq_one_two_of_length_two_prod_two {l : List Nat}
+    (hlen : l.length = 2)
+    (hsorted : l.Pairwise (· ≤ ·))
+    (hprod : l.prod = 2) :
+    l = [1, 2] := by
+  rcases List.length_eq_two.mp hlen with ⟨a, b, rfl⟩
+  haveI : IsTrans Nat (· ≤ ·) := ⟨fun _ _ _ => Nat.le_trans⟩
+  have hsorted' : a ≤ b := by
+    simpa using
+      (List.pairwise_cons_cons_iff_of_trans (R := (· ≤ ·)) (a := a) (b := b) (l := [])).1
+        hsorted
+  have hdiv : a ∣ 2 := ⟨b, by simpa [List.prod] using hprod.symm⟩
+  have haLeTwo : a ≤ 2 := by
+    exact Nat.le_of_dvd (by decide) hdiv
+  interval_cases a
+  · simp [List.prod] at hprod
+  · have hb : b = 2 := by
+      simpa [List.prod] using hprod
+    simp [hb]
+  · have hb : b = 1 := by
+      simpa [List.prod] using hprod
+    simp [hb] at hsorted'
+
+private theorem pairwise_length_two_prod_four_cases {l : List Nat}
+    (hlen : l.length = 2)
+    (hsorted : l.Pairwise (· ≤ ·))
+    (hprod : l.prod = 4) :
+    l = [1, 4] ∨ l = [2, 2] := by
+  rcases List.length_eq_two.mp hlen with ⟨a, b, rfl⟩
+  haveI : IsTrans Nat (· ≤ ·) := ⟨fun _ _ _ => Nat.le_trans⟩
+  have hsorted' : a ≤ b := by
+    simpa using
+      (List.pairwise_cons_cons_iff_of_trans (R := (· ≤ ·)) (a := a) (b := b) (l := [])).1
+        hsorted
+  have hdiv : a ∣ 4 := ⟨b, by simpa [List.prod] using hprod.symm⟩
+  have haLeFour : a ≤ 4 := by
+    exact Nat.le_of_dvd (by decide) hdiv
+  interval_cases a
+  · simp [List.prod] at hprod
+  · have hb : b = 4 := by
+      simpa [List.prod] using hprod
+    exact Or.inl (by simp [hb])
+  · have hb : b = 2 := by
+      have hmul : 2 * b = 2 * 2 := by
+        simpa [List.prod, Nat.mul_assoc] using hprod
+      exact Nat.eq_of_mul_eq_mul_left (by decide) hmul
+    exact Or.inr (by simp [hb])
+  · have : False := by
+      norm_num at hdiv
+    exact this.elim
+  · have hb : b = 1 := by
+      simpa [List.prod] using hprod
+    simp [hb] at hsorted'
+
+private theorem fin2_ofFn_pair {α : Type _} (f : Fin 2 → α) :
+    List.ofFn f = [f 0, f 1] := by
+  rw [List.ofFn_succ']
+  simp
+
+private theorem fin2_toList_perm :
+    List.Perm ((Finset.univ : Finset (Fin 2)).toList) [0, 1] := by
+  have hlen : ((Finset.univ : Finset (Fin 2)).toList).length = 2 := by
+    simp
+  have hnodup : ((Finset.univ : Finset (Fin 2)).toList).Nodup := Finset.nodup_toList _
+  rcases List.length_eq_two.mp hlen with ⟨a, b, hab⟩
+  rw [hab] at hnodup
+  rw [hab]
+  have habne : a ≠ b := by
+    simpa [List.nodup_cons] using hnodup
+  fin_cases a <;> fin_cases b
+  · contradiction
+  · exact List.Perm.refl _
+  · simpa using List.Perm.swap 0 1 []
+  · contradiction
+
+private theorem pidFullRankMathlibSmithCoeffNatAbsList_fin2_eq_sort_pair
+    {n : Type _} [Fintype n] [DecidableEq n]
+    (A : _root_.Matrix (Fin 2) n Int)
+    (hfull : Module.finrank Int (pidSmithColumnSpan A) = 2) :
+    pidFullRankMathlibSmithCoeffNatAbsList A hfull =
+      ([ (pidFullRankSmithNormalFormCoeffs A hfull 0).natAbs,
+         (pidFullRankSmithNormalFormCoeffs A hfull 1).natAbs ].insertionSort (· ≤ ·)) := by
+  unfold pidFullRankMathlibSmithCoeffNatAbsList
+  let f : Fin 2 → Nat := fun i =>
+    (pidFullRankSmithNormalFormCoeffs A hfull i).natAbs
+  have hperm : List.Perm (((Finset.univ : Finset (Fin 2)).toList.map f)) [f 0, f 1] :=
+    fin2_toList_perm.map f
+  exact
+    (((List.perm_insertionSort (r := (· ≤ ·))
+      (((Finset.univ : Finset (Fin 2)).toList.map f))).trans hperm).trans
+      (List.perm_insertionSort (r := (· ≤ ·)) [f 0, f 1]).symm).eq_of_pairwise'
+      (List.pairwise_insertionSort (r := (· ≤ ·)) _)
+      (List.pairwise_insertionSort (r := (· ≤ ·)) _)
+
+private theorem pidExecutableSmithCoeffNatAbsList_fin2_eq_sort_pair_of_count_eq_two
+    {m n : Type _} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [CanonicalMod Int]
+    (A : _root_.Matrix m n Int)
+    (hcount : pidExecutableInvariantFactorCount A = 2) :
+    pidExecutableSmithCoeffNatAbsList A =
+      ([ (pidExecutableInvariantFactorFn A (Fin.cast hcount.symm 0)).natAbs,
+         (pidExecutableInvariantFactorFn A (Fin.cast hcount.symm 1)).natAbs ].insertionSort
+        (· ≤ ·)) := by
+  unfold pidExecutableSmithCoeffNatAbsList
+  rw [show List.map Int.natAbs (pidSmithNormalFormCoeffList A) =
+      List.ofFn
+        (fun i : Fin (pidExecutableInvariantFactorCount A) =>
+          (pidExecutableInvariantFactorFn A i).natAbs) by
+        rw [← List.ofFn_getElem_eq_map (pidSmithNormalFormCoeffList A) Int.natAbs]
+        simp [pidExecutableInvariantFactorFn, pidExecutableInvariantFactorCount]]
+  rw [List.ofFn_congr hcount]
+  exact congrArg (fun l => l.insertionSort (· ≤ ·)) <|
+    fin2_ofFn_pair
+      (fun i : Fin 2 => (pidExecutableInvariantFactorFn A (Fin.cast hcount.symm i)).natAbs)
+
+private theorem fin2PiZModTwoTorsionCard_eq_two_of_sort_pair_eq_one_four
+    (f : Fin 2 → Nat)
+    (hsort : ([f 0, f 1].insertionSort (· ≤ ·)) = [1, 4]) :
+    Nat.card {x : ((i : Fin 2) → ZMod (f i)) // (2 : Int) • x = 0} = 2 := by
+  by_cases h : f 0 ≤ f 1
+  ·
+    have hab : f 0 = 1 ∧ f 1 = 4 := by
+      simpa [h] using hsort
+    rcases hab with ⟨h0, h1⟩
+    have hf : f = ![1, 4] := by
+      funext i
+      fin_cases i <;> simp [h0, h1]
+    subst f
+    have e := twoTorsionSubtypeEquiv
+      ((LinearEquiv.piFinTwo Int (fun i => ZMod (![1, 4] i))).toAddEquiv)
+    have hcard :
+      Nat.card {x : ((i : Fin 2) → ZMod (![1, 4] i)) // (2 : Int) • x = 0}
+        = Nat.card {x : ZMod 1 × ZMod 4 // (2 : Int) • x = 0} := Nat.card_congr e
+    have htwo :
+        Nat.card {x : ((i : Fin 2) → ZMod (![1, 4] i)) // (2 : Int) • x = 0} = 2 := by
+      calc
+        Nat.card {x : ((i : Fin 2) → ZMod (![1, 4] i)) // (2 : Int) • x = 0}
+          = Nat.card {x : ZMod 1 × ZMod 4 // (2 : Int) • x = 0} := hcard
+        _ = 2 := by
+              rw [Nat.card_eq_fintype_card]
+              decide
+    simpa [h0, h1] using htwo
+  ·
+    have hab : f 1 = 1 ∧ f 0 = 4 := by
+      simpa [h] using hsort
+    rcases hab with ⟨h1, h0⟩
+    have hf : f = ![4, 1] := by
+      funext i
+      fin_cases i <;> simp [h0, h1]
+    subst f
+    have e := twoTorsionSubtypeEquiv
+      ((LinearEquiv.piFinTwo Int (fun i => ZMod (![4, 1] i))).toAddEquiv)
+    have hcard :
+      Nat.card {x : ((i : Fin 2) → ZMod (![4, 1] i)) // (2 : Int) • x = 0}
+        = Nat.card {x : ZMod 4 × ZMod 1 // (2 : Int) • x = 0} := Nat.card_congr e
+    have htwo :
+        Nat.card {x : ((i : Fin 2) → ZMod (![4, 1] i)) // (2 : Int) • x = 0} = 2 := by
+      calc
+        Nat.card {x : ((i : Fin 2) → ZMod (![4, 1] i)) // (2 : Int) • x = 0}
+          = Nat.card {x : ZMod 4 × ZMod 1 // (2 : Int) • x = 0} := hcard
+        _ = 2 := by
+              rw [Nat.card_eq_fintype_card]
+              decide
+    simpa [h0, h1] using htwo
+
 theorem fullRankMatrixZUnimodularSmoke :
     Unimodular fullRankMatrixZ := by
   let B : _root_.Matrix (Fin 2) (Fin 2) Int :=
@@ -1267,6 +1546,36 @@ theorem fullRankColumnSpanFinrankSmoke :
     Module.finrank Int (NormalForms.Bridge.MathlibPID.pidSmithColumnSpan fullRankMatrixZ) = 2 := by
   rw [fullRankColumnSpanTopSmoke, finrank_top, Module.finrank_pi]
   decide
+
+private theorem unitBoundaryColumnSpanFinrankSmoke :
+    Module.finrank Int
+      (NormalForms.Bridge.MathlibPID.pidSmithColumnSpan unitBoundaryMatrixZ) = 2 := by
+  let M := NormalForms.Bridge.MathlibPID.pidSmithColumnSpan unitBoundaryMatrixZ
+  let a : M := ⟨unitBoundaryColumnSpanBasisVec₁, by
+    refine ⟨![-1, 0], ?_⟩
+    decide⟩
+  let b : M := ⟨unitBoundaryColumnSpanBasisVec₂, by
+    refine ⟨![0, 1], ?_⟩
+    decide⟩
+  have hlin : LinearIndependent Int ![a, b] := by
+    rw [Fintype.linearIndependent_iff]
+    intro g hg i
+    fin_cases i
+    · have h0 := congrArg (fun x : M => ((x : Fin 2 → Int) 0)) hg
+      have h0' : g 0 = 0 := by
+        simpa
+          [a, b, unitBoundaryColumnSpanBasisVec₁, unitBoundaryColumnSpanBasisVec₂] using h0
+      simpa using h0'
+    · have h1 := congrArg (fun x : M => ((x : Fin 2 → Int) 1)) hg
+      have h1' : g 1 = 0 := by
+        simpa
+          [a, b, unitBoundaryColumnSpanBasisVec₁, unitBoundaryColumnSpanBasisVec₂] using h1
+      simpa using h1'
+  have hlower : 2 ≤ Module.finrank Int M := by
+    simpa using hlin.fintype_card_le_finrank
+  have hupper : Module.finrank Int M ≤ 2 := by
+    simpa using (Submodule.finrank_le M)
+  exact le_antisymm hupper hlower
 
 private theorem presentationColumnSpanFinrankSmoke :
     Module.finrank Int
@@ -1298,6 +1607,151 @@ private theorem presentationColumnSpanFinrankSmoke :
     simpa using (Submodule.finrank_le M)
   exact le_antisymm hupper hlower
 
+private noncomputable def unitBoundaryMod2 :
+    (Fin 2 → Int) →ₗ[Int] ZMod 2 where
+  toFun v := (v 1 : ZMod 2)
+  map_add' _ _ := by simp
+  map_smul' c v := by simp
+
+set_option linter.flexible false in
+private theorem unitBoundary_ker_mod2 :
+    LinearMap.ker unitBoundaryMod2 = pidSmithColumnSpan unitBoundaryMatrixZ := by
+  ext x
+  constructor
+  · intro hx
+    rw [LinearMap.mem_ker] at hx
+    rw [pidSmithColumnSpan_eq_range_mulVecLin]
+    have hdiv : (2 : Int) ∣ x 1 := (ZMod.intCast_zmod_eq_zero_iff_dvd (x 1) 2).mp hx
+    rcases hdiv with ⟨k, hk⟩
+    refine ⟨![-x 0, k], ?_⟩
+    ext i
+    fin_cases i
+    · change (_root_.Matrix.mulVec unitBoundaryMatrixZ ![-x 0, k]) 0 = x 0
+      rw [_root_.Matrix.mulVec, Matrix.vec2_dotProduct]
+      simp [unitBoundaryMatrixZ]
+    · change (_root_.Matrix.mulVec unitBoundaryMatrixZ ![-x 0, k]) 1 = x 1
+      rw [_root_.Matrix.mulVec, Matrix.vec2_dotProduct]
+      rw [hk]
+      simp [unitBoundaryMatrixZ]
+  · intro hx
+    rw [pidSmithColumnSpan_eq_range_mulVecLin] at hx
+    rcases hx with ⟨v, rfl⟩
+    rw [LinearMap.mem_ker]
+    simp [unitBoundaryMod2, unitBoundaryMatrixZ, _root_.Matrix.mulVec, Matrix.vec2_dotProduct]
+    left
+    decide
+
+private noncomputable def unitBoundaryQuotEquivZMod2 :
+    ((Fin 2 → Int) ⧸ pidSmithColumnSpan unitBoundaryMatrixZ) ≃+ ZMod 2 := by
+  let p := pidSmithColumnSpan unitBoundaryMatrixZ
+  have hexact : Function.Exact p.subtype unitBoundaryMod2 := by
+    rw [LinearMap.exact_iff, Submodule.range_subtype, unitBoundary_ker_mod2]
+  have hsurj : Function.Surjective unitBoundaryMod2 := by
+    intro z
+    refine ⟨![0, z.val], ?_⟩
+    simp [unitBoundaryMod2]
+  exact ((Submodule.quotEquivOfEq _ _ (Submodule.range_subtype p).symm).toAddEquiv).trans
+    (hexact.linearEquivOfSurjective hsurj).toAddEquiv
+
+private theorem unitBoundaryQuotientCardSmoke :
+    Nat.card (((Fin 2 → Int) ⧸ pidSmithColumnSpan unitBoundaryMatrixZ)) = 2 := by
+  calc
+    Nat.card (((Fin 2 → Int) ⧸ pidSmithColumnSpan unitBoundaryMatrixZ))
+      = Nat.card (ZMod 2) := Nat.card_congr unitBoundaryQuotEquivZMod2.toEquiv
+    _ = 2 := Nat.card_zmod 2
+
+private noncomputable def presentationMod2Pair :
+    (Fin 2 → Int) →ₗ[Int] (ZMod 2 × ZMod 2) where
+  toFun v := ((v 0 : ZMod 2), (v 1 : ZMod 2))
+  map_add' _ _ := by simp
+  map_smul' c v := by simp
+
+set_option linter.flexible false in
+private theorem presentationSNF_ker_mod2Pair :
+    LinearMap.ker presentationMod2Pair = pidSmithColumnSpan presentationSNFMatrixZ := by
+  ext x
+  constructor
+  · intro hx
+    rw [LinearMap.mem_ker] at hx
+    simp [presentationMod2Pair] at hx
+    rw [pidSmithColumnSpan_eq_range_mulVecLin]
+    have hdiv0 : (2 : Int) ∣ x 0 := (ZMod.intCast_zmod_eq_zero_iff_dvd (x 0) 2).mp hx.1
+    have hdiv1 : (2 : Int) ∣ x 1 := (ZMod.intCast_zmod_eq_zero_iff_dvd (x 1) 2).mp hx.2
+    rcases hdiv0 with ⟨a, ha⟩
+    rcases hdiv1 with ⟨b, hb⟩
+    refine ⟨![a, b, 0], ?_⟩
+    ext i
+    fin_cases i
+    · change (_root_.Matrix.mulVec presentationSNFMatrixZ ![a, b, 0]) 0 = x 0
+      rw [_root_.Matrix.mulVec, Matrix.vec3_dotProduct]
+      rw [ha]
+      simp [presentationSNFMatrixZ]
+    · change (_root_.Matrix.mulVec presentationSNFMatrixZ ![a, b, 0]) 1 = x 1
+      rw [_root_.Matrix.mulVec, Matrix.vec3_dotProduct]
+      rw [hb]
+      simp [presentationSNFMatrixZ]
+  · intro hx
+    rw [pidSmithColumnSpan_eq_range_mulVecLin] at hx
+    rcases hx with ⟨v, rfl⟩
+    rw [LinearMap.mem_ker]
+    rw [Prod.ext_iff]
+    constructor
+    · simp [presentationMod2Pair, presentationSNFMatrixZ]
+      left
+      decide
+    · simp [presentationMod2Pair, presentationSNFMatrixZ]
+      left
+      decide
+
+private theorem presentationColumnSpan_eq_snf :
+    pidSmithColumnSpan presentationMatrixZ = pidSmithColumnSpan presentationSNFMatrixZ := by
+  calc
+    pidSmithColumnSpan presentationMatrixZ
+      = pidSmithColumnSpan (presentationMatrixZ * presentationSNFRightZ) := by
+          simpa using
+            (pidSmithColumnSpan_mul_right_unimodular (A := presentationMatrixZ)
+              (V := presentationSNFRightZ) presentationSNFRightUnimodular).symm
+    _ = pidSmithColumnSpan presentationSNFMatrixZ := by
+          have hEq : presentationMatrixZ * presentationSNFRightZ = presentationSNFMatrixZ := by
+            simpa [presentationSNFCertificateZ] using presentationSNFCertificateSmoke
+          rw [hEq]
+
+private noncomputable def presentationQuotEquivZMod2Prod :
+    ((Fin 2 → Int) ⧸ pidSmithColumnSpan presentationMatrixZ) ≃+
+      (ZMod 2 × ZMod 2) := by
+  let p := pidSmithColumnSpan presentationSNFMatrixZ
+  have hexact : Function.Exact p.subtype presentationMod2Pair := by
+    rw [LinearMap.exact_iff, Submodule.range_subtype, presentationSNF_ker_mod2Pair]
+  have hsurj : Function.Surjective presentationMod2Pair := by
+    rintro ⟨a, b⟩
+    refine ⟨![a.val, b.val], ?_⟩
+    rw [Prod.ext_iff]
+    constructor <;> simp [presentationMod2Pair]
+  exact ((Submodule.quotEquivOfEq _ _ presentationColumnSpan_eq_snf).toAddEquiv).trans <|
+    (((Submodule.quotEquivOfEq _ _ (Submodule.range_subtype p).symm).toAddEquiv).trans
+      (hexact.linearEquivOfSurjective hsurj).toAddEquiv)
+
+private theorem presentationQuotientCardSmoke :
+    Nat.card (((Fin 2 → Int) ⧸ pidSmithColumnSpan presentationMatrixZ)) = 4 := by
+  calc
+    Nat.card (((Fin 2 → Int) ⧸ pidSmithColumnSpan presentationMatrixZ))
+      = Nat.card (ZMod 2 × ZMod 2) := Nat.card_congr presentationQuotEquivZMod2Prod.toEquiv
+    _ = 4 := by
+          rw [Nat.card_eq_fintype_card]
+          decide
+
+private theorem presentationQuotientTwoTorsionCardSmoke :
+    Nat.card
+      {x : ((Fin 2 → Int) ⧸ pidSmithColumnSpan presentationMatrixZ) // (2 : Int) • x = 0} = 4 := by
+  let e := twoTorsionSubtypeEquiv presentationQuotEquivZMod2Prod
+  calc
+    Nat.card
+      {x : ((Fin 2 → Int) ⧸ pidSmithColumnSpan presentationMatrixZ) // (2 : Int) • x = 0}
+      = Nat.card {x : ZMod 2 × ZMod 2 // (2 : Int) • x = 0} := Nat.card_congr e
+    _ = 4 := by
+          rw [Nat.card_eq_fintype_card]
+          decide
+
 theorem fullRankPidExecutableInvariantFactorCountSmoke :
     NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount fullRankMatrixZ = 2 := by
   exact
@@ -1309,6 +1763,332 @@ theorem presentationPidExecutableInvariantFactorCountSmoke :
   exact
     NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
       presentationMatrixZ presentationColumnSpanFinrankSmoke
+
+theorem unitBoundaryPidExecutableInvariantFactorCountSmoke :
+    NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount unitBoundaryMatrixZ = 2 := by
+  exact
+    NormalForms.Bridge.MathlibPID.pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
+      unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke
+
+theorem fullRankPidMathlibCoeffNatAbsListSmoke :
+    pidFullRankMathlibSmithCoeffNatAbsList
+        fullRankMatrixZ fullRankColumnSpanFinrankSmoke =
+      [1, 1] := by
+  have hsorted :=
+    pidFullRankMathlibSmithCoeffNatAbsList_pairwise
+      fullRankMatrixZ fullRankColumnSpanFinrankSmoke
+  have hlen :
+      (pidFullRankMathlibSmithCoeffNatAbsList
+        fullRankMatrixZ fullRankColumnSpanFinrankSmoke).length = 2 := by
+    exact
+      pidFullRankMathlibSmithCoeffNatAbsList_length
+        fullRankMatrixZ fullRankColumnSpanFinrankSmoke
+  have hfull' :
+      Module.finrank Int (pidSmithColumnSpan fullRankMatrixZ) =
+        Module.finrank Int (Fin 2 → Int) := by
+    simpa [Module.finrank_eq_card_basis (Pi.basisFun Int (Fin 2))] using
+      fullRankColumnSpanFinrankSmoke
+  have hprod :
+      (pidFullRankMathlibSmithCoeffNatAbsList
+        fullRankMatrixZ fullRankColumnSpanFinrankSmoke).prod = 1 := by
+    calc
+      (pidFullRankMathlibSmithCoeffNatAbsList
+          fullRankMatrixZ fullRankColumnSpanFinrankSmoke).prod
+          = ∏ i : Fin 2,
+              (pidFullRankSmithNormalFormCoeffs
+                fullRankMatrixZ fullRankColumnSpanFinrankSmoke i).natAbs :=
+            pidFullRankMathlibSmithCoeffNatAbsList_prod
+              fullRankMatrixZ fullRankColumnSpanFinrankSmoke
+      _ = Nat.card (((Fin 2 → Int) ⧸ pidSmithColumnSpan fullRankMatrixZ)) := by
+            let hcard :=
+              Nat.card_congr
+                (((pidSmithColumnSpan fullRankMatrixZ).quotientEquivPiZMod
+                  (Pi.basisFun Int (Fin 2)) hfull').toEquiv)
+            simpa [Nat.card_pi, Nat.card_zmod] using hcard.symm
+      _ = 1 := by
+            rw [fullRankColumnSpanTopSmoke]
+            simp
+  exact pairwise_eq_one_one_of_length_two_prod_one hlen hsorted hprod
+
+theorem unitBoundaryPidMathlibCoeffNatAbsListSmoke :
+    pidFullRankMathlibSmithCoeffNatAbsList
+      unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke = [1, 2] := by
+  have hsorted :=
+    pidFullRankMathlibSmithCoeffNatAbsList_pairwise
+      unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke
+  have hlen :
+      (pidFullRankMathlibSmithCoeffNatAbsList
+        unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke).length = 2 := by
+    exact
+      pidFullRankMathlibSmithCoeffNatAbsList_length
+        unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke
+  have hfull' :
+      Module.finrank Int (pidSmithColumnSpan unitBoundaryMatrixZ) =
+        Module.finrank Int (Fin 2 → Int) := by
+    simpa [Module.finrank_eq_card_basis (Pi.basisFun Int (Fin 2))] using
+      unitBoundaryColumnSpanFinrankSmoke
+  have hprod :
+      (pidFullRankMathlibSmithCoeffNatAbsList
+        unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke).prod = 2 := by
+    calc
+      (pidFullRankMathlibSmithCoeffNatAbsList
+          unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke).prod
+          = ∏ i : Fin 2,
+              (pidFullRankSmithNormalFormCoeffs
+                unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke i).natAbs :=
+            pidFullRankMathlibSmithCoeffNatAbsList_prod
+              unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke
+      _ = Nat.card (((Fin 2 → Int) ⧸ pidSmithColumnSpan unitBoundaryMatrixZ)) := by
+            let hcard :=
+              Nat.card_congr
+                (((pidSmithColumnSpan unitBoundaryMatrixZ).quotientEquivPiZMod
+                  (Pi.basisFun Int (Fin 2)) hfull').toEquiv)
+            simpa [Nat.card_pi, Nat.card_zmod] using hcard.symm
+      _ = 2 := unitBoundaryQuotientCardSmoke
+  exact pairwise_eq_one_two_of_length_two_prod_two hlen hsorted hprod
+
+theorem presentationPidMathlibCoeffNatAbsListSmoke :
+    pidFullRankMathlibSmithCoeffNatAbsList
+      presentationMatrixZ presentationColumnSpanFinrankSmoke = [2, 2] := by
+  let a :=
+    (pidFullRankSmithNormalFormCoeffs
+      presentationMatrixZ presentationColumnSpanFinrankSmoke 0).natAbs
+  let b :=
+    (pidFullRankSmithNormalFormCoeffs
+      presentationMatrixZ presentationColumnSpanFinrankSmoke 1).natAbs
+  have hnorm :
+      pidFullRankMathlibSmithCoeffNatAbsList
+          presentationMatrixZ presentationColumnSpanFinrankSmoke =
+        ([a, b].insertionSort (· ≤ ·)) := by
+    simpa [a, b] using
+      pidFullRankMathlibSmithCoeffNatAbsList_fin2_eq_sort_pair
+        presentationMatrixZ presentationColumnSpanFinrankSmoke
+  have hsorted :=
+    pidFullRankMathlibSmithCoeffNatAbsList_pairwise
+      presentationMatrixZ presentationColumnSpanFinrankSmoke
+  have hlen :
+      (pidFullRankMathlibSmithCoeffNatAbsList
+        presentationMatrixZ presentationColumnSpanFinrankSmoke).length = 2 := by
+    exact
+      pidFullRankMathlibSmithCoeffNatAbsList_length
+        presentationMatrixZ presentationColumnSpanFinrankSmoke
+  have hfull' :
+      Module.finrank Int (pidSmithColumnSpan presentationMatrixZ) =
+        Module.finrank Int (Fin 2 → Int) := by
+    simpa [Module.finrank_eq_card_basis (Pi.basisFun Int (Fin 2))] using
+      presentationColumnSpanFinrankSmoke
+  have hprod :
+      (pidFullRankMathlibSmithCoeffNatAbsList
+        presentationMatrixZ presentationColumnSpanFinrankSmoke).prod = 4 := by
+    calc
+      (pidFullRankMathlibSmithCoeffNatAbsList
+          presentationMatrixZ presentationColumnSpanFinrankSmoke).prod
+          = ∏ i : Fin 2,
+              (pidFullRankSmithNormalFormCoeffs
+                presentationMatrixZ presentationColumnSpanFinrankSmoke i).natAbs :=
+            pidFullRankMathlibSmithCoeffNatAbsList_prod
+              presentationMatrixZ presentationColumnSpanFinrankSmoke
+      _ = Nat.card (((Fin 2 → Int) ⧸ pidSmithColumnSpan presentationMatrixZ)) := by
+            let hcard :=
+              Nat.card_congr
+                (((pidSmithColumnSpan presentationMatrixZ).quotientEquivPiZMod
+                  (Pi.basisFun Int (Fin 2)) hfull').toEquiv)
+            simpa [Nat.card_pi, Nat.card_zmod] using hcard.symm
+      _ = 4 := presentationQuotientCardSmoke
+  rcases pairwise_length_two_prod_four_cases hlen hsorted hprod with honefour | htwotwo
+  ·
+    have honefour' : ([a, b].insertionSort (· ≤ ·)) = [1, 4] := by
+      rwa [hnorm] at honefour
+    have hmodel2 :
+        Nat.card
+          {x : ((i : Fin 2) →
+            ZMod ((pidFullRankSmithNormalFormCoeffs
+              presentationMatrixZ presentationColumnSpanFinrankSmoke i).natAbs)) //
+            (2 : Int) • x = 0} = 2 :=
+      fin2PiZModTwoTorsionCard_eq_two_of_sort_pair_eq_one_four
+        (fun i : Fin 2 =>
+          (pidFullRankSmithNormalFormCoeffs
+            presentationMatrixZ presentationColumnSpanFinrankSmoke i).natAbs)
+        honefour'
+    have hmodel4 :
+        Nat.card
+          {x : ((i : Fin 2) →
+            ZMod ((pidFullRankSmithNormalFormCoeffs
+              presentationMatrixZ presentationColumnSpanFinrankSmoke i).natAbs)) //
+            (2 : Int) • x = 0} = 4 := by
+      have e := twoTorsionSubtypeEquiv
+        (((pidSmithColumnSpan presentationMatrixZ).quotientEquivPiZMod
+          (Pi.basisFun Int (Fin 2)) hfull').symm)
+      calc
+        Nat.card
+            {x : ((i : Fin 2) →
+              ZMod ((pidFullRankSmithNormalFormCoeffs
+                presentationMatrixZ presentationColumnSpanFinrankSmoke i).natAbs)) //
+              (2 : Int) • x = 0}
+          = Nat.card
+              {x : ((Fin 2 → Int) ⧸ pidSmithColumnSpan presentationMatrixZ) //
+                (2 : Int) • x = 0} := by
+                  simpa using Nat.card_congr e
+        _ = 4 := presentationQuotientTwoTorsionCardSmoke
+    have hcontra : False := by
+      rw [hmodel2] at hmodel4
+      norm_num at hmodel4
+    exfalso
+    exact hcontra
+  ·
+    exact htwotwo
+
+theorem fullRankPidExecutableCoeffNatAbsListSmoke :
+    pidExecutableSmithCoeffNatAbsList fullRankMatrixZ = [1, 1] := by
+  have hsorted := pidExecutableSmithCoeffNatAbsList_pairwise fullRankMatrixZ
+  have hlen :
+      (pidExecutableSmithCoeffNatAbsList fullRankMatrixZ).length = 2 := by
+    simpa using
+      pidExecutableSmithCoeffNatAbsList_length_of_finrank_eq_card
+        fullRankMatrixZ fullRankColumnSpanFinrankSmoke
+  have hprod : (pidExecutableSmithCoeffNatAbsList fullRankMatrixZ).prod = 1 := by
+    calc
+      (pidExecutableSmithCoeffNatAbsList fullRankMatrixZ).prod
+          = ∏ i : Fin (pidExecutableInvariantFactorCount fullRankMatrixZ),
+              (pidExecutableInvariantFactorFn fullRankMatrixZ i).natAbs :=
+            pidExecutableSmithCoeffNatAbsList_prod fullRankMatrixZ
+      _ = Nat.card (((Fin 2 → Int) ⧸ pidSmithColumnSpan fullRankMatrixZ)) := by
+            let hcard :=
+              Nat.card_congr
+                ((pidExecutableQuotientEquivPiZMod
+                  fullRankMatrixZ fullRankPidExecutableInvariantFactorCountSmoke).toEquiv)
+            simpa [Nat.card_pi, Nat.card_zmod] using hcard.symm
+      _ = 1 := by
+            rw [fullRankColumnSpanTopSmoke]
+            simp
+  exact pairwise_eq_one_one_of_length_two_prod_one hlen hsorted hprod
+
+theorem unitBoundaryPidExecutableCoeffNatAbsListSmoke :
+    pidExecutableSmithCoeffNatAbsList unitBoundaryMatrixZ = [1, 2] := by
+  have hsorted := pidExecutableSmithCoeffNatAbsList_pairwise unitBoundaryMatrixZ
+  have hlen :
+      (pidExecutableSmithCoeffNatAbsList unitBoundaryMatrixZ).length = 2 := by
+    simpa using
+      pidExecutableSmithCoeffNatAbsList_length_of_finrank_eq_card
+        unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke
+  have hprod : (pidExecutableSmithCoeffNatAbsList unitBoundaryMatrixZ).prod = 2 := by
+    calc
+      (pidExecutableSmithCoeffNatAbsList unitBoundaryMatrixZ).prod
+          = ∏ i : Fin (pidExecutableInvariantFactorCount unitBoundaryMatrixZ),
+              (pidExecutableInvariantFactorFn unitBoundaryMatrixZ i).natAbs :=
+            pidExecutableSmithCoeffNatAbsList_prod unitBoundaryMatrixZ
+      _ = Nat.card (((Fin 2 → Int) ⧸ pidSmithColumnSpan unitBoundaryMatrixZ)) := by
+            let hcard :=
+              Nat.card_congr
+                ((pidExecutableQuotientEquivPiZMod
+                  unitBoundaryMatrixZ unitBoundaryPidExecutableInvariantFactorCountSmoke).toEquiv)
+            simpa [Nat.card_pi, Nat.card_zmod] using hcard.symm
+      _ = 2 := unitBoundaryQuotientCardSmoke
+  exact pairwise_eq_one_two_of_length_two_prod_two hlen hsorted hprod
+
+theorem presentationPidExecutableCoeffNatAbsListSmoke :
+    pidExecutableSmithCoeffNatAbsList presentationMatrixZ = [2, 2] := by
+  let a :=
+    (pidExecutableInvariantFactorFn presentationMatrixZ
+      (Fin.cast presentationPidExecutableInvariantFactorCountSmoke.symm 0)).natAbs
+  let b :=
+    (pidExecutableInvariantFactorFn presentationMatrixZ
+      (Fin.cast presentationPidExecutableInvariantFactorCountSmoke.symm 1)).natAbs
+  have hnorm :
+      pidExecutableSmithCoeffNatAbsList presentationMatrixZ =
+        ([a, b].insertionSort (· ≤ ·)) := by
+    simpa [a, b] using
+      pidExecutableSmithCoeffNatAbsList_fin2_eq_sort_pair_of_count_eq_two
+        presentationMatrixZ presentationPidExecutableInvariantFactorCountSmoke
+  have hsorted := pidExecutableSmithCoeffNatAbsList_pairwise presentationMatrixZ
+  have hlen :
+      (pidExecutableSmithCoeffNatAbsList presentationMatrixZ).length = 2 := by
+    simpa using
+      pidExecutableSmithCoeffNatAbsList_length_of_finrank_eq_card
+        presentationMatrixZ presentationColumnSpanFinrankSmoke
+  have hprod : (pidExecutableSmithCoeffNatAbsList presentationMatrixZ).prod = 4 := by
+    calc
+      (pidExecutableSmithCoeffNatAbsList presentationMatrixZ).prod
+          = ∏ i : Fin (pidExecutableInvariantFactorCount presentationMatrixZ),
+              (pidExecutableInvariantFactorFn presentationMatrixZ i).natAbs :=
+            pidExecutableSmithCoeffNatAbsList_prod presentationMatrixZ
+      _ = Nat.card (((Fin 2 → Int) ⧸ pidSmithColumnSpan presentationMatrixZ)) := by
+            let hcard :=
+              Nat.card_congr
+                ((pidExecutableQuotientEquivPiZMod
+                  presentationMatrixZ presentationPidExecutableInvariantFactorCountSmoke).toEquiv)
+            simpa [Nat.card_pi, Nat.card_zmod] using hcard.symm
+      _ = 4 := presentationQuotientCardSmoke
+  rcases pairwise_length_two_prod_four_cases hlen hsorted hprod with honefour | htwotwo
+  ·
+    have honefour' : ([a, b].insertionSort (· ≤ ·)) = [1, 4] := by
+      rwa [hnorm] at honefour
+    have hmodel2 :
+        Nat.card
+          {x : ((i : Fin 2) →
+            ZMod ((pidExecutableInvariantFactorFn presentationMatrixZ
+              (Fin.cast presentationPidExecutableInvariantFactorCountSmoke.symm i)).natAbs)) //
+            (2 : Int) • x = 0} = 2 :=
+      fin2PiZModTwoTorsionCard_eq_two_of_sort_pair_eq_one_four
+        (fun i : Fin 2 =>
+          (pidExecutableInvariantFactorFn presentationMatrixZ
+            (Fin.cast presentationPidExecutableInvariantFactorCountSmoke.symm i)).natAbs)
+        honefour'
+    have hmodel4 :
+        Nat.card
+          {x : ((i : Fin 2) →
+            ZMod ((pidExecutableInvariantFactorFn presentationMatrixZ
+              (Fin.cast presentationPidExecutableInvariantFactorCountSmoke.symm i)).natAbs)) //
+            (2 : Int) • x = 0} = 4 := by
+      have ebase := twoTorsionSubtypeEquiv
+        (by
+          simpa using
+            ((LinearEquiv.piCongrLeft Int
+              (fun i : Fin (pidExecutableInvariantFactorCount presentationMatrixZ) =>
+                ZMod (pidExecutableInvariantFactorFn presentationMatrixZ i).natAbs)
+              (finCongr presentationPidExecutableInvariantFactorCountSmoke.symm)).toAddEquiv))
+      have equot := twoTorsionSubtypeEquiv
+        ((pidExecutableQuotientEquivPiZMod
+          presentationMatrixZ presentationPidExecutableInvariantFactorCountSmoke).symm)
+      calc
+        Nat.card
+            {x : ((i : Fin 2) →
+              ZMod ((pidExecutableInvariantFactorFn presentationMatrixZ
+                (Fin.cast presentationPidExecutableInvariantFactorCountSmoke.symm i)).natAbs)) //
+              (2 : Int) • x = 0}
+          = Nat.card
+              {x : ((i : Fin (pidExecutableInvariantFactorCount presentationMatrixZ)) →
+                ZMod (pidExecutableInvariantFactorFn presentationMatrixZ i).natAbs) //
+                (2 : Int) • x = 0} := by
+                  simpa using Nat.card_congr ebase
+        _ = Nat.card
+              {x : ((Fin 2 → Int) ⧸ pidSmithColumnSpan presentationMatrixZ) //
+                (2 : Int) • x = 0} := Nat.card_congr equot
+        _ = 4 := presentationQuotientTwoTorsionCardSmoke
+    have hcontra : False := by
+      rw [hmodel2] at hmodel4
+      norm_num at hmodel4
+    exfalso
+    exact hcontra
+  ·
+    exact htwotwo
+
+theorem fullRankPidCoeffNatAbsListEqualitySmoke :
+    pidFullRankMathlibSmithCoeffNatAbsList fullRankMatrixZ fullRankColumnSpanFinrankSmoke =
+      pidExecutableSmithCoeffNatAbsList fullRankMatrixZ := by
+  rw [fullRankPidMathlibCoeffNatAbsListSmoke, fullRankPidExecutableCoeffNatAbsListSmoke]
+
+theorem unitBoundaryPidCoeffNatAbsListEqualitySmoke :
+    pidFullRankMathlibSmithCoeffNatAbsList
+        unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke =
+      pidExecutableSmithCoeffNatAbsList unitBoundaryMatrixZ := by
+  rw [unitBoundaryPidMathlibCoeffNatAbsListSmoke, unitBoundaryPidExecutableCoeffNatAbsListSmoke]
+
+theorem presentationPidCoeffNatAbsListEqualitySmoke :
+    pidFullRankMathlibSmithCoeffNatAbsList
+        presentationMatrixZ presentationColumnSpanFinrankSmoke =
+      pidExecutableSmithCoeffNatAbsList presentationMatrixZ := by
+  rw [presentationPidMathlibCoeffNatAbsListSmoke, presentationPidExecutableCoeffNatAbsListSmoke]
 
 theorem fullRankPidCoeffNatAbsListLengthComparisonSmoke :
     (NormalForms.Bridge.MathlibPID.pidFullRankMathlibSmithCoeffNatAbsList
@@ -1372,6 +2152,10 @@ noncomputable def fullRankPidFullRankMathlibDirectSumEquivExecutableSmoke :=
 noncomputable def fullRankPidFullRankMathlibPiZModEquivExecutableSmoke :=
   NormalForms.Bridge.MathlibPID.pidFullRankMathlibPiZModEquivExecutable fullRankMatrixZ
     fullRankColumnSpanFinrankSmoke fullRankPidExecutableInvariantFactorCountSmoke
+
+noncomputable def unitBoundaryPidFullRankMathlibPiZModEquivExecutableSmoke :=
+  NormalForms.Bridge.MathlibPID.pidFullRankMathlibPiZModEquivExecutable unitBoundaryMatrixZ
+    unitBoundaryColumnSpanFinrankSmoke unitBoundaryPidExecutableInvariantFactorCountSmoke
 
 noncomputable def presentationPidFullRankMathlibPiZModEquivExecutableSmoke :=
   NormalForms.Bridge.MathlibPID.pidFullRankMathlibPiZModEquivExecutable presentationMatrixZ
