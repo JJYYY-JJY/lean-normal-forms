@@ -12,7 +12,8 @@ This repository currently contains a buildable `NormalForms` Lean library with a
 completed recursive row-style Hermite layer, a completed executable Smith layer
 with public correctness, uniqueness, and unimodularity extraction theorems, a
 semantic PID quotient bridge layer, and an initial full-rank `Int`
-witness-list comparison layer.
+witness-list interoperability layer closed at the example level via structural
+counting.
 
 - Public API for `IsHermiteNormalForm`, `IsSmithNormalForm`, `HNFResult`,
   `SNFResult`, `smithInvariantFactors`, `smithColumnSpan`,
@@ -50,9 +51,9 @@ witness-list comparison layer.
 - Smoke examples over `Int` and `Q[X]`, including public HNF certificate
   checks, internal Smith diagonal-spec, invariant-factor, and same-size-step
   checks, public `SNFResult.ofCertificate` packaging smoke, semantic
-  quotient/direct-sum/`PiZMod` bridge instantiations, and normalized
-  executable-vs-mathlib coefficient-list length comparisons, plus the local
-  plan in `PLAN.md`
+  quotient/direct-sum/`PiZMod` bridge instantiations, and example-level
+  executable-vs-mathlib normalized coefficient-list equality proofs for the
+  current full-rank `Int` showcase matrices, plus the local plan in `PLAN.md`
 - GitHub Actions, citation metadata, Zenodo metadata, and an axiom-audit smoke script
 
 The current Lean files compute recursive HNF, package explicit certificates, and
@@ -66,14 +67,19 @@ place, and the same-size lead-clearing, lead-preparation, stabilization, and
 single-step nondivisible pivot-improvement layers are verified over both `Int`
 and `Q[X]`. The Smith Phase 3 uniqueness closure is now done, and the current
 PID bridge now consists of two layers: a semantic quotient/decomposition layer
-and a first coefficient-facing layer for full-rank `Int` matrices. Quotients
+and an example-level coefficient-facing layer for full-rank `Int` matrices.
+Quotients
 are transported to the executable Smith result and decomposed into torsion
 factors plus a free part; full-rank cases are related back to mathlib's PID
 quotient theorems via `PiSpan`, `DirectSum`, and `PiZMod` equivalences; and the
 bridge now exposes normalized `natAbs` coefficient-list readouts on both the
-executable and mathlib sides. The remaining project work shifts to stronger
-coefficient-level comparison theorems beyond this normalized readout/length
-layer, together with the application layer.
+executable and mathlib sides together with example-level structural-counting
+proofs that these lists agree for the current full-rank `Int` showcase
+matrices. No abstract theorem
+`pidFullRankMathlibSmithCoeffNatAbsList_eq_executable` landed: the remaining
+generic blocker is that mathlib does not yet expose a canonicality theorem for
+its chosen `smithNormalFormCoeffs` witness list. The next project work therefore
+shifts to Phase 5, the abelian-group application layer.
 
 One deliberate implementation boundary is worth calling out: the public Smith
 wrappers over arbitrary `Fintype` indices are defined by reindexing through
@@ -111,7 +117,9 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 - `NormalForms/Matrix/Certificates`: reusable certificate shapes and unimodularity lemmas
 - `NormalForms/Bridge/MathlibPID`: raw PID bridge helpers and normalized
   coefficient-list readouts in `Basic`, plus semantic quotient/decomposition
-  and full-rank executable-vs-mathlib bridge theorems in `Quotient`
+  and full-rank executable-vs-mathlib compatibility equivalences in
+  `Quotient`; the example-level normalized coefficient-list equality proofs
+  live in `NormalForms/Examples/AbelianGroups`
 - `NormalForms/Examples/AbelianGroups`: sample matrices, executable HNF smoke
   checks, internal `Int` and `Q[X]` Smith spec/invariant-factor/same-size-step
   smoke, public Smith certificate/result packaging smoke, and the current
@@ -125,8 +133,9 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
 - Exact executable canonicality statements use a lightweight `CanonicalMod` mixin to capture canonical Euclidean remainders
 - PID-level statements are scoped to specifications and bridge theorems; the
   currently completed bridge includes semantic quotient/direct-sum results and
-  a first normalized `Int` witness-list comparison layer; direct coefficient-list
-  equality against mathlib's chosen `smithNormalFormCoeffs` remains future work
+  example-level normalized `Int` witness-list equality via structural counting;
+  direct generic coefficient-list equality against mathlib's chosen
+  `smithNormalFormCoeffs` remains blocked on upstream witness canonicality
 - The initial research application is finitely generated abelian groups over `Z`
 
 For the full roadmap, milestones, and submission strategy, see `PLAN.md`.

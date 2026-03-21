@@ -9,6 +9,12 @@ Semantic bridge theorems between the executable Smith layer and mathlib's
 module-theoretic quotient decompositions, together with the current full-rank
 count theorem and executable-vs-mathlib `PiSpan` / `DirectSum` / `PiZMod`
 compatibility equivalences.
+
+This file intentionally stops at semantic bridge results and full-rank
+compatibility equivalences. The current coefficient-list equality closure is
+proved only at the example layer in
+`NormalForms.Examples.AbelianGroups.Basic`, because mathlib does not yet expose
+an abstract witness-canonicality theorem for `smithNormalFormCoeffs`.
 -/
 
 namespace NormalForms.Bridge.MathlibPID
