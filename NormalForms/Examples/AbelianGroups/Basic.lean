@@ -1,6 +1,7 @@
 import NormalForms.Matrix.Hermite
 import NormalForms.Matrix.Smith
 import NormalForms.Bridge.MathlibPID
+import NormalForms.Applications.AbelianGroups
 import Mathlib.Algebra.Exact
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Group.Finset.Defs
@@ -10,7 +11,7 @@ import Mathlib.LinearAlgebra.Matrix.Rank
 /-!
 # Abelian Group Examples
 
-Sample matrices for the future finitely generated abelian-group showcase.
+Sample matrices for the current finitely generated abelian-group showcase.
 The current module includes executable smoke checks for elementary matrices,
 mixed log certificates, the Phase 1 Bezout reduction gadget, and Phase 2 HNF
 smoke coverage.
@@ -27,6 +28,9 @@ For Smith normal form, the examples are intentionally split across two layers:
   including quotient/direct-sum/`PiZMod` equivalences and normalized
   executable-vs-mathlib coefficient-list length comparisons in the full-rank
   examples
+- application-facing smoke theorems instantiate the public Phase 5
+  `NormalForms.Applications.AbelianGroups` API on full-rank, unit-boundary, and
+  mixed torsion-plus-free presentation matrices
 
 This split keeps the examples close to the public API while avoiding the costly
 `Fintype.equivFin` simplification paths that can otherwise dominate elaboration
@@ -41,6 +45,7 @@ open NormalForms.Matrix.Certificates
 open NormalForms.Matrix.Hermite
 open NormalForms.Matrix.Smith
 open NormalForms.Bridge.MathlibPID
+open NormalForms.Applications.AbelianGroups
 
 def zeroMatrixZ : _root_.Matrix (Fin 2) (Fin 2) Int :=
   0
@@ -2160,6 +2165,184 @@ noncomputable def unitBoundaryPidFullRankMathlibPiZModEquivExecutableSmoke :=
 noncomputable def presentationPidFullRankMathlibPiZModEquivExecutableSmoke :=
   NormalForms.Bridge.MathlibPID.pidFullRankMathlibPiZModEquivExecutable presentationMatrixZ
     presentationColumnSpanFinrankSmoke presentationPidExecutableInvariantFactorCountSmoke
+
+private theorem fin2_eq_two_two_of_sorted_eq_two_two
+    (f : Fin 2 → Nat)
+    (hsort : ([f 0, f 1].insertionSort (· ≤ ·)) = [2, 2]) :
+    f = ![2, 2] := by
+  by_cases h : f 0 ≤ f 1
+  · have hf : f 0 = 2 ∧ f 1 = 2 := by
+      simpa [h] using hsort
+    rcases hf with ⟨h0, h1⟩
+    funext i
+    fin_cases i <;> simp [h0, h1]
+  · have hf : f 1 = 2 ∧ f 0 = 2 := by
+      simpa [h] using hsort
+    rcases hf with ⟨h1, h0⟩
+    funext i
+    fin_cases i <;> simp [h0, h1]
+
+private theorem fin2_eq_one_two_or_two_one_of_sorted_eq_one_two
+    (f : Fin 2 → Nat)
+    (hsort : ([f 0, f 1].insertionSort (· ≤ ·)) = [1, 2]) :
+    f = ![1, 2] ∨ f = ![2, 1] := by
+  by_cases h : f 0 ≤ f 1
+  · left
+    have hf : f 0 = 1 ∧ f 1 = 2 := by
+      simpa [h] using hsort
+    rcases hf with ⟨h0, h1⟩
+    funext i
+    fin_cases i <;> simp [h0, h1]
+  · right
+    have hf : f 1 = 1 ∧ f 0 = 2 := by
+      simpa [h] using hsort
+    rcases hf with ⟨h1, h0⟩
+    funext i
+    fin_cases i <;> simp [h0, h1]
+
+theorem presentationPublicInvariantFactorCountSmoke :
+    presentationInvariantFactorCount presentationMatrixZ = 2 := by
+  exact presentationInvariantFactorCount_eq_card_rows_of_finrank_eq_card_rows
+    presentationMatrixZ presentationColumnSpanFinrankSmoke
+
+theorem unitBoundaryPublicInvariantFactorCountSmoke :
+    presentationInvariantFactorCount unitBoundaryMatrixZ = 2 := by
+  exact presentationInvariantFactorCount_eq_card_rows_of_finrank_eq_card_rows
+    unitBoundaryMatrixZ unitBoundaryColumnSpanFinrankSmoke
+
+theorem presentationPublicInvariantFactorsSmoke :
+    presentationInvariantFactors presentationMatrixZ = [2, 2] := by
+  simpa [presentationInvariantFactors] using presentationPidExecutableCoeffNatAbsListSmoke
+
+theorem unitBoundaryPublicInvariantFactorsSmoke :
+    presentationInvariantFactors unitBoundaryMatrixZ = [1, 2] := by
+  simpa [presentationInvariantFactors] using unitBoundaryPidExecutableCoeffNatAbsListSmoke
+
+noncomputable def mixedTorsionFreePublicQuotientEquivPiZModProdSmoke :=
+  presentationQuotientEquivPiZModProd mixedTorsionFreeMatrixZ
+
+private noncomputable def mixedTorsionFreeMod2ProdInt :
+    (Fin 2 → Int) →ₗ[Int] (ZMod 2 × Int) where
+  toFun v := ((v 0 : ZMod 2), v 1)
+  map_add' _ _ := by simp
+  map_smul' c v := by simp
+
+set_option linter.flexible false in
+private theorem mixedTorsionFree_ker_mod2ProdInt :
+    LinearMap.ker mixedTorsionFreeMod2ProdInt =
+      presentationSubmodule mixedTorsionFreeMatrixZ := by
+  ext x
+  constructor
+  · intro hx
+    rw [LinearMap.mem_ker, Prod.ext_iff] at hx
+    rw [presentationSubmodule, pidSmithColumnSpan_eq_range_mulVecLin]
+    have hdiv : (2 : Int) ∣ x 0 := (ZMod.intCast_zmod_eq_zero_iff_dvd (x 0) 2).mp hx.1
+    rcases hdiv with ⟨k, hk⟩
+    refine ⟨![k, 0], ?_⟩
+    ext i
+    fin_cases i
+    · change (_root_.Matrix.mulVec mixedTorsionFreeMatrixZ ![k, 0]) 0 = x 0
+      rw [_root_.Matrix.mulVec, Matrix.vec2_dotProduct]
+      rw [hk]
+      simp [mixedTorsionFreeMatrixZ]
+    · change (_root_.Matrix.mulVec mixedTorsionFreeMatrixZ ![k, 0]) 1 = x 1
+      rw [_root_.Matrix.mulVec, Matrix.vec2_dotProduct]
+      simpa [mixedTorsionFreeMatrixZ] using hx.2.symm
+  · intro hx
+    rw [presentationSubmodule, pidSmithColumnSpan_eq_range_mulVecLin] at hx
+    rcases hx with ⟨v, rfl⟩
+    rw [LinearMap.mem_ker, Prod.ext_iff]
+    constructor
+    · simp [mixedTorsionFreeMod2ProdInt, mixedTorsionFreeMatrixZ]
+      left
+      decide
+    · simp [mixedTorsionFreeMod2ProdInt, mixedTorsionFreeMatrixZ]
+
+noncomputable def mixedTorsionFreePublicQuotientEquivZMod2IntSmoke :
+    presentationQuotient mixedTorsionFreeMatrixZ ≃+ (ZMod 2 × Int) := by
+  let p := presentationSubmodule mixedTorsionFreeMatrixZ
+  have hexact : Function.Exact p.subtype mixedTorsionFreeMod2ProdInt := by
+    rw [LinearMap.exact_iff, Submodule.range_subtype, mixedTorsionFree_ker_mod2ProdInt]
+  have hsurj : Function.Surjective mixedTorsionFreeMod2ProdInt := by
+    rintro ⟨a, b⟩
+    refine ⟨![a.val, b], ?_⟩
+    simp [mixedTorsionFreeMod2ProdInt]
+  exact ((Submodule.quotEquivOfEq _ _ (Submodule.range_subtype p).symm).toAddEquiv).trans
+    (hexact.linearEquivOfSurjective hsurj).toAddEquiv
+
+noncomputable def presentationPublicQuotientEquivZMod2ProdSmoke :
+    presentationQuotient presentationMatrixZ ≃+ (ZMod 2 × ZMod 2) := by
+  let eBase :=
+    presentationQuotientEquivPiZMod_of_fullRank presentationMatrixZ
+      presentationColumnSpanFinrankSmoke
+  let f : Fin 2 → Nat := fun i =>
+    presentationInvariantFactorFn presentationMatrixZ
+      (Fin.cast presentationPublicInvariantFactorCountSmoke.symm i)
+  let eCount :
+      ((i : Fin (presentationInvariantFactorCount presentationMatrixZ)) →
+          ZMod (presentationInvariantFactorFn presentationMatrixZ i)) ≃+
+        ((i : Fin 2) → ZMod (f i)) :=
+    (LinearEquiv.piCongrLeft Int
+      (fun i : Fin (presentationInvariantFactorCount presentationMatrixZ) =>
+        ZMod (presentationInvariantFactorFn presentationMatrixZ i))
+      (finCongr presentationPublicInvariantFactorCountSmoke.symm)).symm.toAddEquiv
+  have hpair :
+      presentationInvariantFactors presentationMatrixZ =
+        ([f 0, f 1].insertionSort (· ≤ ·)) := by
+    simpa [presentationInvariantFactors, presentationInvariantFactorFn,
+      presentationInvariantFactorCount, f] using
+      pidExecutableSmithCoeffNatAbsList_fin2_eq_sort_pair_of_count_eq_two
+        presentationMatrixZ presentationPublicInvariantFactorCountSmoke
+  have hsort :
+      ([f 0, f 1].insertionSort (· ≤ ·)) = [2, 2] := by
+    rw [← hpair, presentationPublicInvariantFactorsSmoke]
+  have hf : f = ![2, 2] := fin2_eq_two_two_of_sorted_eq_two_two f hsort
+  have eVals : ((i : Fin 2) → ZMod (f i)) ≃+ (ZMod 2 × ZMod 2) := by
+    rw [hf]
+    exact (LinearEquiv.piFinTwo Int (fun i => ZMod (![2, 2] i))).toAddEquiv
+  exact eBase.trans (eCount.trans eVals)
+
+noncomputable def unitBoundaryPublicQuotientEquivZMod1ProdZMod2Smoke :
+    presentationQuotient unitBoundaryMatrixZ ≃+ (ZMod 1 × ZMod 2) := by
+  let eBase :=
+    presentationQuotientEquivPiZMod_of_fullRank unitBoundaryMatrixZ
+      unitBoundaryColumnSpanFinrankSmoke
+  let f : Fin 2 → Nat := fun i =>
+    presentationInvariantFactorFn unitBoundaryMatrixZ
+      (Fin.cast unitBoundaryPublicInvariantFactorCountSmoke.symm i)
+  let eCount :
+      ((i : Fin (presentationInvariantFactorCount unitBoundaryMatrixZ)) →
+          ZMod (presentationInvariantFactorFn unitBoundaryMatrixZ i)) ≃+
+        ((i : Fin 2) → ZMod (f i)) :=
+    (LinearEquiv.piCongrLeft Int
+      (fun i : Fin (presentationInvariantFactorCount unitBoundaryMatrixZ) =>
+        ZMod (presentationInvariantFactorFn unitBoundaryMatrixZ i))
+      (finCongr unitBoundaryPublicInvariantFactorCountSmoke.symm)).symm.toAddEquiv
+  have hpair :
+      presentationInvariantFactors unitBoundaryMatrixZ =
+        ([f 0, f 1].insertionSort (· ≤ ·)) := by
+    simpa [presentationInvariantFactors, presentationInvariantFactorFn,
+      presentationInvariantFactorCount, f] using
+      pidExecutableSmithCoeffNatAbsList_fin2_eq_sort_pair_of_count_eq_two
+        unitBoundaryMatrixZ unitBoundaryPublicInvariantFactorCountSmoke
+  have hsort :
+      ([f 0, f 1].insertionSort (· ≤ ·)) = [1, 2] := by
+    rw [← hpair, unitBoundaryPublicInvariantFactorsSmoke]
+  classical
+  by_cases hf : f = ![1, 2]
+  · have eVals : ((i : Fin 2) → ZMod (f i)) ≃+ (ZMod 1 × ZMod 2) := by
+      rw [hf]
+      exact (LinearEquiv.piFinTwo Int (fun i => ZMod (![1, 2] i))).toAddEquiv
+    exact eBase.trans (eCount.trans eVals)
+  · have hf' : f = ![2, 1] := by
+      rcases fin2_eq_one_two_or_two_one_of_sorted_eq_one_two f hsort with h12 | h21
+      · exact False.elim (hf h12)
+      · exact h21
+    have eVals : ((i : Fin 2) → ZMod (f i)) ≃+ (ZMod 1 × ZMod 2) := by
+      rw [hf']
+      exact ((LinearEquiv.piFinTwo Int (fun i => ZMod (![2, 1] i))).toAddEquiv).trans
+        (AddEquiv.prodComm (M := ZMod 2) (N := ZMod 1))
+    exact eBase.trans (eCount.trans eVals)
 
 theorem presentationColumnSpanBridgeSmoke :
     NormalForms.Bridge.MathlibPID.pidSmithColumnSpan presentationMatrixZ =
