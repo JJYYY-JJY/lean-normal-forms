@@ -11,9 +11,9 @@ bridge to mathlib's quotient/decomposition results.
 This repository currently contains a buildable `NormalForms` Lean library with a
 completed recursive row-style Hermite layer, a completed executable Smith layer
 with public correctness, uniqueness, and unimodularity extraction theorems, a
-semantic PID quotient bridge layer, and an initial full-rank `Int`
+semantic PID quotient bridge layer, an initial full-rank `Int`
 witness-list interoperability layer closed at the example level via structural
-counting.
+counting, and a completed Phase 5 `Int` presentation-matrix application layer.
 
 - Public API for `IsHermiteNormalForm`, `IsSmithNormalForm`, `HNFResult`,
   `SNFResult`, `smithInvariantFactors`, `smithColumnSpan`,
@@ -47,13 +47,23 @@ counting.
   `pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card`, and
   full-rank compatibility equivalences with mathlib's `quotientEquivPiSpan` /
   `quotientEquivDirectSum` / `quotientEquivPiZMod`
+- `NormalForms.Applications.AbelianGroups` now exposes the public Phase 5
+  application API over `Int` presentation matrices:
+  `presentationSubmodule`, `presentationQuotient`,
+  `presentationInvariantFactorCount`, `presentationInvariantFactorFn`,
+  `presentationInvariantFactors`, `presentationFreeRank`,
+  `presentationQuotientEquivPiZModProd`, and the full-rank specialization
+  `presentationQuotientEquivPiZMod_of_fullRank`
 - Elementary row/column operations, mixed-log certificate helpers, and a reusable 2x2 Bezout reduction gadget
 - Smoke examples over `Int` and `Q[X]`, including public HNF certificate
   checks, internal Smith diagonal-spec, invariant-factor, and same-size-step
   checks, public `SNFResult.ofCertificate` packaging smoke, semantic
   quotient/direct-sum/`PiZMod` bridge instantiations, and example-level
   executable-vs-mathlib normalized coefficient-list equality proofs for the
-  current full-rank `Int` showcase matrices, plus the local plan in `PLAN.md`
+  current full-rank `Int` showcase matrices, together with public Phase 5
+  quotient-decomposition smoke for `presentationMatrixZ`,
+  `mixedTorsionFreeMatrixZ`, and `unitBoundaryMatrixZ`, plus the local plan in
+  `PLAN.md`
 - GitHub Actions, citation metadata, Zenodo metadata, and an axiom-audit smoke script
 
 The current Lean files compute recursive HNF, package explicit certificates, and
@@ -78,8 +88,15 @@ proofs that these lists agree for the current full-rank `Int` showcase
 matrices. No abstract theorem
 `pidFullRankMathlibSmithCoeffNatAbsList_eq_executable` landed: the remaining
 generic blocker is that mathlib does not yet expose a canonicality theorem for
-its chosen `smithNormalFormCoeffs` witness list. The next project work therefore
-shifts to Phase 5, the abelian-group application layer.
+its chosen `smithNormalFormCoeffs` witness list. On top of that bridge, the
+repository now also contains a dedicated Phase 5 application layer in
+`NormalForms.Applications.AbelianGroups`: for finite `Int` presentation
+matrices it packages the presentation quotient `ℤ^m / im(A)`, the executable
+invariant-factor readout, the free-rank readout, the torsion-plus-free
+decomposition
+`((m → Int) ⧸ presentationSubmodule A) ≃+ ((Fin k → ZMod dᵢ) × (Fin r → Int))`,
+and the full-rank torsion specialization. For the current repository scope,
+that completes the planned `Int` abelian-group application milestone.
 
 One deliberate implementation boundary is worth calling out: the public Smith
 wrappers over arbitrary `Fintype` indices are defined by reindexing through
@@ -104,6 +121,7 @@ lake env lean NormalForms/Matrix/Smith/Basic.lean
 lake env lean NormalForms/Matrix/Smith/Uniqueness.lean
 lake env lean NormalForms/Bridge/MathlibPID/Basic.lean
 lake env lean NormalForms/Bridge/MathlibPID/Quotient.lean
+lake env lean NormalForms/Applications/AbelianGroups/Basic.lean
 lake env lean NormalForms/Examples/AbelianGroups/Basic.lean
 ```
 
@@ -120,10 +138,13 @@ The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fres
   and full-rank executable-vs-mathlib compatibility equivalences in
   `Quotient`; the example-level normalized coefficient-list equality proofs
   live in `NormalForms/Examples/AbelianGroups`
+- `NormalForms/Applications/AbelianGroups`: public `Int` presentation-matrix
+  application API, including quotient, invariant-factor, free-rank, and
+  quotient-decomposition wrappers
 - `NormalForms/Examples/AbelianGroups`: sample matrices, executable HNF smoke
   checks, internal `Int` and `Q[X]` Smith spec/invariant-factor/same-size-step
   smoke, public Smith certificate/result packaging smoke, and the current
-  bridge-facing examples
+  bridge-facing and application-facing examples
 - `paper/`: manuscript planning notes
 - `artifact/`: artifact packaging notes
 
