@@ -192,7 +192,7 @@ migrated.
 | `divasonThiemann2022snf` | JAR 66(4), pp. 1065--1095, DOI `10.1007/s10817-022-09631-5` | Rename `divason2022snf`; note the published correction DOI `10.1007/s10817-022-09636-0` when extracting exact corrected claims. |
 | `brentZimmermann2010` | Richard P. Brent and Paul Zimmermann, *Modern Computer Arithmetic*, CUP, 2010, DOI `10.1017/CBO9780511921698` | Replace all `brent2010modern`; add edition/ISBN only if consistently verified. |
 | `cohen1996Dedekind` | *Mathematics of Computation* 65(216), pp. 1681--1699, DOI `10.1090/S0025-5718-96-00766-1` | Deleted: no release claim needs this article. |
-| `maWangWen2026` | Wanli Ma, Zichen Wang, Zaiwen Wen, arXiv:2607.05874v1, 7 July 2026 | Added with v1 explicit; future arXiv versions may change the cited limitation text. |
+| `maWangWen2026` | Wanli Ma, Zichen Wang, Zaiwen Wen, arXiv:2607.05874v1 [math.NA], 7 July 2026, DOI `10.48550/arXiv.2607.05874` | Added with v1 explicit; future arXiv versions may change the cited limitation text. |
 | `hexLLL2026` / `hexLLLMathlib2026` | repository owner/author, title, year, exact commits `a73f188...` / `c10d668...`, stable source URLs | Add software records; use only for implementation/API/proof ownership. |
 
 ## Primary-source registry
