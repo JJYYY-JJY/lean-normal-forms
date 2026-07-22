@@ -1,69 +1,30 @@
-\section{Future Work: Towards Smith Normal Form and the PID Bridge}
+\section{Independent Extensions}
 \label{sec:future}
 
-The companion repository already contains a stable public interface for
-\SNF{}, together with a genuine specification layer and certificate packaging
-boundary. The module
-\module{NormalForms.Matrix.Smith.Basic} currently defines:
+The completed \code{ComputableEuclideanOps} layer supplies Boolean equality,
+division with remainder, normalization, units, extended gcd, and a
+well-founded measure. It replaces factor-count termination and supports
+genuine evaluation over \(\mathbb Z\) and \(\mathbb Q[X]\).
 
-\begin{itemize}
-  \item \code{IsSmithNormalForm}, which is a real diagonal-shape specification
-    phrased over arbitrary finite index types;
-  \item \code{smithInvariantFactors} and \code{smithColumnSpan}, which expose
-    the current public readout layer;
-  \item \code{SNFResult}, which packages matrices \(U\), \(S\), \(V\), the
-    equation \(U A V = S\), and a Smith-form witness;
-  \item \code{SNFResult.ofCertificate} and \code{SNFResult.toCertificate},
-    which define the current public certificate/result boundary;
-  \item \code{smithNormalForm}, whose signature already carries
-    \code{[CanonicalMod R]} but whose current implementation returns
-    \code{none}.
-\end{itemize}
+The certificate path now has a pure parser/checker/soundness split, a strict
+\code{decide_cbv}-based Lean module generator, and pinned optional FLINT
+process and FFI adapters sharing one C computation and raw data schema. Lean
+rechecks the expected input, transformation equations, both inverse equations,
+and normal-form predicate. Seeded differential regressions and decomposed
+generation/check benchmarks are recorded separately from the trusted theorem
+path. Truthful operation, pivot, and gcd telemetry remains future
+instrumentation rather than an inferred benchmark value.
 
-This paper therefore makes \emph{no} claim about executable Smith normal form, no
-claim about Smith-form correctness or uniqueness, and no claim about the final
-classification theorem for finitely generated abelian groups. Those topics remain
-future work.
+The 1.0 layer separates intrinsic Smith data from execution traces.
+Determinantal ideals identify the rank and associate-class signature under
+certified transformations and reindexing. Finite-free presentations fix the
+matrix direction \(R^{\mathrm{relations}}\to R^{\mathrm{generators}}\) and
+derive the cokernel decomposition. Exact type tests now freeze these
+interfaces, and the core release gate checks the pinned container inputs,
+local archive metadata, hashes, and citation data.
 
-Internally, however, the repository has already moved past a pure API freeze.
-The same module now contains proof-carrying pivot states together with a
-verified same-size lead-reduction foundation: raw row/column clearing steps,
-pure-data first-column and first-row clearing loops, external invariance
-theorems, and a wrapper \code{clearLeadByPivot} that reassembles the resulting
-state. This is meant as the base layer for the eventual executable \SNF{}
-kernel, not as a completed Smith algorithm.
-
-The current \SNF{} API nevertheless records two design decisions worth making
-explicit. First, \code{SNFResult} deliberately does \emph{not} include
-unimodularity fields for \(U\) and \(V\). The HNF experience showed that
-certificate packaging matters; freezing the public boundary before the proofs are
-written should not over-commit to a final proof object layout. Second,
-\code{CanonicalMod} appears on the executable entrypoint \code{smithNormalForm},
-not on the abstract predicate \code{IsSmithNormalForm}. This mirrors the HNF
-architecture: canonical remainder assumptions belong on executable exactness, not
-on the abstract shape of the normal form itself.
-
-There is also a deliberate elaboration boundary in the current design. The
-public Smith wrappers reindex arbitrary finite types through \code{Fintype.equivFin},
-but the repository intentionally avoids aggressive public \code{simp} lemmas that
-collapse this bridge on concrete \code{Fin}-indexed matrices. In practice those
-lemmas make elaboration unstable. Concrete diagonal-specification and
-invariant-factor smoke tests therefore remain on the internal \code{Fin} layer,
-while the public examples focus on stable packaging statements.
-
-The same caution applies to the PID bridge. The dedicated bridge module currently
-contains only a placeholder agreement predicate together with a trivial theorem
-named \code{executableSNFMatchesPID}. These declarations are markers
-for the intended integration with \mathlib{}'s PID-side structural results, not
-completed mathematics. A realistic next milestone is therefore:
-
-\begin{itemize}
-  \item extend the current lead-reduction foundation with nondivisible pivot
-    improvement and a strict descent argument;
-  \item connect that same-size layer to the outer recursive
-    \code{smithNormalFormFin} kernel;
-  \item prove public correctness, left/right unimodularity extraction, and
-    Smith uniqueness with explicit two-sided certificates;
-  \item only then relate the resulting invariant factors to the abstract PID
-    theorems already available in \mathlib.
-\end{itemize}
+After the core facade and artifact freeze, rational canonical form, finite-free
+integer homology, Kannan--Bachem, modular HNF, LLL, and formal bit-cost models
+proceed as independent application or research lines. Each line reuses the
+strong core result types and has separate acceptance tests, benchmarks, paper,
+and artifact.

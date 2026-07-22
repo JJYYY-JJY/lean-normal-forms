@@ -1,0 +1,99 @@
+diff --git a/Mathlib/Algebra/Module/Presentation/Matrix.lean b/Mathlib/Algebra/Module/Presentation/Matrix.lean
+new file mode 100644
+index 0000000000..ea74fd5c9f
+--- /dev/null
++++ b/Mathlib/Algebra/Module/Presentation/Matrix.lean
+@@ -0,0 +1,89 @@
++/-
++Copyright (c) 2026 Junye Ji. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Junye Ji
++-/
++module
++
++public import Mathlib.Algebra.Module.Presentation.Basic
++public import Mathlib.LinearAlgebra.Matrix.ToLin
++
++/-!
++# Presentations from matrices
++
++This file interprets the columns of a matrix as relations on the free module
++indexed by its rows and identifies the resulting quotient with the cokernel of
++the matrix's `mulVec` linear map.
++-/
++
++@[expose] public noncomputable section
++
++namespace Module
++
++namespace Relations
++
++variable {A : Type u} [CommRing A]
++
++/--
++The relations whose generators are the rows of `M` and whose relations are its
++columns.
++-/
++public def ofMatrix
++    {m : Type v} {n : Type w} [Fintype m]
++    (M : Matrix m n A) :
++    Module.Relations A where
++  G := m
++  R := n
++  relation j :=
++    (Finsupp.linearEquivFunOnFinite A A m).symm (M.col j)
++
++@[simp] public theorem ofMatrix_relation_apply
++    {m : Type v} {n : Type w} [Fintype m]
++    (M : Matrix m n A) (j : n) (i : m) :
++    (ofMatrix M).relation j i = M i j :=
++  rfl
++
++/--
++The quotient presented by the columns of a finite matrix is the cokernel of
++its `mulVec` linear map.
++-/
++public def ofMatrixQuotientEquiv
++    {m : Type v} {n : Type w} [Fintype m] [Fintype n]
++    (M : Matrix m n A) :
++    (ofMatrix M).Quotient ≃ₗ[A]
++      ((m → A) ⧸ LinearMap.range M.mulVecLin) := by
++  let generatorEquiv :
++      (m →₀ A) ≃ₗ[A] (m → A) :=
++    Finsupp.linearEquivFunOnFinite A A m
++  have hmap :
++      Submodule.map generatorEquiv.toLinearMap
++          (Submodule.span A (Set.range (ofMatrix M).relation)) =
++        LinearMap.range M.mulVecLin := by
++    rw [Submodule.map_span, Matrix.range_mulVecLin]
++    apply congrArg (Submodule.span A)
++    ext x
++    constructor
++    · rintro ⟨y, ⟨j, rfl⟩, rfl⟩
++      exact ⟨j, by
++        ext i
++        rfl⟩
++    · rintro ⟨j, rfl⟩
++      refine ⟨(ofMatrix M).relation j, ⟨j, rfl⟩, ?_⟩
++      ext i
++      rfl
++  let quotientInstanceEquiv :
++      (ofMatrix M).Quotient ≃ₗ[A]
++        ((m →₀ A) ⧸
++          Submodule.span A (Set.range (ofMatrix M).relation)) :=
++    { toFun := id
++      invFun := id
++      left_inv := fun _ => rfl
++      right_inv := fun _ => rfl
++      map_add' := fun _ _ => rfl
++      map_smul' := fun _ _ => rfl }
++  exact quotientInstanceEquiv.trans
++    (Submodule.Quotient.equiv
++      (Submodule.span A (Set.range (ofMatrix M).relation))
++      (LinearMap.range M.mulVecLin)
++      generatorEquiv
++      hmap)
++
++end Relations
++
++end Module

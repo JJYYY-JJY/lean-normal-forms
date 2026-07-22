@@ -17,7 +17,5 @@ jobs:
       - uses: leanprover/lean-action@v1
       - name: Fetch mathlib cache
         run: lake exe cache get
-      - name: Build project
-        run: lake build
-      - name: Axiom audit smoke check
-        run: lake env lean scripts/AxiomAudit.lean
+      - name: Run code-only verification
+        run: scripts/verify.sh all

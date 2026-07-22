@@ -1,5 +1,13 @@
-import NormalForms.Matrix.Certificates
-import NormalForms.Matrix.Hermite.Defs
+/-
+Copyright (c) 2026 Junye Ji. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Junye Ji
+-/
+module
+
+public import NormalForms.Basic
+public import NormalForms.Matrix.Certificates
+public import NormalForms.Matrix.Hermite.Defs
 
 /-!
 # Smith Normal Form Definitions
@@ -11,8 +19,31 @@ namespace NormalForms.Matrix.Smith
 
 open scoped Matrix
 open NormalForms.Matrix.Certificates
-open NormalForms.Matrix.Elementary
 open NormalForms.Matrix.Hermite
+
+/-- Smith normal-form predicate at the canonical `Fin` indexing seam. -/
+public inductive IsSmithNormalFormFin {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] :
+    {m n : Nat} -> _root_.Matrix (Fin m) (Fin n) R -> Prop
+  | emptyRows {n : Nat} (A : _root_.Matrix (Fin 0) (Fin n) R) :
+      IsSmithNormalFormFin A
+  | emptyCols {m : Nat} (A : _root_.Matrix (Fin m) (Fin 0) R) :
+      IsSmithNormalFormFin A
+  | zeroLead {m n : Nat} (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
+      (hzero : A 0 0 = 0)
+      (hrow : ∀ j : Fin n, A 0 j.succ = 0)
+      (hcol : ∀ i : Fin m, A i.succ 0 = 0)
+      (hLowerZero : lowerRight A = 0) :
+      IsSmithNormalFormFin A
+  | pivot {m n : Nat} (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
+      (hpivot : A 0 0 ≠ 0)
+      (hnorm : A 0 0 = normalize (A 0 0))
+      (hrow : ∀ j : Fin n, A 0 j.succ = 0)
+      (hcol : ∀ i : Fin m, A i.succ 0 = 0)
+      (hLower : IsSmithNormalFormFin (lowerRight A))
+      (hdiv : ∀ i : Fin m, ∀ j : Fin n, A 0 0 ∣ A i.succ j.succ) :
+      IsSmithNormalFormFin A
+
 
 namespace Internal
 
@@ -78,40 +109,6 @@ noncomputable instance {m n : Nat} {R : Type _}
   infer_instance
 
 
-inductive IsSmithNormalFormFin {R : Type _}
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] :
-    {m n : Nat} -> _root_.Matrix (Fin m) (Fin n) R -> Prop
-  | emptyRows {n : Nat} (A : _root_.Matrix (Fin 0) (Fin n) R) :
-      IsSmithNormalFormFin A
-  | emptyCols {m : Nat} (A : _root_.Matrix (Fin m) (Fin 0) R) :
-      IsSmithNormalFormFin A
-  | zeroLead {m n : Nat} (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
-      (hzero : A 0 0 = 0)
-      (hrow : ∀ j : Fin n, A 0 j.succ = 0)
-      (hcol : ∀ i : Fin m, A i.succ 0 = 0)
-      (hLowerZero : lowerRight A = 0) :
-      IsSmithNormalFormFin A
-  | pivot {m n : Nat} (A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R)
-      (hpivot : A 0 0 ≠ 0)
-      (hnorm : A 0 0 = normalize (A 0 0))
-      (hrow : ∀ j : Fin n, A 0 j.succ = 0)
-      (hcol : ∀ i : Fin m, A i.succ 0 = 0)
-      (hLower : IsSmithNormalFormFin (lowerRight A))
-      (hdiv : ∀ i : Fin m, ∀ j : Fin n, A 0 0 ∣ A i.succ j.succ) :
-      IsSmithNormalFormFin A
-
-structure FinSNFResult {m n : Nat} {R : Type _}
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
-    (A : _root_.Matrix (Fin m) (Fin n) R) where
-  U : _root_.Matrix (Fin m) (Fin m) R
-  S : _root_.Matrix (Fin m) (Fin n) R
-  V : _root_.Matrix (Fin n) (Fin n) R
-  two_sided_mul : U * A * V = S
-  leftUnimodular : Unimodular U
-  rightUnimodular : Unimodular V
-  isSmith : IsSmithNormalFormFin S
-
-
 def firstNonzeroEntry? {m n : Nat} {R : Type _}
     [Zero R] [DecidableEq R] :
     _root_.Matrix (Fin m) (Fin n) R -> Option (Fin m × Fin n)
@@ -159,7 +156,7 @@ theorem firstNonzeroEntry?_eq_none {m n : Nat} {R : Type _}
                     match firstNonzero? (fun s : Fin n => A i0 s) with
                     | none => none
                     | some j0 => some (i0, j0)) = none := by
-              simpa [firstNonzeroEntry?] using hgo
+              simpa only [firstNonzeroEntry?.goRows] using hgo
             rcases Nat.lt_succ_iff_lt_or_eq.mp hi with hi' | hEq
             · have hgo' : firstNonzeroEntry?.goRows A k hk' = none := by
                 cases hgoRows : firstNonzeroEntry?.goRows A k hk' with
@@ -346,7 +343,7 @@ theorem firstUndivisibleLowerRight?_eq_none {m n : Nat} {R : Type _}
                       have : False := by
                         have hrowNone :
                             firstUndivisible? d (fun s : Fin n => A i0.succ s.succ) = none := by
-                          simpa [firstUndivisibleLowerRight?.goRows, hgoRows] using hgo
+                          simpa [firstUndivisibleLowerRight?.goRows, hgoRows, i0] using hgo
                         have : some p = none := hrow.symm.trans hrowNone
                         cases this
                       exact False.elim this
@@ -396,7 +393,7 @@ theorem firstUndivisibleLowerRight?_some_not_dvd {m n : Nat} {R : Type _}
                         ∃ a,
                           firstUndivisible? d (fun j : Fin n => A i.succ j.succ) = some a ∧
                             (i, a) = p := by
-                      simpa [firstUndivisibleLowerRight?.goRows, hgo] using h
+                      simpa [firstUndivisibleLowerRight?.goRows, hgo, i] using h
                     rcases h' with ⟨a, ha, hp⟩
                     have ha' : a = j := by
                       have hs : some a = some j := by
@@ -620,50 +617,63 @@ theorem isSmithNormalFormFin_toDiag {m n : Nat} {R : Type _}
 
 end Internal
 
-def smithColumnSpan {m n R : Type _}
+/-- Strong Smith result at the canonical `Fin` indexing seam. -/
+public structure SNFResultFin {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) where
+  U : _root_.Matrix (Fin m) (Fin m) R
+  U_cert : MatrixInverseCertificate U
+  S : _root_.Matrix (Fin m) (Fin n) R
+  V : _root_.Matrix (Fin n) (Fin n) R
+  V_cert : MatrixInverseCertificate V
+  equation : U * A * V = S
+  isSmith : IsSmithNormalFormFin S
+
+
+@[expose] public def smithColumnSpan {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R]
     (A : _root_.Matrix m n R) : Submodule R (m -> R) :=
   LinearMap.range A.mulVecLin
 
 
-/-- Read normalized nonzero diagonal entries from a Smith matrix, truncating at the first `0`.
+/-- Read normalized nonzero diagonal entries from a canonical `Fin` Smith matrix. -/
+public noncomputable def smithInvariantFactorsFin {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) : List R :=
+  Internal.invariantFactors A
 
-The public wrapper works for arbitrary finite index types by reindexing to
-`Fin`. We intentionally avoid a companion `[simp]` bridge lemma for `Fin`
-matrices, since expanding `Fintype.equivFin` aggressively can make elaboration
-pathologically slow.
--/
-noncomputable def smithInvariantFactors {m n R : Type _}
+
+/-- Read invariant factors relative to an explicit indexing. -/
+public noncomputable def smithInvariantFactorsWith {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (indexing : NormalForms.Matrix.MatrixIndexing m n)
     (A : _root_.Matrix m n R) : List R :=
-  Internal.invariantFactors
-    (_root_.Matrix.reindex (Fintype.equivFin m) (Fintype.equivFin n) A)
+  smithInvariantFactorsFin (indexing.reindex A)
 
-/-- Public Smith-normal-form predicate.
 
-Like `smithInvariantFactors`, this wrapper is defined by reindexing to the
-internal `Fin` predicate. Callers should not expect `simp` to compute through
-that bridge automatically; use the internal predicate for concrete executable
-smoke checks, and use this public predicate for API-level statements.
--/
-def IsSmithNormalForm {m n R : Type _}
+/-- Smith semantics relative to an explicit row/column enumeration. -/
+public def IsSmithNormalFormWith {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (indexing : NormalForms.Matrix.MatrixIndexing m n)
     (A : _root_.Matrix m n R) : Prop :=
   Internal.IsSmithNormalFormDiag
-    (_root_.Matrix.reindex (Fintype.equivFin m) (Fintype.equivFin n) A)
+    (indexing.reindex A)
 
-noncomputable instance {m n R : Type _}
+
+/-- Smith semantics for increasing enumeration on finite linear orders. -/
+public def IsSmithNormalFormOrdered {m n R : Type _}
+    [Fintype m] [Fintype n] [LinearOrder m] [LinearOrder n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix m n R) : Prop :=
+  IsSmithNormalFormWith (NormalForms.Matrix.MatrixIndexing.ordered m n) A
+
+public noncomputable instance {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
-    {A : _root_.Matrix m n R} : Decidable (IsSmithNormalForm A) := by
-  classical
-  unfold IsSmithNormalForm
-  infer_instance
-
-
-
-
+    {indexing : NormalForms.Matrix.MatrixIndexing m n}
+    {A : _root_.Matrix m n R} : Decidable (IsSmithNormalFormWith indexing A) := by
+  exact Classical.propDecidable _
 end NormalForms.Matrix.Smith

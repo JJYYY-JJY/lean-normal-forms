@@ -1,4 +1,13 @@
-import NormalForms.Matrix.Hermite.Basic
+/-
+Copyright (c) 2026 Junye Ji. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Junye Ji
+-/
+module
+
+public import NormalForms.Matrix.Hermite.Basic
+import all NormalForms.Matrix.Certificates.Basic
+import all NormalForms.Matrix.Hermite.Algorithm
 
 /-!
 # Hermite Normal Form Correctness and Uniqueness
@@ -11,16 +20,7 @@ namespace NormalForms.Matrix.Hermite
 open scoped Matrix
 open NormalForms.Matrix.Certificates
 
-theorem hermiteNormalForm_isHermite {m n R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] [CanonicalMod R]
-    {A : _root_.Matrix m n R} {result : HNFResult A}
-    (_hresult : hermiteNormalForm A = some result) :
-    IsHermiteNormalForm result.H := by
-  exact result.isHermite
-
-
-theorem hnf_lower_row_firstCol_zero {m n : Nat} {R : Type _}
+public theorem hnf_lower_row_firstCol_zero {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
     (hA : IsHermiteNormalFormFin A) :
@@ -33,7 +33,7 @@ theorem hnf_lower_row_firstCol_zero {m n : Nat} {R : Type _}
       exact hbelow
 
 
-theorem hnf_rowAbove_reduced_at_pivot {m n : Nat} {R : Type _}
+public theorem hnf_rowAbove_reduced_at_pivot {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin m) (Fin n) R} (hA : IsHermiteNormalFormFin A) :
     ∀ {i j : Fin m} (_hij : i < j) {p : Fin n},
@@ -276,7 +276,7 @@ private theorem topRow_eq_of_eq_add_lowerRows {m n : Nat} {R : Type _}
   exact hEqj.symm
 
 
-theorem isHermiteNormalFormFin_unique_of_left_equiv {m n : Nat} {R : Type _}
+public theorem isHermiteNormalFormFin_unique_of_left_equiv {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] [CanonicalMod R] :
     ∀ {H₁ : _root_.Matrix (Fin m) (Fin n) R},
       IsHermiteNormalFormFin H₁ ->
@@ -410,18 +410,19 @@ theorem isHermiteNormalFormFin_unique_of_left_equiv {m n : Nat} {R : Type _}
                   exact congrFun (congrFun hLowerEq i) j
 
 
-theorem isHermiteNormalForm_unique_of_left_equiv {m n R : Type _}
+public theorem isHermiteNormalFormWith_unique_of_left_equiv {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R] [CanonicalMod R]
+    (indexing : NormalForms.Matrix.MatrixIndexing m n)
     {H₁ H₂ : _root_.Matrix m n R}
-    (hH₁ : IsHermiteNormalForm H₁)
-    (hH₂ : IsHermiteNormalForm H₂)
+    (hH₁ : IsHermiteNormalFormWith indexing H₁)
+    (hH₂ : IsHermiteNormalFormWith indexing H₂)
     {U : _root_.Matrix m m R}
     (hU : Unimodular U)
     (hEq : U * H₁ = H₂) :
     H₁ = H₂ := by
-  let em := Fintype.equivFin m
-  let en := Fintype.equivFin n
+  let em := indexing.rows.equiv
+  let en := indexing.cols.equiv
   have hEqFin :
       _root_.Matrix.reindex em em U *
           _root_.Matrix.reindex em en H₁ =

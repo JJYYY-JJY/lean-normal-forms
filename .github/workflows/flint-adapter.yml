@@ -1,0 +1,39 @@
+name: Optional FLINT adapter
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 9 * * 0"
+
+permissions:
+  contents: read
+
+jobs:
+  adapter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+      - name: Fetch mathlib cache
+        run: lake exe cache get
+      - name: Build pinned dynamic FLINT stack
+        env:
+          NORMALFORMS_FLINT_BUILD_LEAN_FFI: "1"
+        run: scripts/BuildFlintAdapter.sh
+      - name: Generate certificates and recheck them with Lean
+        env:
+          NORMALFORMS_FLINT_SKIP_BUILD: "1"
+        run: scripts/FlintAdapterTest.sh
+      - name: Exercise FFI and differential regressions
+        env:
+          NORMALFORMS_FLINT_SKIP_BUILD: "1"
+        run: scripts/FlintFFITest.sh
+      - name: Smoke-test separated benchmark stages
+        run: >-
+          scripts/bench.py certificate-paths
+          --skip-build
+          --warmups 0
+          --measurements 2
+          --output-prefix /tmp/normalforms-certificate-paths

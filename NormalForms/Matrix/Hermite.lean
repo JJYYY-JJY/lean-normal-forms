@@ -1,2 +1,10 @@
-import NormalForms.Matrix.Hermite.Basic
-import NormalForms.Matrix.Hermite.Uniqueness
+/-
+Copyright (c) 2026 Junye Ji. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Junye Ji
+-/
+module
+
+public import NormalForms.Matrix.Hermite.Defs
+public import NormalForms.Matrix.Hermite.Basic
+public import NormalForms.Matrix.Hermite.Uniqueness

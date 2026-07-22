@@ -1,0 +1,66 @@
+{
+  "schema": "normalforms.benchmark/v1",
+  "benchmark": "native-polynomial-certificate-corpus",
+  "version": "0.2.2",
+  "sourceCommit": "921d246a154ddf311d202b72e7e0b205fd91f9f2",
+  "date": "2026-07-19",
+  "command": ".lake/build/bin/normalforms-polynomial-smoke",
+  "protocol": {
+    "warmups": 1,
+    "measurements": 7,
+    "wallClockGate": false,
+    "summaryMethod": "median and Tukey hinges excluding the median"
+  },
+  "host": {
+    "os": "Linux 7.0.0-28-generic x86_64 GNU/Linux",
+    "architecture": "x86_64",
+    "cpu": "AMD Ryzen 9 7940H w/ Radeon 780M Graphics",
+    "logicalCpus": 16,
+    "cores": 8,
+    "threadsPerCore": 2,
+    "sockets": 1,
+    "maxCpuMHz": 5263.061,
+    "memoryBytes": 61819011072,
+    "lean": "4.32.0",
+    "leanCommit": "8c9756b28d64dab099da31a4c09229a9e6a2ef35"
+  },
+  "observations": [
+    { "run": 1, "wallSeconds": 3.40, "maxRssKiB": 71260 },
+    { "run": 2, "wallSeconds": 4.82, "maxRssKiB": 72744 },
+    { "run": 3, "wallSeconds": 3.44, "maxRssKiB": 72056 },
+    { "run": 4, "wallSeconds": 4.66, "maxRssKiB": 72568 },
+    { "run": 5, "wallSeconds": 3.42, "maxRssKiB": 71700 },
+    { "run": 6, "wallSeconds": 4.69, "maxRssKiB": 72508 },
+    { "run": 7, "wallSeconds": 4.71, "maxRssKiB": 71804 }
+  ],
+  "summary": {
+    "wallSeconds": {
+      "median": 4.66,
+      "q1": 3.42,
+      "q3": 4.71,
+      "iqr": 1.29
+    },
+    "maxRssKiB": {
+      "median": 72056,
+      "q1": 71700,
+      "q3": 72568,
+      "iqr": 868
+    }
+  },
+  "coverage": [
+    "pivot improvement",
+    "zero matrix",
+    "constant full rank",
+    "rank-deficient polynomial",
+    "zero rows",
+    "HNF and SNF transformation equations",
+    "all stored inverse identities"
+  ],
+  "unavailableMetrics": [
+    "ring operation count",
+    "pivot count",
+    "gcd count",
+    "maximum coefficient bit length",
+    "maximum polynomial degree"
+  ]
+}

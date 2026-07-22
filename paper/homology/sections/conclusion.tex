@@ -1,0 +1,17 @@
+\section{Conclusion}
+
+Strong Smith certificates with explicit inverses turn the textbook homology
+algorithm into a compositional formal construction.  The first Smith result
+provides an actual integral kernel basis, the chain condition proves that
+the incoming map lies in that kernel, and the second result classifies the
+resulting cokernel.  The final equivalence concerns the intrinsic homology
+quotient, while a proved projection keeps the full matrix path executable.
+
+The v1.2.2 application remains separate from the stable normal-form facade
+and has its own API freeze, native test, audit, paper, and artifact.  Its
+comparison with mathlib categorical homology handles the degree-zero
+short-complex distinction explicitly.  For simplicial input, a certified
+realization witness supplies exactly the additional identities and basis
+compatibility needed to transport the decomposition to normalized chains and
+the normalized Moore complex; no reconstruction theorem from weaker face
+data is assumed.

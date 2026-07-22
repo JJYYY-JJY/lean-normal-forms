@@ -1,0 +1,48 @@
+{
+  "created_utc": "2026-07-20T11:01:52.796764+00:00",
+  "modules": [
+    {
+      "allocation_count": 65177536000,
+      "heartbeats": 65177536.0,
+      "max_rss_kib": 3865072,
+      "module": "NormalForms/Euclidean/PolynomialRat.lean",
+      "wall_seconds": 4.36
+    },
+    {
+      "allocation_count": 62430986000,
+      "heartbeats": 62430986.0,
+      "max_rss_kib": 3836460,
+      "module": "NormalForms/Matrix/Hermite/Algorithm.lean",
+      "wall_seconds": 4.33
+    },
+    {
+      "allocation_count": 161794210000,
+      "heartbeats": 161794210.0,
+      "max_rss_kib": 3929008,
+      "module": "NormalForms/Matrix/Smith/Algorithm.lean",
+      "wall_seconds": 7.26
+    },
+    {
+      "allocation_count": 28868905000,
+      "heartbeats": 28868905.0,
+      "max_rss_kib": 3815424,
+      "module": "NormalForms/Certificate/Checker.lean",
+      "wall_seconds": 4.04
+    }
+  ],
+  "policy": {
+    "absolute_wall_failure": false,
+    "allocation_definition": "sum of retained Lean 4.32 trace-profiler heartbeat intervals; one public heartbeat is 1000 small allocation increments",
+    "allocation_failure_factor": 2.0,
+    "trace_threshold": 10000,
+    "wall_warning_factor": 3.0
+  },
+  "schema": "normalforms.module-profile/v1",
+  "source": {
+    "git_revision": "dfee0640cb6bd837107187cb9eb5fd714eb105dd",
+    "lean": "Lean (version 4.32.0, x86_64-unknown-linux-gnu, commit 8c9756b28d64dab099da31a4c09229a9e6a2ef35, Release)",
+    "machine": "x86_64",
+    "system": "Linux",
+    "working_tree_clean": true
+  }
+}

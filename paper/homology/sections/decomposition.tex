@@ -1,0 +1,37 @@
+\section{Homology presentation and decomposition}
+
+Let $K_n$ be the restricted kernel-coordinate matrix.  The kernel-basis
+equivalence maps the boundary submodule onto the column span of $K_n$.
+Quotient transport therefore gives a linear equivalence
+\[
+  H_n
+  \simeq_{\Z}
+  \Z^{\rank C_n-r}/\operatorname{im}K_n.
+\]
+Lean names this equivalence \code{homologyPresentationEquiv}.  Its codomain
+is the \code{presentedModule} of a
+\code{FiniteFreePresentation}.
+
+A second strong Smith calculation
+\[
+  U'K_nV'=S'
+\]
+classifies that cokernel.  If the nonzero normalized entries of $S'$ are
+$a_1,\ldots,a_t$, the resulting additive equivalence is
+\[
+  H_n \simeq
+  \left(\prod_{i=1}^{t}\Z/a_i\Z\right)
+  \times \Z^{\,(\rank C_n-r)-t}.
+\]
+The final exponent is \code{bettiNumber}.  The complete factor family keeps
+unit entries: $\Z/1\Z$ is a zero summand, and retaining it preserves the
+exact certified Smith data.  The reader
+\code{homologyTorsionFactors} separately filters units for display.
+
+The runtime projection repeats the same matrix path without evaluating the
+noncomputable quotient equivalences.  It reads the outgoing nonzero Smith
+prefix, extracts the tail matrix, runs the second strong Smith algorithm, and
+returns ranks and factors.  Proofs identify the runtime rank with the
+semantic rank, reindex the runtime matrix to $K_n$, and show that its factors
+come directly from the second strong result.  Runtime output is therefore a
+projection of certified objects rather than an independent calculator.

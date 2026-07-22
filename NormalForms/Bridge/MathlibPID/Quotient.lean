@@ -1,6 +1,14 @@
-import NormalForms.Bridge.MathlibPID.Basic
-import Mathlib.LinearAlgebra.Quotient.Pi
-import Mathlib.LinearAlgebra.FreeModule.Finite.Quotient
+/-
+Copyright (c) 2026 Junye Ji. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Junye Ji
+-/
+module
+
+public import NormalForms.Bridge.MathlibPID.Basic
+import all NormalForms.Matrix.Smith.Basic
+import all NormalForms.Matrix.Smith.Defs
+import all NormalForms.Matrix.Smith.Uniqueness
 
 /-!
 # PID Quotient Bridge
@@ -11,10 +19,10 @@ count theorem and executable-vs-mathlib `PiSpan` / `DirectSum` / `PiZMod`
 compatibility equivalences.
 
 This file intentionally stops at semantic bridge results and full-rank
-compatibility equivalences. The current coefficient-list equality closure is
-proved only at the example layer in
-`NormalForms.Examples.AbelianGroups.Basic`, because mathlib does not yet expose
-an abstract witness-canonicality theorem for `smithNormalFormCoeffs`.
+compatibility equivalences.  Intrinsic coefficient comparison lives in
+`NormalForms.Bridge.MathlibPID.Signature`: because mathlib does not expose a
+witness-canonicality theorem for `smithNormalFormCoeffs`, that bridge takes the
+missing normalization and divisibility-chain proof explicitly.
 -/
 
 namespace NormalForms.Bridge.MathlibPID
@@ -25,68 +33,83 @@ open NormalForms.Matrix.Smith
 
 private noncomputable def pidExecutableResult {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) : NormalForms.Matrix.Smith.SNFResult A :=
-  Classical.choose (NormalForms.Matrix.Smith.smithNormalForm_exists A)
+  NormalForms.Matrix.Smith.smithNormalForm A
 
-@[simp] theorem pidExecutableResult_spec {m n R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+/--
+Transport a canonical-`Fin` presentation quotient through a supplied strong
+Smith result.  This implementation seam consumes the explicit inverse
+certificate and never reruns the Smith algorithm.
+
+It is intentionally not part of the public core facade; independently
+versioned applications import it with `import all`.
+-/
+noncomputable def quotientEquivOfResultFin
+    {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
-    [NormalForms.Matrix.Hermite.CanonicalMod R]
-    (A : _root_.Matrix m n R) :
-    NormalForms.Matrix.Smith.smithNormalForm A = some (pidExecutableResult A) :=
-  Classical.choose_spec (NormalForms.Matrix.Smith.smithNormalForm_exists A)
+    (A : _root_.Matrix (Fin m) (Fin n) R)
+    (result : SNFResultFin A) :
+    ((Fin m → R) ⧸ pidSmithColumnSpan A) ≃ₗ[R]
+      ((Fin m → R) ⧸ pidSmithColumnSpan result.S) := by
+  let e : (Fin m → R) ≃ₗ[R] (Fin m → R) :=
+    pidUnimodularMulVecEquiv result.U result.U_cert
+  have hspan :
+      Submodule.map (e : (Fin m → R) →ₗ[R] (Fin m → R))
+          (pidSmithColumnSpan A) =
+        pidSmithColumnSpan result.S := by
+    calc
+      Submodule.map (e : (Fin m → R) →ₗ[R] (Fin m → R))
+            (pidSmithColumnSpan A) =
+          pidSmithColumnSpan (result.U * A) := by
+        simpa [e, pidUnimodularMulVecEquiv, Matrix.toLin'_apply'] using
+          (pidSmithColumnSpan_mul_left_unimodular
+            (A := A) (U := result.U) result.U_cert).symm
+      _ = pidSmithColumnSpan (result.U * A * result.V) := by
+        simpa [Matrix.mul_assoc] using
+          (pidSmithColumnSpan_mul_right_unimodular
+            (A := result.U * A) (V := result.V) result.V_cert).symm
+      _ = pidSmithColumnSpan result.S := by
+        rw [result.equation]
+  exact Submodule.Quotient.equiv _ _ e hspan
 
 @[simp] private theorem pidExecutableInvariantFactorCount_eq_result_length {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) :
     pidExecutableInvariantFactorCount A = (pidExecutableResult A).invariantFactors.length :=
   by
-    rw [pidExecutableInvariantFactorCount_eq_length,
-      pidSmithNormalFormCoeffList_eq_resultInvariantFactors
-        (A := A) (result := pidExecutableResult A) (pidExecutableResult_spec A)]
+    rfl
 
-@[simp] theorem pidExecutableResult_eq_of_hresult {m n R : Type _}
+private noncomputable def pidExecutableQuotientEquivOfResult {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
-    [NormalForms.Matrix.Hermite.CanonicalMod R]
-    {A : _root_.Matrix m n R} {result : NormalForms.Matrix.Smith.SNFResult A}
-    (hresult : NormalForms.Matrix.Smith.smithNormalForm A = some result) :
-    pidExecutableResult A = result := by
-  have hchosen := pidExecutableResult_spec A
-  rw [hresult] at hchosen
-  injection hchosen with hEq
-  exact hEq.symm
-
-noncomputable def pidExecutableQuotientEquivOfResult {m n R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) :
     ((m -> R) ⧸ pidSmithColumnSpan A) ≃ₗ[R]
       ((m -> R) ⧸ pidSmithColumnSpan (pidExecutableResult A).S) := by
   let result := pidExecutableResult A
-  let hresult : NormalForms.Matrix.Smith.smithNormalForm A = some result :=
-    pidExecutableResult_spec A
-  let hU := NormalForms.Matrix.Smith.smithNormalForm_leftUnimodular hresult
-  let hV := NormalForms.Matrix.Smith.smithNormalForm_rightUnimodular hresult
-  let e : (m -> R) ≃ₗ[R] (m -> R) := pidUnimodularMulVecEquiv result.U hU
+  let e : (m -> R) ≃ₗ[R] (m -> R) := pidUnimodularMulVecEquiv result.U result.U_cert
   have hspan :
       Submodule.map (e : (m -> R) →ₗ[R] (m -> R)) (pidSmithColumnSpan A) =
         pidSmithColumnSpan result.S := by
     calc
       Submodule.map (e : (m -> R) →ₗ[R] (m -> R)) (pidSmithColumnSpan A)
           = pidSmithColumnSpan (result.U * A) := by
-              simpa [e, pidUnimodularMulVecEquiv] using
-                (pidSmithColumnSpan_mul_left_unimodular (A := A) (U := result.U) hU).symm
+              simpa [e, pidUnimodularMulVecEquiv, Matrix.toLin'_apply'] using
+                (pidSmithColumnSpan_mul_left_unimodular
+                  (A := A) (U := result.U) result.U_cert).symm
       _ = pidSmithColumnSpan (result.U * A * result.V) := by
             simpa [Matrix.mul_assoc] using
-              (pidSmithColumnSpan_mul_right_unimodular (A := result.U * A) (V := result.V) hV).symm
+              (pidSmithColumnSpan_mul_right_unimodular
+                (A := result.U * A) (V := result.V) result.V_cert).symm
       _ = pidSmithColumnSpan result.S := by
-            simp [result.two_sided_mul]
+            rw [result.equation]
   exact Submodule.Quotient.equiv _ _ e hspan
 
 private theorem invariantFactors_length_le_min {m n : Nat} {R : Type _}
@@ -137,7 +160,7 @@ private theorem diagEntry_lowerRight {m n : Nat} {R : Type _}
 private theorem diagEntry_ne_zero_of_lt_invariantFactors_length {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin m) (Fin n) R}
-    (hA : NormalForms.Matrix.Smith.Internal.IsSmithNormalFormFin A) :
+    (hA : NormalForms.Matrix.Smith.IsSmithNormalFormFin A) :
     ∀ k, k < (NormalForms.Matrix.Smith.Internal.invariantFactors A).length →
       ∀ hk : k < Nat.min m n, NormalForms.Matrix.Smith.Internal.diagEntry A k hk ≠ 0 := by
   intro k
@@ -169,7 +192,7 @@ private theorem diagEntry_ne_zero_of_lt_invariantFactors_length {m n : Nat} {R :
 private theorem diagEntry_eq_zero_of_invariantFactors_length_le {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin m) (Fin n) R}
-    (hA : NormalForms.Matrix.Smith.Internal.IsSmithNormalFormFin A) :
+    (hA : NormalForms.Matrix.Smith.IsSmithNormalFormFin A) :
     ∀ k, (NormalForms.Matrix.Smith.Internal.invariantFactors A).length ≤ k →
       ∀ hk : k < Nat.min m n, NormalForms.Matrix.Smith.Internal.diagEntry A k hk = 0 := by
   intro k
@@ -216,7 +239,7 @@ private def smithCoordSubmodule {m n : Nat} {R : Type _}
 private theorem smithColumnSpan_eq_pi_of_isSmithFin {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {S : _root_.Matrix (Fin m) (Fin n) R}
-    (hS : NormalForms.Matrix.Smith.Internal.IsSmithNormalFormFin S) :
+    (hS : NormalForms.Matrix.Smith.IsSmithNormalFormFin S) :
     LinearMap.range S.mulVecLin = Submodule.pi Set.univ (smithCoordSubmodule S) := by
   rcases NormalForms.Matrix.Smith.Internal.isSmithNormalFormFin_toDiag hS with ⟨hOff, _, _⟩
   refine le_antisymm ?_ ?_
@@ -303,27 +326,60 @@ private theorem smithColumnSpan_eq_pi_of_isSmithFin {m n : Nat} {R : Type _}
         exact hEq ▸ j.is_lt
       simp [hOff i j hij]
 
+/--
+Decompose a square canonical-`Fin` presentation quotient using a supplied
+strong Smith result.  All `n` diagonal entries are retained, including units
+and zeros; applications may separately prove that a particular determinant
+eliminates the zero case.
+
+Like `quotientEquivOfResultFin`, this is a hidden implementation seam rather
+than a frozen v1 core declaration.
+-/
+noncomputable def quotientEquivPiSpanOfResultFin
+    {n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin n) (Fin n) R)
+    (result : SNFResultFin A) :
+    ((Fin n → R) ⧸ pidSmithColumnSpan A) ≃ₗ[R]
+      ((i : Fin n) → R ⧸ Ideal.span ({result.S i i} : Set R)) := by
+  have hpi :
+      LinearMap.range result.S.mulVecLin =
+        Submodule.pi Set.univ (smithCoordSubmodule result.S) :=
+    smithColumnSpan_eq_pi_of_isSmithFin result.isSmith
+  have hcoord :
+      ∀ i : Fin n,
+        smithCoordSubmodule result.S i =
+          Ideal.span ({result.S i i} : Set R) := by
+    intro i
+    simp [smithCoordSubmodule, smithDiagEntryOrZero, i.is_lt]
+  exact (quotientEquivOfResultFin A result).trans <|
+    (Submodule.quotEquivOfEq _ _ hpi).trans <|
+      (Submodule.quotientPi _).trans <|
+        LinearEquiv.piCongrRight fun i =>
+          Submodule.quotEquivOfEq _ _ (hcoord i)
+
 private noncomputable def pidExecutableResultFinMatrix {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) :
     _root_.Matrix (Fin (Fintype.card m)) (Fin (Fintype.card n)) R :=
-  _root_.Matrix.reindex (Fintype.equivFin m) (Fintype.equivFin n) (pidExecutableResult A).S
+  (pidExecutableResult A).finResult.S
 
 private theorem pidExecutableResultFin_isSmith {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) :
-    NormalForms.Matrix.Smith.Internal.IsSmithNormalFormFin (pidExecutableResultFinMatrix A) := by
-  exact
-    NormalForms.Matrix.Smith.Internal.isSmithNormalFormDiag_toFin
-      (pidExecutableResult A).isSmith
+    NormalForms.Matrix.Smith.IsSmithNormalFormFin (pidExecutableResultFinMatrix A) := by
+  exact (pidExecutableResult A).finResult.isSmith
 
-noncomputable def pidExecutableQuotientEquivPiCoords {m n R : Type _}
+private noncomputable def pidExecutableQuotientEquivPiCoords {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) :
     ((m -> R) ⧸ pidSmithColumnSpan A) ≃ₗ[R]
@@ -332,9 +388,9 @@ noncomputable def pidExecutableQuotientEquivPiCoords {m n R : Type _}
   let result := pidExecutableResult A
   let Sfin := pidExecutableResultFinMatrix A
   let eRow : (m -> R) ≃ₗ[R] (Fin (Fintype.card m) -> R) :=
-    LinearEquiv.funCongrLeft R R (Fintype.equivFin m).symm
+    LinearEquiv.funCongrLeft R R result.indexing.rows.equiv.symm
   let eCol : (Fin (Fintype.card n) -> R) ≃ₗ[R] (n -> R) :=
-    LinearEquiv.funCongrLeft R R (Fintype.equivFin n)
+    LinearEquiv.funCongrLeft R R result.indexing.cols.equiv
   have hspanFin :
       Submodule.map (eRow : (m -> R) →ₗ[R] (Fin (Fintype.card m) -> R))
           (pidSmithColumnSpan result.S) =
@@ -344,8 +400,10 @@ noncomputable def pidExecutableQuotientEquivPiCoords {m n R : Type _}
           (eRow : (m -> R) →ₗ[R] (Fin (Fintype.card m) -> R)) ∘ₗ
             result.S.mulVecLin ∘ₗ
               (eCol : (Fin (Fintype.card n) -> R) →ₗ[R] (n -> R)) := by
-      simpa [Sfin, eRow, eCol] using
-        (Matrix.mulVecLin_reindex (Fintype.equivFin m) (Fintype.equivFin n) result.S)
+      simpa [Sfin, eRow, eCol, pidExecutableResultFinMatrix,
+        NormalForms.Matrix.Smith.SNFResult.S] using
+        (Matrix.mulVecLin_reindex result.indexing.rows.equiv
+          result.indexing.cols.equiv result.S)
     unfold pidSmithColumnSpan NormalForms.Matrix.Smith.smithColumnSpan
     rw [hlin, LinearMap.range_comp]
     have hsurj : Function.Surjective (eCol : (Fin (Fintype.card n) -> R) →ₗ[R] (n -> R)) :=
@@ -401,17 +459,21 @@ private theorem splitRowEquiv_apply_inr {m k : Nat} (hkm : k ≤ m) (j : Fin (m 
 
 private theorem pidExecutableInvariantFactorCount_eq_internal_length {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) :
     pidExecutableInvariantFactorCount A =
       (NormalForms.Matrix.Smith.Internal.invariantFactors
         (pidExecutableResultFinMatrix A)).length := by
+  rw [pidExecutableInvariantFactorCount_eq_result_length,
+    NormalForms.Matrix.Smith.SNFResult.invariantFactors_eq_internal]
   rfl
 
 private theorem pidExecutableInvariantFactorCount_le_card_rows {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) :
     pidExecutableInvariantFactorCount A ≤ Fintype.card m := by
@@ -422,7 +484,8 @@ private theorem pidExecutableInvariantFactorCount_le_card_rows {m n R : Type _}
 
 private theorem pidExecutableInvariantFactorCount_le_card_cols {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) :
     pidExecutableInvariantFactorCount A ≤ Fintype.card n := by
@@ -434,7 +497,7 @@ private theorem pidExecutableInvariantFactorCount_le_card_cols {m n R : Type _}
 private theorem invariantFactors_get_eq_diagEntry {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {S : _root_.Matrix (Fin m) (Fin n) R}
-    (hS : NormalForms.Matrix.Smith.Internal.IsSmithNormalFormFin S) :
+    (hS : NormalForms.Matrix.Smith.IsSmithNormalFormFin S) :
     ∀ k (hkLen : k < (NormalForms.Matrix.Smith.Internal.invariantFactors S).length)
       (hk : k < Nat.min m n),
       (NormalForms.Matrix.Smith.Internal.invariantFactors S).get ⟨k, hkLen⟩ =
@@ -468,7 +531,8 @@ private theorem invariantFactors_get_eq_diagEntry {m n : Nat} {R : Type _}
 
 private theorem pidExecutableInvariantFactorFn_eq_diagEntry {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) (i : Fin (pidExecutableInvariantFactorCount A)) :
     pidExecutableInvariantFactorFn A i =
@@ -479,18 +543,19 @@ private theorem pidExecutableInvariantFactorFn_eq_diagEntry {m n R : Type _}
       i.1 <
         (NormalForms.Matrix.Smith.Internal.invariantFactors
           (pidExecutableResultFinMatrix A)).length := by
-    change i.1 < pidExecutableInvariantFactorCount A
+    rw [← pidExecutableInvariantFactorCount_eq_internal_length]
     exact i.is_lt
   simpa
     [pidExecutableInvariantFactorFn, pidExecutableInvariantFactorCount_eq_internal_length,
-      pidExecutableResultFinMatrix, NormalForms.Matrix.Smith.SNFResult.invariantFactors,
-      NormalForms.Matrix.Smith.smithInvariantFactors] using
+      pidExecutableResultFinMatrix, pidSmithNormalFormCoeffList, pidExecutableResult,
+      NormalForms.Matrix.Smith.SNFResult.invariantFactors_eq_internal] using
     invariantFactors_get_eq_diagEntry (pidExecutableResultFin_isSmith A) i.1 hi
       (lt_of_lt_of_le i.is_lt (invariantFactors_length_le_min (pidExecutableResultFinMatrix A)))
 
 private theorem smithDiagEntryOrZero_eq_factorFn_of_lt {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) (i : Fin (pidExecutableInvariantFactorCount A)) :
     smithDiagEntryOrZero
@@ -501,23 +566,21 @@ private theorem smithDiagEntryOrZero_eq_factorFn_of_lt {m n R : Type _}
   have hiCol : i.1 < Fintype.card n :=
     lt_of_lt_of_le i.is_lt (pidExecutableInvariantFactorCount_le_card_cols A)
   rw [splitRowEquiv_apply_inl_eq_castLE hkm i]
-  have hrow :
-      (Fin.castLE hkm i : Fin (Fintype.card m)) =
-        ⟨i.1, lt_of_lt_of_le i.is_lt hkm⟩ := by
-    ext
-    rfl
+  have hiCol' : (Fin.castLE hkm i).1 < Fintype.card n := hiCol
   calc
     smithDiagEntryOrZero (pidExecutableResultFinMatrix A) (Fin.castLE hkm i)
         = NormalForms.Matrix.Smith.Internal.diagEntry (pidExecutableResultFinMatrix A) i.1
             (lt_of_lt_of_le i.is_lt
               (invariantFactors_length_le_min (pidExecutableResultFinMatrix A))) := by
-                simp
-                  [smithDiagEntryOrZero, hiCol, NormalForms.Matrix.Smith.Internal.diagEntry, hrow]
+                rw [smithDiagEntryOrZero, dif_pos hiCol']
+                unfold NormalForms.Matrix.Smith.Internal.diagEntry
+                congr 1
     _ = pidExecutableInvariantFactorFn A i := (pidExecutableInvariantFactorFn_eq_diagEntry A i).symm
 
 private theorem smithCoordSubmodule_eq_factorSubmodule_of_lt {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) (i : Fin (pidExecutableInvariantFactorCount A)) :
     smithCoordSubmodule
@@ -528,7 +591,8 @@ private theorem smithCoordSubmodule_eq_factorSubmodule_of_lt {m n R : Type _}
 
 private theorem smithDiagEntryOrZero_eq_zero_of_ge {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R)
     (j : Fin (Fintype.card m - pidExecutableInvariantFactorCount A)) :
@@ -538,6 +602,7 @@ private theorem smithDiagEntryOrZero_eq_zero_of_ge {m n R : Type _}
   let Sfin := pidExecutableResultFinMatrix A
   let hkm := pidExecutableInvariantFactorCount_le_card_rows A
   let idx := splitRowEquiv hkm (Sum.inr j)
+  change smithDiagEntryOrZero Sfin idx = 0
   have hidx : idx.1 = pidExecutableInvariantFactorCount A + j.1 :=
     splitRowEquiv_apply_inr hkm j
   have hlenle :
@@ -551,12 +616,13 @@ private theorem smithDiagEntryOrZero_eq_zero_of_ge {m n R : Type _}
       diagEntry_eq_zero_of_invariantFactors_length_le
         (pidExecutableResultFin_isSmith A) idx.1 hlenle hk
     rw [smithDiagEntryOrZero, dif_pos hCol]
-    simpa [NormalForms.Matrix.Smith.Internal.diagEntry] using hzero
+    simpa [NormalForms.Matrix.Smith.Internal.diagEntry, Fin.eta] using hzero
   · rw [smithDiagEntryOrZero, dif_neg hCol]
 
 private theorem smithCoordSubmodule_eq_bot_of_ge {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R)
     (j : Fin (Fintype.card m - pidExecutableInvariantFactorCount A)) :
@@ -567,9 +633,10 @@ private theorem smithCoordSubmodule_eq_bot_of_ge {m n R : Type _}
   rw [smithCoordSubmodule, smithDiagEntryOrZero_eq_zero_of_ge (A := A) j]
   simp
 
-noncomputable def pidExecutableQuotientEquivPiSpanProd {m n R : Type _}
+public noncomputable def pidExecutableQuotientEquivPiSpanProd {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R) :
     ((m → R) ⧸ pidSmithColumnSpan A) ≃ₗ[R]
@@ -614,7 +681,7 @@ noncomputable def pidExecutableQuotientEquivPiSpanProd {m n R : Type _}
       eSum.trans <|
         LinearEquiv.prodCongr eLeft eRight
 
-noncomputable def pidExecutableQuotientEquivPiZModProd {m n : Type _}
+public noncomputable def pidExecutableQuotientEquivPiZModProd {m n : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [NormalForms.Matrix.Hermite.CanonicalMod Int]
     (A : _root_.Matrix m n Int) :
@@ -640,7 +707,7 @@ private theorem intFunction_infinite_of_pos (k : Nat) (hk : 0 < k) :
   have := congrArg (fun f => f j) hab
   simpa [j] using this
 
-theorem pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
+public theorem pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
     {m n : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [NormalForms.Matrix.Hermite.CanonicalMod Int]
@@ -676,7 +743,7 @@ theorem pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
     exfalso
     exact hInf.false
 
-@[simp] theorem pidExecutableSmithCoeffNatAbsList_length_eq_count {m n : Type _}
+@[simp] public theorem pidExecutableSmithCoeffNatAbsList_length_eq_count {m n : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [NormalForms.Matrix.Hermite.CanonicalMod Int]
     (A : _root_.Matrix m n Int) :
@@ -684,7 +751,7 @@ theorem pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
   rw [NormalForms.Bridge.MathlibPID.pidExecutableSmithCoeffNatAbsList_length]
   exact (pidExecutableInvariantFactorCount_eq_length A).symm
 
-@[simp] theorem pidExecutableSmithCoeffNatAbsList_length_of_finrank_eq_card
+@[simp] public theorem pidExecutableSmithCoeffNatAbsList_length_of_finrank_eq_card
     {m n : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [NormalForms.Matrix.Hermite.CanonicalMod Int]
@@ -694,9 +761,10 @@ theorem pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card
   rw [pidExecutableSmithCoeffNatAbsList_length_eq_count,
     pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card A hfull]
 
-noncomputable def pidExecutableQuotientEquivPiSpan {m n R : Type _}
+public noncomputable def pidExecutableQuotientEquivPiSpan {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R)
     (hcount : pidExecutableInvariantFactorCount A = Fintype.card m) :
@@ -710,7 +778,8 @@ noncomputable def pidExecutableQuotientEquivPiSpan {m n R : Type _}
     rw [← pidExecutableInvariantFactorCount_eq_result_length (A := A), hcount]
     simp
   have hzeroBase : Fintype.card m - pidExecutableInvariantFactorCount A = 0 := by
-    simpa [pidExecutableInvariantFactorCount_eq_result_length (A := A)] using hzero
+    simpa [pidExecutableResult, pidExecutableInvariantFactorCount_eq_result_length (A := A)]
+      using hzero
   let eFree : (Fin (Fintype.card m - pidExecutableInvariantFactorCount A) → R) ≃ₗ[R] (Fin 0 → R) :=
     LinearEquiv.funCongrLeft R R (finCongr hzeroBase.symm)
   let eTail :
@@ -720,7 +789,7 @@ noncomputable def pidExecutableQuotientEquivPiSpan {m n R : Type _}
   )
   exact (pidExecutableQuotientEquivPiSpanProd A).trans eTail
 
-noncomputable def pidExecutableQuotientEquivPiZMod {m n : Type _}
+public noncomputable def pidExecutableQuotientEquivPiZMod {m n : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [NormalForms.Matrix.Hermite.CanonicalMod Int]
     (A : _root_.Matrix m n Int)
@@ -736,9 +805,10 @@ noncomputable def pidExecutableQuotientEquivPiZMod {m n : Type _}
     AddEquiv.piCongrRight fun i => ↑(Int.quotientSpanEquivZMod (pidExecutableInvariantFactorFn A i))
   exact (pidExecutableQuotientEquivPiSpan A hcount).toAddEquiv.trans eTors
 
-noncomputable def pidExecutableQuotientEquivDirectSum {m n R : Type _}
+public noncomputable def pidExecutableQuotientEquivDirectSum {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R)
     (hcount : pidExecutableInvariantFactorCount A = Fintype.card m) :
@@ -749,9 +819,10 @@ noncomputable def pidExecutableQuotientEquivDirectSum {m n R : Type _}
     (pidExecutableQuotientEquivPiSpan A hcount).trans
       (DirectSum.linearEquivFunOnFintype _ _ _).symm
 
-noncomputable def pidFullRankMathlibQuotientEquivExecutable {m n R : Type _}
+public noncomputable def pidFullRankMathlibQuotientEquivExecutable {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R)
     (hfull_mathlib : Module.finrank R (pidSmithColumnSpan A) = Fintype.card m)
@@ -765,9 +836,10 @@ noncomputable def pidFullRankMathlibQuotientEquivExecutable {m n R : Type _}
   exact ((pidSmithColumnSpan A).quotientEquivPiSpan b hfull').symm.trans
     (pidExecutableQuotientEquivPiSpan A hcount)
 
-noncomputable def pidFullRankMathlibDirectSumEquivExecutable {m n R : Type _}
+public noncomputable def pidFullRankMathlibDirectSumEquivExecutable {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    [EuclideanDomain R] [NormalizationMonoid R]
+    [NormalForms.ComputableEuclideanOps R] [DecidableEq R]
     [NormalForms.Matrix.Hermite.CanonicalMod R]
     (A : _root_.Matrix m n R)
     (hfull_mathlib : Module.finrank R (pidSmithColumnSpan A) = Fintype.card m)
@@ -782,7 +854,7 @@ noncomputable def pidFullRankMathlibDirectSumEquivExecutable {m n R : Type _}
     ((Submodule.quotientEquivDirectSum (F := R) b (N := pidSmithColumnSpan A) hfull').symm).trans
       (pidExecutableQuotientEquivDirectSum A hcount)
 
-noncomputable def pidFullRankMathlibPiZModEquivExecutable {m n : Type _}
+public noncomputable def pidFullRankMathlibPiZModEquivExecutable {m n : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [NormalForms.Matrix.Hermite.CanonicalMod Int]
     (A : _root_.Matrix m n Int)

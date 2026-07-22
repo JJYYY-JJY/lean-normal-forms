@@ -1,0 +1,487 @@
+{
+  "binary_sha256": "d4d124583adc48a5550f964f3bb2f37b7c1a06222d8a39e65d18c32424b91e3a",
+  "cases": [
+    {
+      "bit_bound": 5391756178017111495,
+      "bit_cost": 242765386189266,
+      "case": "hnf-prepared-3x3",
+      "determinant_bits": 3,
+      "diagonal": [
+        2,
+        1,
+        2
+      ],
+      "dimension": 3,
+      "divmod_calls": 0,
+      "injections": 0,
+      "input_bits": 5,
+      "left_bits": 4,
+      "left_inverse_bits": 4,
+      "normalizations": 3,
+      "passes": 0,
+      "result_bits": 2,
+      "right_bits": 0,
+      "right_inverse_bits": 0,
+      "ring_additions": 30,
+      "ring_multiplications": 57,
+      "ring_total": 93,
+      "valid": true,
+      "xgcd_calls": 3
+    },
+    {
+      "bit_bound": 611589027790369897456,
+      "bit_cost": 1130326542472,
+      "case": "smith-repeat-2x2",
+      "determinant_bits": 3,
+      "diagonal": [
+        1,
+        4
+      ],
+      "dimension": 2,
+      "divmod_calls": 1,
+      "injections": 0,
+      "input_bits": 2,
+      "left_bits": 2,
+      "left_inverse_bits": 2,
+      "normalizations": 5,
+      "passes": 1,
+      "result_bits": 3,
+      "right_bits": 2,
+      "right_inverse_bits": 2,
+      "ring_additions": 12,
+      "ring_multiplications": 28,
+      "ring_total": 48,
+      "valid": true,
+      "xgcd_calls": 2
+    },
+    {
+      "bit_bound": 611589027790369897456,
+      "bit_cost": 3012432681653,
+      "case": "smith-injection-2x2",
+      "determinant_bits": 3,
+      "diagonal": [
+        1,
+        6
+      ],
+      "dimension": 2,
+      "divmod_calls": 2,
+      "injections": 1,
+      "input_bits": 2,
+      "left_bits": 2,
+      "left_inverse_bits": 2,
+      "normalizations": 8,
+      "passes": 2,
+      "result_bits": 3,
+      "right_bits": 3,
+      "right_inverse_bits": 3,
+      "ring_additions": 26,
+      "ring_multiplications": 56,
+      "ring_total": 96,
+      "valid": true,
+      "xgcd_calls": 4
+    }
+  ],
+  "created_utc": "2026-07-21T18:13:18.972517+00:00",
+  "hardware": {
+    "cpu_model": "AMD Ryzen 9 7940H w/ Radeon 780M Graphics",
+    "lean": "Lean (version 4.32.0, x86_64-unknown-linux-gnu, commit 8c9756b28d64dab099da31a4c09229a9e6a2ef35, Release)",
+    "libc": [
+      "glibc",
+      "2.43"
+    ],
+    "logical_cpus": 16,
+    "machine": "x86_64",
+    "memory_total_kib": 60370128,
+    "python": "3.14.6",
+    "release": "7.0.0-28-generic",
+    "system": "Linux"
+  },
+  "policy": {
+    "comparison_requires_identical_hardware_fingerprint": true,
+    "hosted_ci_absolute_time_gate": false,
+    "measurements": 7,
+    "summary_method": "median and inclusive quartiles",
+    "warmups": 1
+  },
+  "profile": "research-kannan-bachem-v0.1.0",
+  "research_version": "0.1.0",
+  "schema": "normalforms.kannan-bachem-benchmark/v1",
+  "source": {
+    "git_revision": "76b6644bef13a2955797b5250813ecd030e0e9d8",
+    "tracked_patch_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "working_tree_clean": true
+  },
+  "stages": [
+    {
+      "case_names": [
+        "hnf-prepared-3x3"
+      ],
+      "description": "prepared principal-minor HNF on a 3-by-3 input",
+      "id": "prepared_hnf",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 71968,
+          "system_seconds": 0.0,
+          "user_seconds": 4.19,
+          "wall_seconds": 4.2
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 72640,
+          "system_seconds": 0.0,
+          "user_seconds": 4.15,
+          "wall_seconds": 4.16
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 71876,
+          "system_seconds": 0.0,
+          "user_seconds": 4.14,
+          "wall_seconds": 4.15
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 71736,
+          "system_seconds": 0.0,
+          "user_seconds": 4.39,
+          "wall_seconds": 4.4
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 73868,
+          "system_seconds": 0.0,
+          "user_seconds": 4.2,
+          "wall_seconds": 4.21
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 71980,
+          "system_seconds": 0.0,
+          "user_seconds": 4.2,
+          "wall_seconds": 4.2
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72352,
+          "system_seconds": 0.0,
+          "user_seconds": 4.21,
+          "wall_seconds": 4.22
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 574.0,
+          "maximum": 73868.0,
+          "median": 71980.0,
+          "minimum": 71736.0,
+          "q1": 71922.0,
+          "q3": 72496.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.03500000000000014,
+          "maximum": 4.39,
+          "median": 4.2,
+          "minimum": 4.14,
+          "q1": 4.17,
+          "q3": 4.205
+        },
+        "wall_seconds": {
+          "iqr": 0.03500000000000014,
+          "maximum": 4.4,
+          "median": 4.2,
+          "minimum": 4.15,
+          "q1": 4.18,
+          "q3": 4.215
+        }
+      }
+    },
+    {
+      "case_names": [
+        "smith-repeat-2x2"
+      ],
+      "description": "Smith stabilization with a repeated pass",
+      "id": "smith_repeat",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 72508,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 72868,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 72768,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 73976,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72760,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72712,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72128,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 208.0,
+          "maximum": 73976.0,
+          "median": 72760.0,
+          "minimum": 72128.0,
+          "q1": 72610.0,
+          "q3": 72818.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.05,
+          "median": 0.05,
+          "minimum": 0.05,
+          "q1": 0.05,
+          "q3": 0.05
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.06,
+          "median": 0.06,
+          "minimum": 0.06,
+          "q1": 0.06,
+          "q3": 0.06
+        }
+      }
+    },
+    {
+      "case_names": [
+        "smith-injection-2x2"
+      ],
+      "description": "Smith stabilization through Step 7 injection",
+      "id": "smith_injection",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 73104,
+          "system_seconds": 0.0,
+          "user_seconds": 2.48,
+          "wall_seconds": 2.49
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 74164,
+          "system_seconds": 0.0,
+          "user_seconds": 2.23,
+          "wall_seconds": 2.23
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 72948,
+          "system_seconds": 0.0,
+          "user_seconds": 2.24,
+          "wall_seconds": 2.24
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 73868,
+          "system_seconds": 0.0,
+          "user_seconds": 2.25,
+          "wall_seconds": 2.26
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 73488,
+          "system_seconds": 0.0,
+          "user_seconds": 2.25,
+          "wall_seconds": 2.25
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72100,
+          "system_seconds": 0.0,
+          "user_seconds": 2.43,
+          "wall_seconds": 2.43
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72872,
+          "system_seconds": 0.0,
+          "user_seconds": 2.22,
+          "wall_seconds": 2.23
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 768.0,
+          "maximum": 74164.0,
+          "median": 73104.0,
+          "minimum": 72100.0,
+          "q1": 72910.0,
+          "q3": 73678.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.10499999999999954,
+          "maximum": 2.48,
+          "median": 2.25,
+          "minimum": 2.22,
+          "q1": 2.2350000000000003,
+          "q3": 2.34
+        },
+        "wall_seconds": {
+          "iqr": 0.10999999999999943,
+          "maximum": 2.49,
+          "median": 2.25,
+          "minimum": 2.23,
+          "q1": 2.2350000000000003,
+          "q3": 2.3449999999999998
+        }
+      }
+    },
+    {
+      "case_names": [
+        "hnf-prepared-3x3",
+        "smith-repeat-2x2",
+        "smith-injection-2x2"
+      ],
+      "description": "all three deterministic research cases",
+      "id": "end_to_end",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 71972,
+          "system_seconds": 0.0,
+          "user_seconds": 6.47,
+          "wall_seconds": 6.48
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 71980,
+          "system_seconds": 0.0,
+          "user_seconds": 6.34,
+          "wall_seconds": 6.35
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 72348,
+          "system_seconds": 0.0,
+          "user_seconds": 6.41,
+          "wall_seconds": 6.41
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72120,
+          "system_seconds": 0.0,
+          "user_seconds": 6.47,
+          "wall_seconds": 6.48
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72792,
+          "system_seconds": 0.0,
+          "user_seconds": 6.33,
+          "wall_seconds": 6.33
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 73944,
+          "system_seconds": 0.0,
+          "user_seconds": 6.37,
+          "wall_seconds": 6.38
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72848,
+          "system_seconds": 0.0,
+          "user_seconds": 6.37,
+          "wall_seconds": 6.38
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 770.0,
+          "maximum": 73944.0,
+          "median": 72348.0,
+          "minimum": 71972.0,
+          "q1": 72050.0,
+          "q3": 72820.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.08499999999999908,
+          "maximum": 6.47,
+          "median": 6.37,
+          "minimum": 6.33,
+          "q1": 6.355,
+          "q3": 6.4399999999999995
+        },
+        "wall_seconds": {
+          "iqr": 0.08000000000000007,
+          "maximum": 6.48,
+          "median": 6.38,
+          "minimum": 6.33,
+          "q1": 6.365,
+          "q3": 6.445
+        }
+      }
+    }
+  ],
+  "trust_boundary": "Native time and RSS are observational regression evidence. Kernel-checked theorems establish normal-form correctness, operation bounds, coefficient bounds, and modeled bit cost."
+}

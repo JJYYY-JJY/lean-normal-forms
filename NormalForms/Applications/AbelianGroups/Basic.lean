@@ -1,18 +1,50 @@
-import NormalForms.Bridge.MathlibPID
+/-
+Copyright (c) 2026 Junye Ji. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Junye Ji
+-/
+module
+
+public import NormalForms.Presentation
 
 /-!
 # Abelian Groups from Presentation Matrices
 
-Public `Int`-specialized wrappers around the executable Smith/PID bridge for
-presentation quotients `ℤ^m / im(A)`.
+Public `Int` specialization of `FiniteFreePresentation` for presentation
+quotients `ℤ^m / im(A)`.
 
 The API keeps the executable invariant-factor data exactly as produced by the
 current Smith layer, including unit factors `1`.
 -/
 
+public section
+
 namespace NormalForms.Applications.AbelianGroups
 
 open NormalForms.Bridge.MathlibPID
+
+/-- Regard an integer matrix as a column-oriented finite-free presentation. -/
+@[expose] public def presentationOfMatrix {m n : Nat}
+    (A : _root_.Matrix (Fin m) (Fin n) Int) :
+    FiniteFreePresentation Int where
+  numGenerators := m
+  numRelations := n
+  relationMatrix := A
+
+@[simp] public theorem presentationOfMatrix_numGenerators {m n : Nat}
+    (A : _root_.Matrix (Fin m) (Fin n) Int) :
+    (presentationOfMatrix A).numGenerators = m :=
+  rfl
+
+@[simp] public theorem presentationOfMatrix_numRelations {m n : Nat}
+    (A : _root_.Matrix (Fin m) (Fin n) Int) :
+    (presentationOfMatrix A).numRelations = n :=
+  rfl
+
+@[simp] public theorem presentationOfMatrix_relationMatrix {m n : Nat}
+    (A : _root_.Matrix (Fin m) (Fin n) Int) :
+    (presentationOfMatrix A).relationMatrix = A :=
+  rfl
 
 /-- The submodule presented by the columns of `A`. -/
 abbrev presentationSubmodule {m n : Type _}
@@ -32,6 +64,13 @@ noncomputable abbrev presentationInvariantFactorCount {m n : Type _}
     [NormalForms.Matrix.Hermite.CanonicalMod Int]
     (A : _root_.Matrix m n Int) : Nat :=
   pidExecutableInvariantFactorCount A
+
+@[simp] public theorem presentationOfMatrix_smithRank {m n : Nat}
+    [NormalForms.Matrix.Hermite.CanonicalMod Int]
+    (A : _root_.Matrix (Fin m) (Fin n) Int) :
+    (presentationOfMatrix A).smithRank =
+      presentationInvariantFactorCount A :=
+  rfl
 
 /-- The `i`-th executable invariant factor, read as a natural number via `natAbs`. -/
 noncomputable abbrev presentationInvariantFactorFn {m n : Type _}

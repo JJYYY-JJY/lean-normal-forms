@@ -1,0 +1,59 @@
+\section{Comparison with mathlib homology}
+
+The definition \code{toMathlibChainComplex} sends an
+\code{IntChainComplex} to
+\[
+  \code{ChainComplex}\;(\code{ModuleCat}\ \Z)\;\mathbb{N}.
+\]
+Its object in degree $n$ is the finite function module
+$\Z^{\rank C_n}$, and its differential from degree $n+1$ to $n$ is the
+linear map induced by \code{boundary n}.  The homological-complex chain law
+is a direct consequence of \code{boundary\_squared}; the theorem
+\code{toMathlibChainComplex\_d} exposes the differential equation.
+
+The intrinsic quotient is compared to mathlib homology through short
+complexes.  In positive degree the incoming, middle, and outgoing objects
+agree up to the index equalities used by mathlib's complex shape.  Degree
+zero needs a genuine comparison: the project's outgoing map has codomain
+$0$, while mathlib's canonical short complex uses the zero endomorphism
+$C_0\to C_0$.  The morphism \code{degreeShortComplexToSc} has identity
+middle component and the unique map $0\to C_0$ as its third component.
+Its first component is epic, its middle component is an isomorphism, and its
+third component is monic, including the empty-domain proof in degree zero.
+Mathlib's homology-map theorem then yields \code{degreeHomologyIso}.
+
+Composing this categorical isomorphism with the definitional quotient
+identification gives
+\[
+  \code{mathlibHomologyEquiv}\ n :
+  H_n \simeq_{\Z}
+  \code{toMathlibChainComplex.homology}\ n.
+\]
+The definition \code{mathlibHomologyDecomposition} transports the complete
+cyclic-plus-free decomposition across this equivalence.
+
+\subsection{Normalized Moore realization}
+
+The finite normalized data of Section~\ref{sec:normalized-input} records
+nondegenerate face outcomes and the equation $D^2=0$.  These facts do not
+determine degeneracy maps or all simplicial identities, so they are
+insufficient to construct an arbitrary simplicial set.  The structure
+\code{NormalizedMooreComparison} makes the missing boundary explicit.  It
+contains a genuine mathlib simplicial set, bijections from the finite indices
+to its nondegenerate simplices, degreewise basis equivalences, agreement of
+\code{some} faces, proof that \code{none} faces are degenerate, agreement on
+canonical generators, and differential commutation.
+
+Given this witness, \code{chainIso} identifies the explicit matrix complex
+with mathlib's nondegenerate normalized chain complex.  The canonical
+splitting of the free module on a simplicial set then connects that complex
+to the normalized Moore complex in the Karoubi envelope.  Both endpoints are
+in the image of the fully faithful Karoubi embedding, so
+\code{normalizedMooreChainIso} reflects the result to an actual isomorphism
+of chain complexes.  Applying mathlib's homology functor and the explicit
+decomposition produces \code{normalizedChainHomologyDecomposition} and
+\code{normalizedMooreHomologyDecomposition}.
+
+This parameterization separates two claims cleanly: the finite matrix
+homology theorem is unconditional, while transport to a particular
+simplicial model requires a checked realization of that model.

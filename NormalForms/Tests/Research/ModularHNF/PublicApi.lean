@@ -1,0 +1,180 @@
+/-
+Copyright (c) 2026 Junye Ji. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Junye Ji
+-/
+module
+
+import NormalForms.Research.ModularHNF
+
+set_option linter.privateModule false
+set_option linter.hashCommand false
+
+/-! Compilation-only freeze for the independent modular-HNF facade. -/
+
+open NormalForms.Research.ModularHNF
+
+#check selectedSquareMinor
+#check FullColumnRankWitness
+#check FullColumnRankWitness.rows
+#check FullColumnRankWitness.det_ne_zero
+#check FullColumnRankWitness.columns_le_rows
+#check FullColumnRankWitness.rational_rank_eq
+#check DeterminantModulusWitness
+#check DeterminantModulusWitness.modulus
+#check DeterminantModulusWitness.positive
+#check DeterminantModulusWitness.selectedMinor_dvd
+#check largestElementaryDivisor
+#check ElementaryDivisorModulusWitness
+#check ModulusWitness
+#check ModulusWitness.modulus
+#check ModulusWitness.positive
+#check ModulusWitness.nonzero
+
+#check ModularOperationCount
+#check ModularOperationCount.additions
+#check ModularOperationCount.multiplications
+#check ModularOperationCount.xgcdCalls
+#check ModularOperationCount.exactDivisions
+#check ModularOperationCount.modularReductions
+#check ModularOperationCount.comparisons
+#check ModularOperationCount.add
+#check ModularOperationCount.total
+#check ModularStageEvent
+#check ModularStageEvent.column
+#check ModularStageEvent.modulusBefore
+#check ModularStageEvent.gcdWithPivot
+#check ModularStageEvent.modulusAfter
+#check RawModularRun
+#check RawModularRun.candidate
+#check RawModularRun.finalModulus
+#check RawModularRun.stages
+#check RawModularRun.operations
+#check runRaw
+#check runWithDeterminantWitness
+
+#check rowSpan
+#check suffixModule
+#check augmentedRowSpan
+#check row_mem_rowSpan
+#check suffixGenerator_mem
+#check rowSpan_mul_le
+#check rowSpan_mul_eq
+#check mem_suffixModule_of_coordinates
+#check suffixModule_coordinates
+#check RowsCongruentOnSuffix
+#check RowsCongruentOnSuffix.refl
+#check RowsCongruentOnSuffix.symm
+#check RowsCongruentOnSuffix.trans
+#check augmentedRowSpan_eq_of_congruent
+#check augmentedRowSpan_eq_of_transform_congruent
+#check centeredMod_eq_add_mul
+#check selectedMinorDet_smul_single_mem_rowSpan
+#check determinantModulus_smul_single_mem_rowSpan
+#check determinantModulus_suffixModule_le_rowSpan
+#check determinantModulus_augmentedRowSpan_eq
+#check PrefixRowsZero
+#check coefficients_zero_before_of_combination_zero
+#check coordinate_dvd_of_mem_augmented
+
+#check fullColumnShape_unique_of_rowSpan_eq
+#check runWithDeterminantWitness_candidate_eq_reference
+#check modularHNFFullRank
+#check modularHNFFullRank_eq_reference
+#check modularHNFFullRank_inverse_equation
+
+#check FractionFreeRankProfile
+#check FractionFreeRankProfile.rank
+#check FractionFreeRankProfile.rank_le_rows
+#check FractionFreeRankProfile.rank_le_columns
+#check FractionFreeRankProfile.pivotColumns
+#check FractionFreeRankProfile.pivotRows
+#check FractionFreeRankProfile.minor_ne_zero
+#check FractionFreeRankProfile.coefficients
+#check FractionFreeRankProfile.column_identity
+#check FractionFreeRankProfile.coefficients_zero_of_before
+#check FractionFreeRankProfile.projected
+#check FractionFreeRankProfile.fullRank
+#check FractionFreeRankProfile.determinantModulus
+#check integerHermiteNormalFormModularWithProfile
+#check integerHermiteNormalFormModularWithProfile_eq_reference
+#check adjugateCoefficients
+#check RankProfileSelection
+#check RankProfileSelection.rank
+#check RankProfileSelection.pivotColumns
+#check RankProfileSelection.pivotRows
+#check RankProfileSelection.minor
+#check RankProfileSelection.coefficients
+#check RankProfileSelection.IsValid
+#check searchRankProfile?
+#check searchRankProfile_isSome
+#check searchRankProfile_valid
+#check fractionFreeRankProfile
+#check integerHermiteNormalFormModular
+#check integerHermiteNormalFormModular_eq_reference
+
+#check modularStageOperationBound
+#check modularOperationBound
+#check runRaw_operations_total_le
+#check runWithDeterminantWitness_operations_total_le
+#check integerBitLength
+#check matrixHeight
+#check matrixBitLength
+#check entry_natAbs_le_matrixHeight
+#check matrixHeight_le
+#check EntriesBounded
+#check EntriesBounded.mono
+#check coefficientGrowth
+#check coefficientSteps
+#check coefficientGrowth_mono
+#check coefficientGrowth_le
+#check coefficientSteps_mono
+#check coefficientSteps_base_le
+#check coefficientSteps_add
+#check runRawPrefix
+#check modularIntermediateHeightBound
+#check runRawPrefix_entriesBounded
+#check runRawPrefix_matrixHeight_le
+#check runRawPrefix_matrixBitLength_le
+#check runRaw_eq_runRawPrefix
+#check runRaw_matrixHeight_le_intermediateBound
+#check runRaw_matrixBitLength_le_intermediateBound
+#check diagonal_natAbs_le_modulus
+#check entry_natAbs_le_modulus
+#check runWithDeterminantWitness_entry_natAbs_le
+#check runWithDeterminantWitness_matrixHeight_le
+#check runWithDeterminantWitness_matrixBitLength_le
+
+#check StandardXGCD.natAuxWithCost
+#check StandardXGCD.natAuxWithCost_value
+#check StandardXGCD.natAuxCoefficientBitBound
+#check StandardXGCD.natAuxWithCost_coefficientBitLength_le
+#check StandardXGCD.standardIntXGCDUniformCoefficientHeightBound
+#check StandardXGCD.standardIntXGCDUniformCoefficientBitBound
+#check StandardXGCD.natAuxBitOperationBound
+#check StandardXGCD.natAuxWithCost_cost_le
+#check StandardXGCD.standardXGCDAuxStepBitOperationBound
+#check StandardXGCD.natAuxWithCost_cost_le_closed
+#check StandardXGCD.standardIntXGCDWithCost
+#check StandardXGCD.standardIntXGCDWithCost_value
+#check StandardXGCD.standardIntXGCDCoefficientBitBound
+#check StandardXGCD.standardIntXGCDWithCost_coefficientBitLength_le
+#check StandardXGCD.standardIntXGCDWithCost_coefficient_natAbs_le_uniform
+#check StandardXGCD.standardIntXGCDWithCost_coefficient_bitLength_le_uniform
+#check StandardXGCD.standardIntXGCDBitOperationBound
+#check StandardXGCD.standardIntXGCDWithCost_cost_le
+#check StandardXGCD.standardIntXGCDClosedBitOperationBound
+#check StandardXGCD.standardIntXGCDWithCost_cost_le_closed
+#check StandardXGCD.standardXGCDAuxStepBitOperationBound_mono_iterations
+#check StandardXGCD.standardIntXGCDUniformBitOperationBound
+#check StandardXGCD.standardIntXGCDWithCost_cost_le_uniform
+
+#check modularWorkingBitWidth
+#check modularComparisonCostForBitLength
+#check modularScalarBitOperationCharge
+#check ModularOperationCount.bitOperationCost
+#check ModularOperationCount.bitOperationCost_le_total_mul_charge
+#check modularKernelHeightBound
+#check modularKernelBitOperationBound
+#check runRaw_bitOperationCost_le
+#check runWithDeterminantWitness_bitOperationCost_le

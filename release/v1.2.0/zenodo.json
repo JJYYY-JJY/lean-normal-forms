@@ -1,0 +1,23 @@
+{
+  "title": "lean-normal-forms",
+  "description": "Certified executable Hermite and Smith normal forms in Lean 4, with independently imported rational-canonical and finite-free integer homology applications. Version 1.2.0 adds explicit bounded chain complexes, certified Smith kernel coordinates, a proved homology presentation and torsion-plus-free decomposition, theorem-connected execution, native examples, and an independent artifact.",
+  "license": "Apache-2.0",
+  "version": "1.2.0",
+  "creators": [
+    {
+      "name": "Ji, Junye",
+      "affiliation": "Independent"
+    }
+  ],
+  "keywords": [
+    "Lean 4",
+    "mathlib",
+    "Hermite normal form",
+    "Smith normal form",
+    "rational canonical form",
+    "homology",
+    "chain complexes",
+    "invariant factors",
+    "formalized mathematics"
+  ]
+}

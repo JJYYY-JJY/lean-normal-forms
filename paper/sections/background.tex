@@ -9,13 +9,14 @@ arbitrary finite types. This generality is convenient for users, but structural
 recursion over an arbitrary finite type is awkward. The repository therefore
 splits the development into two layers.
 
-The public predicate \code{IsHermiteNormalForm} and the public result package
-\code{HNFResult} are stated over arbitrary finite index types. Internally, the
-kernel works over \code{Matrix (Fin m) (Fin n) R} and proves a recursive
-predicate \code{IsHermiteNormalFormFin}. The public wrapper simply reindexes
-along \code{Fintype.equivFin}. This pattern keeps the user-facing API compatible
-with ordinary matrix code in \mathlib{}, while giving the algorithm dimensions
-that can be inspected by recursion.
+The kernel works over \code{Matrix (Fin m) (Fin n) R} and proves the recursive
+predicate \code{IsHermiteNormalFormFin}. For arbitrary finite index types,
+\code{FiniteIndexing} and \code{MatrixIndexing} store explicit equivalences to
+\code{Fin}. The public predicates \code{IsHermiteNormalFormWith} and
+\code{IsHermiteNormalFormOrdered} therefore state exactly which enumeration
+defines the normal-form semantics. An \code{HNFResult} stores that indexing and
+the underlying strong \code{Fin} result; matrices and certificates on the
+original index types are derived projections.
 
 \subsection{Euclidean computation versus canonical representatives}
 
@@ -53,10 +54,9 @@ The field \code{mod_mod} closes the single-step reduction proof: when the top
 row is explicitly replaced by a remainder, a second reduction must leave it
 unchanged. The field \code{reduced_eq_of_dvd_sub} is stronger and is used
 only in uniqueness: it upgrades congruence modulo a pivot into literal equality
-once both sides are already canonical representatives. In the current repository
-the only concrete instance is \code{Int}. The HNF development is nevertheless
-parametric in \code{[CanonicalMod R]}, which is precisely the abstraction
-boundary needed by the later \SNF{} layer.
+once both sides are already canonical representatives. The current repository
+provides instances for \code{Int} and \code{Polynomial Rat}. The development
+remains parametric in \code{[CanonicalMod R]}.
 
 \subsection{The recursive HNF predicate}
 

@@ -1,162 +1,173 @@
 # lean-normal-forms
 
-Executable Hermite normal form and Smith-normal-form infrastructure in Lean 4
-over Euclidean domains, with certified matrix certificates and a semantic PID
-bridge to mathlib's quotient/decomposition results.
+`lean-normal-forms` provides certified Hermite and Smith normal forms in
+Lean 4. Version 1.2.2 targets Euclidean domains, exposes finite-index
+semantics in its types, and returns explicit transformation matrices with
+chosen inverses. The repository pins Lean and mathlib 4.32.0.
 
-## Status
+## Verified capabilities
 
-**🌟 Zero Warnings Milestone:** The entire codebase currently builds with **zero warnings and zero errors** (`lake build`), signifying complete logical verification of the implemented layers and strong proof stability.
+- HNF and SNF for zero-dimensional, rectangular, rank-deficient, and square
+  matrices;
+- transformation equations plus both left and right inverse identities;
+- direct `Fin`, caller-supplied equivalence, ordered-index, and arbitrary
+  finite-index entry points;
+- constructive execution over `Int` and `Polynomial Rat`;
+- canonical Smith data, determinantal ideals, finite-free presentations, and
+  the mathlib PID bridge;
+- a pure `normalforms.cert/v1` JSON parser and checker, with Lean source
+  emission for kernel re-import;
+- separate rational-canonical and finite-free integer homology applications;
+- separate bit-cost, Kannan--Bachem, modular-HNF, and exact
+  integer LLL research profiles.
 
-This repository currently contains a buildable `NormalForms` Lean library with a
-completed recursive row-style Hermite layer, a completed executable Smith layer
-with public correctness, uniqueness, and unimodularity extraction theorems, a
-semantic PID quotient bridge layer, an initial full-rank `Int`
-witness-list interoperability layer closed at the example level via structural
-counting, and a completed Phase 5 `Int` presentation-matrix application layer.
+The optional FLINT adapter generates certificate data through a process or
+Lean FFI path. Neither path enters the default build, test suite, or trusted
+core.
 
-- Public API for `IsHermiteNormalForm`, `IsSmithNormalForm`, `HNFResult`,
-  `SNFResult`, `smithInvariantFactors`, `smithColumnSpan`,
-  `SNFResult.ofCertificate`, and `SNFResult.toCertificate`
-- Executable recursive row-style HNF over Euclidean domains, with first-column elimination, lower-right recursion, top-row reduction, and `HNFResult.toCertificate`
-- Internal HNF recursion carries explicit unimodular left certificates end-to-end, and the public theorem `hermiteNormalForm_unimodular` exposes that certificate from `hermiteNormalForm`
-- HNF correctness and uniqueness are now proved, via `hermiteNormalForm_isHermite` and `isHermiteNormalForm_unique_of_left_equiv`
-- `CanonicalMod` instances are available for both `Int` and `Polynomial Rat`
-- `NormalForms.Matrix.Hermite` is now split across `Defs`, `Transform`,
-  `Bezout`, `Algorithm`, and `Basic`, separating predicates, transform
-  certificates, Bezout gadgets, the recursive Fin kernel, and the public
-  wrapper layer
-- `NormalForms.Matrix.Smith` is now split across `Defs`, `Transform`,
-  `Algorithm`, and `Basic`, so the public Smith specification, two-sided
-  transport layer, recursive executable kernel, and result-packaging API no
-  longer live in one monolithic file
-- `NormalForms.Matrix.Smith.Uniqueness` now proves uniqueness from equal
-  invariant factors, preservation of the first invariant factor under explicit
-  two-sided unimodular equivalence, the completed decomposed
-  `diagPrefixProduct` / minor-divisibility chain, the internal theorem
-  `isSmithNormalFormFin_unique_of_two_sided_equiv`, and the public theorem
-  `isSmithNormalForm_unique_of_two_sided_equiv`
-- `NormalForms.Bridge.MathlibPID.Basic` now exposes raw bridge helpers together
-  with executable-side and mathlib-side normalized `Int` coefficient-list
-  readouts, including `pidExecutableSmithCoeffNatAbsList` and
-  `pidFullRankMathlibSmithCoeffNatAbsList`
-- `NormalForms.Bridge.MathlibPID.Quotient` now proves the semantic PID bridge:
-  executable invariant-factor readout, quotient transport through the chosen
-  executable `SNFResult`, quotient decomposition into torsion-plus-free parts,
-  `ℤ`-specific `ZMod` specialization, the full-rank count theorem
-  `pidExecutableInvariantFactorCount_eq_card_rows_of_finrank_eq_card`, and
-  full-rank compatibility equivalences with mathlib's `quotientEquivPiSpan` /
-  `quotientEquivDirectSum` / `quotientEquivPiZMod`
-- `NormalForms.Applications.AbelianGroups` now exposes the public Phase 5
-  application API over `Int` presentation matrices:
-  `presentationSubmodule`, `presentationQuotient`,
-  `presentationInvariantFactorCount`, `presentationInvariantFactorFn`,
-  `presentationInvariantFactors`, `presentationFreeRank`,
-  `presentationQuotientEquivPiZModProd`, and the full-rank specialization
-  `presentationQuotientEquivPiZMod_of_fullRank`
-- Elementary row/column operations, mixed-log certificate helpers, and a reusable 2x2 Bezout reduction gadget
-- Smoke examples over `Int` and `Q[X]`, including public HNF certificate
-  checks, internal Smith diagonal-spec, invariant-factor, and same-size-step
-  checks, public `SNFResult.ofCertificate` packaging smoke, semantic
-  quotient/direct-sum/`PiZMod` bridge instantiations, and example-level
-  executable-vs-mathlib normalized coefficient-list equality proofs for the
-  current full-rank `Int` showcase matrices, together with public Phase 5
-  quotient-decomposition smoke for `presentationMatrixZ`,
-  `mixedTorsionFreeMatrixZ`, and `unitBoundaryMatrixZ`, plus the local plan in
-  `PLAN.md`
-- GitHub Actions, citation metadata, Zenodo metadata, and an axiom-audit smoke script
+## Install and build
 
-The current Lean files compute recursive HNF, package explicit certificates, and
-prove public HNF correctness and uniqueness. The former monolithic Hermite and
-Smith implementation files are now physically split by concern, so the public
-facades sit on top of dedicated definition, transform, Bezout, and algorithm
-submodules. On the Smith side, the public predicate and invariant-factor reader
-are real, the executable recursive kernel and public
-`smithNormalForm` existence/isSmith/unimodularity/uniqueness theorems are in
-place, and the same-size lead-clearing, lead-preparation, stabilization, and
-single-step nondivisible pivot-improvement layers are verified over both `Int`
-and `Q[X]`. The Smith Phase 3 uniqueness closure is now done, and the current
-PID bridge now consists of two layers: a semantic quotient/decomposition layer
-and an example-level coefficient-facing layer for full-rank `Int` matrices.
-Quotients
-are transported to the executable Smith result and decomposed into torsion
-factors plus a free part; full-rank cases are related back to mathlib's PID
-quotient theorems via `PiSpan`, `DirectSum`, and `PiZMod` equivalences; and the
-bridge now exposes normalized `natAbs` coefficient-list readouts on both the
-executable and mathlib sides together with example-level structural-counting
-proofs that these lists agree for the current full-rank `Int` showcase
-matrices. No abstract theorem
-`pidFullRankMathlibSmithCoeffNatAbsList_eq_executable` landed: the remaining
-generic blocker is that mathlib does not yet expose a canonicality theorem for
-its chosen `smithNormalFormCoeffs` witness list. On top of that bridge, the
-repository now also contains a dedicated Phase 5 application layer in
-`NormalForms.Applications.AbelianGroups`: for finite `Int` presentation
-matrices it packages the presentation quotient `ℤ^m / im(A)`, the executable
-invariant-factor readout, the free-rank readout, the torsion-plus-free
-decomposition
-`((m → Int) ⧸ presentationSubmodule A) ≃+ ((Fin k → ZMod dᵢ) × (Fin r → Int))`,
-and the full-rank torsion specialization. For the current repository scope,
-that completes the planned `Int` abelian-group application milestone.
-
-One deliberate implementation boundary is worth calling out: the public Smith
-wrappers over arbitrary `Fintype` indices are defined by reindexing through
-`Fintype.equivFin`, but the library intentionally does not expose global `[simp]`
-bridge lemmas that try to collapse that reindexing on concrete `Fin` matrices.
-Those simplifications can trigger very expensive elaboration. As a result, the
-example layer keeps concrete Smith computation and same-size step smoke on the
-internal `Fin` definitions and reserves the public layer for stable packaging
-and API checks.
-
-## Build
+Install Lean through `elan`; the checked-in `lean-toolchain` selects the
+required compiler. Fetch the mathlib cache and build the default library:
 
 ```sh
 lake exe cache get
-lake build # Must output 0 warnings
-lake env lean scripts/AxiomAudit.lean
-lake env lean NormalForms/Matrix/Hermite/Algorithm.lean
-lake env lean NormalForms/Matrix/Hermite/Basic.lean
-lake env lean NormalForms/Matrix/Smith/Defs.lean
-lake env lean NormalForms/Matrix/Smith/Algorithm.lean
-lake env lean NormalForms/Matrix/Smith/Basic.lean
-lake env lean NormalForms/Matrix/Smith/Uniqueness.lean
-lake env lean NormalForms/Bridge/MathlibPID/Basic.lean
-lake env lean NormalForms/Bridge/MathlibPID/Quotient.lean
-lake env lean NormalForms/Applications/AbelianGroups/Basic.lean
-lake env lean NormalForms/Examples/AbelianGroups/Basic.lean
+lake build
 ```
 
-The committed `lake-manifest.json` pins a compatible mathlib snapshot. On a fresh machine, Lake will still need network access the first time it materializes `.lake/packages`.
+The repository uses Lake, Bash, and the Python standard library. Lint and
+benchmark commands also require `rg` and GNU `/usr/bin/time`.
 
-## Layout
+## Minimal example
 
-- `NormalForms/Matrix/Elementary`: row and column operation skeletons, logs, and replay semantics
-- `NormalForms/Matrix/Hermite`: split HNF stack with `Defs`, `Transform`, `Bezout`, `Algorithm`, `Basic`, and `Uniqueness`
-- `NormalForms/Matrix/Smith`: split SNF stack with `Defs`, `Transform`, `Algorithm`, `Basic`, and `Uniqueness`
-- `NormalForms/Matrix/Certificates`: reusable certificate shapes and unimodularity lemmas
-- `NormalForms/Bridge/MathlibPID`: raw PID bridge helpers and normalized
-  coefficient-list readouts in `Basic`, plus semantic quotient/decomposition
-  and full-rank executable-vs-mathlib compatibility equivalences in
-  `Quotient`; the example-level normalized coefficient-list equality proofs
-  live in `NormalForms/Examples/AbelianGroups`
-- `NormalForms/Applications/AbelianGroups`: public `Int` presentation-matrix
-  application API, including quotient, invariant-factor, free-rank, and
-  quotient-decomposition wrappers
-- `NormalForms/Examples/AbelianGroups`: sample matrices, executable HNF smoke
-  checks, internal `Int` and `Q[X]` Smith spec/invariant-factor/same-size-step
-  smoke, public Smith certificate/result packaging smoke, and the current
-  bridge-facing and application-facing examples
-- `paper/`: manuscript planning notes
-- `artifact/`: artifact packaging notes
+```lean
+import NormalForms
 
-## Scope
+open scoped Matrix
+open NormalForms.Matrix.Hermite NormalForms.Matrix.Smith
 
-- Executable algorithms are scoped to `EuclideanDomain`
-- Exact executable canonicality statements use a lightweight `CanonicalMod` mixin to capture canonical Euclidean remainders
-- PID-level statements are scoped to specifications and bridge theorems; the
-  currently completed bridge includes semantic quotient/direct-sum results and
-  example-level normalized `Int` witness-list equality via structural counting;
-  direct generic coefficient-list equality against mathlib's chosen
-  `smithNormalFormCoeffs` remains blocked on upstream witness canonicality
-- The initial research application is finitely generated abelian groups over `Z`
+def input : Matrix (Fin 2) (Fin 3) Int :=
+  !![6, 15, 9;
+     4, 10, 6]
 
-For the full roadmap, milestones, and submission strategy, see `PLAN.md`.
+#eval ((hermiteNormalFormFin input).H, (smithNormalFormFin input).S)
+```
+
+Lean prints:
+
+```text
+(!![2, 5, 3; 0, 0, 0], !![1, 0, 0; 0, 0, 0])
+```
+
+Each result also contains its transform, explicit inverse certificate,
+transformation equation, and normal-form proof.
+
+## Public facade
+
+Import `NormalForms` for the frozen core surface. The main executable layers
+are:
+
+```lean
+hermiteNormalFormFin
+hermiteNormalFormWithIndexing
+hermiteNormalFormWithEquiv
+hermiteNormalFormOrdered
+hermiteNormalForm
+
+smithNormalFormFin
+smithNormalFormWithIndexing
+smithNormalFormWithEquiv
+smithNormalFormOrdered
+smithNormalForm
+```
+
+`FiniteIndexing` and `MatrixIndexing` make row and column enumeration
+explicit. `HNFResultFin` and `SNFResultFin` carry strong certificates with
+chosen inverses. A finite-free presentation uses an `m`-by-`n` relation
+matrix as the map `R^n -> R^m`, so columns are relations.
+
+Applications and research profiles use their own imports and do not enlarge
+the core facade:
+
+```lean
+import NormalForms.Applications.RationalCanonical
+import NormalForms.Applications.Homology
+import NormalForms.Research.BitCost
+import NormalForms.Research.KannanBachem
+import NormalForms.Research.ModularHNF
+import NormalForms.Research.LLL
+```
+
+See [the public API reference](docs/PUBLIC_API.md) for declarations and
+conventions. The exact constructor and argument-order freeze lives in
+`NormalForms/Tests/CoreFreeze.lean`. The wire format is specified in
+[the certificate schema](docs/CERTIFICATE_SCHEMA_V1.md).
+
+## Test and verify
+
+Daily software maintenance has five authoritative entry points:
+
+```sh
+lake build
+lake test
+lake lint
+scripts/verify.sh all
+scripts/bench.py PROFILE
+```
+
+`lake test` compiles every deterministic non-optional positive test and the
+exact-diagnostic negative facade-isolation corpus. `lake lint` checks trust
+markers, facade imports, whitespace, and import hygiene without editing
+files.
+
+`scripts/verify.sh` accepts `core`, `rational-canonical`, `homology`,
+`bit-cost`, `kannan-bachem`, `modular-hnf`, `lll`, `flint`, or `all`. The
+`all` profile runs code-only API freezes, axiom audits, deterministic native
+cases, certificate emission and kernel import, baseline validation, and the
+standalone mathlib patch check. It runs FLINT checks when the pinned adapter
+is present. An explicit `flint` profile fails with build instructions when
+the adapter is absent.
+
+`scripts/bench.py` accepts `certificate-paths`, `rational-canonical`,
+`bit-cost`, `kannan-bachem`, `modular-hnf`, or `lll`. Fresh observations go
+to ignored `build/benchmarks/` files unless you pass an output prefix. See
+[the benchmark evidence guide](benchmarks/README.md).
+
+No default software command builds publication material.
+
+## Trust boundary
+
+Lean's kernel checks the normal-form theorems, certificate soundness, and
+explicit inverse identities. The operational certificate path uses
+`decide_cbv`; strict source and axiom audits reject `sorryAx`, project axioms,
+and compiler or native trust.
+
+The strict executable core and strict certificate tier allow `propext` and
+`Quot.sound`. The arbitrary finite-index facade and separate audited
+semantic application or research layers may also use `Classical.choice`.
+Each tier keeps its own declaration roots and allowlist.
+
+FLINT remains an untrusted optional generator. Lean checks the caller-owned
+input, transformation equations, inverse equations, and normal-form
+predicates before constructing a theorem. Native runs, benchmark timing, and
+differential tests provide regression evidence rather than proofs.
+
+## Software documentation
+
+- [Public API](docs/PUBLIC_API.md)
+- [Certificate schema v1](docs/CERTIFICATE_SCHEMA_V1.md)
+- [Rational-canonical API](docs/RATIONAL_CANONICAL_API.md)
+- [Homology API](docs/HOMOLOGY_API.md)
+- [Bit-cost API](docs/BIT_COST_API.md)
+- [Kannan--Bachem API](docs/KANNAN_BACHEM_API.md)
+- [Modular-HNF API](docs/MODULAR_HNF_API.md)
+- [LLL API](docs/LLL_API.md)
+- [Optional FLINT adapter](adapters/flint/README.md)
+- [Artifact profiles](artifact/README.md)
+- [Changelog](CHANGELOG.md)
+- [Current maintenance boundary](PLAN.md)
+
+## License and citation
+
+The project is available under the [Apache License 2.0](LICENSE). Use the
+repository's [citation metadata](CITATION.cff) when citing the software.

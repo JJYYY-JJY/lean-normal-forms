@@ -1,0 +1,453 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  citecolor=blue,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\bits}[1]{\operatorname{bits}(#1)}
+\newcommand{\cost}[1]{\operatorname{cost}(#1)}
+\setlength{\emergencystretch}{3em}
+
+\title{Certified Polynomial-Complexity Hermite and Smith Paths in Lean 4:\\
+Explicit Inverses and a Kannan--Bachem Schedule}
+\author{Junye Ji}
+\date{Research version 0.1.0, July 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The classical Kannan--Bachem result separates the mathematical correctness of
+integer Hermite and Smith normal forms from the polynomial control of their
+intermediate values.  We present an executable Lean 4 development of this
+separation for nonsingular square integer matrices.  A principal-minor HNF
+kernel is preceded by a deterministic certified row permutation.  Its minor
+selection uses a division-free Bird determinant whose executable value,
+intermediate widths, and schoolbook arithmetic cost share one verified
+implementation.  A total SNF path then alternates one-column left HNF and
+transposed prepared HNF, clears divisible columns, and performs the
+Kannan--Bachem Step 7 injection when the pivot fails to divide the lower
+block.  Every continuation strictly decreases the binary size of the pivot.
+Both algorithms return the project's existing strong result types, including
+forward transforms, explicit inverses, both inverse identities, and canonical
+normal-form proofs.  Kernel theorems separately establish semantic
+correctness, ring-operation bounds, coefficient-width bounds for every
+transform and inverse, and a composed binary bit-operation bound.  A pinned
+artifact audits 263 theorem roots, freezes 572 public declarations, and
+records three deterministic native cases.  Native timing remains regression
+evidence and is not used to justify the formal complexity claim.
+\end{abstract}
+
+\section{Introduction}
+
+An integer normal-form routine can be correct and still be a poor algorithm.
+Elementary row and column operations preserve the relevant equivalence, but
+uncontrolled choices can produce enormous intermediate coefficients.  The
+Kannan--Bachem analysis was the first to bound both the number of algebraic
+operations and the binary length of intermediates by polynomials in the input
+size~\citep{kannan1979polynomial}.  A mechanized treatment must expose more
+than the final normal-form predicate: it must connect the executed branches,
+transformation matrices, termination measure, coefficient envelopes, and a
+concrete integer cost model.
+
+This work supplies that connection through a nonsingular-square research
+seam in the project.  It is available through the additive facade
+\begin{center}
+\code{NormalForms.Research.KannanBachem}.
+\end{center}
+The stable core facade does not re-export it.  The implementation uses Lean 4
+and mathlib~\citep{demoura2021lean4,mathlib2020} and returns the same strong HNF and SNF
+types as the core algorithms.  Consequently the research path can be compared
+with the canonical core result without inventing a second mathematical API.
+
+The main contributions are:
+\begin{itemize}
+  \item a primitive-traced principal-minor HNF schedule with directly
+        accumulated forward and inverse row transformations;
+  \item deterministic row preparation for every nonsingular square input,
+        driven by a costed, division-free determinant evaluator;
+  \item a faithful total implementation of the Smith Steps 4--7, including
+        the nondivisible lower-block injection and a strict pivot-width
+        termination proof;
+  \item explicit polynomial bounds for algebraic operations and all
+        intermediate coefficients in the result and four transformations;
+  \item a binary schoolbook cost recurrence whose value projection follows
+        the executed arithmetic and whose closed endpoint depends only on
+        dimension and original input width;
+  \item a reproducible, independently versioned paper, artifact, axiom audit,
+        API freeze, native corpus, and raw benchmark profile.
+\end{itemize}
+
+The scope is exact.  Research version 0.1.0 proves these results for
+nonsingular matrices in \(\Z^{n\times n}\).  It does not claim that this
+particular schedule handles rectangular or rank-deficient inputs.  The stable
+core already handles those inputs; a future Kannan--Bachem wrapper would need
+its own rank decomposition and complexity proof.
+
+\section{Interfaces and certificate discipline}
+
+For an input matrix \(A\), the HNF result stores \(U,H\), an explicit matrix
+\(U^{-1}\), and proofs
+\[
+  UA=H,\qquad U^{-1}U=I,\qquad UU^{-1}=I.
+\]
+The SNF result analogously stores \(U,S,V,U^{-1},V^{-1}\) and proves
+\[
+  UAV=S,qquad U^{-1}U=UU^{-1}=I,
+  \qquad V^{-1}V=VV^{-1}=I.
+\]
+The inverse matrices are data, not objects recovered afterward through a
+determinant theorem, a matrix inverse operator, or choice.  Every primitive
+row or column step carries its inverse, and composition multiplies forward
+and backward transforms in the correct opposite orders.
+
+This discipline matters for complexity.  A theorem about \(S\) alone says
+nothing about the size or cost of the equivalence witness.  The profile
+therefore bounds five observable matrices for SNF:
+\[
+  S,\quad U,\quad U^{-1},\quad V,\quad V^{-1}.
+\]
+The Lean structure \code{SmithCoefficientProfile} records their actual bit
+widths.  The endpoint theorem bounds each field using the original dimension
+and input coefficient width.
+
+Operation logs and final certificates have different roles.  A
+\code{RowTrace} is an executable list of swaps, additions, unit scalings, and
+two-by-two B\'ezout pair steps.  Replaying the trace explains the algorithm's
+primitive schedule.  The accumulated certificate is the stable public
+result.  Theorems connect replay to the result matrix and connect both
+accumulators to the explicit inverse identities.
+
+\section{Prepared principal-minor HNF}
+
+\subsection{The ready kernel}
+
+The square HNF kernel processes leading principal blocks.  Its explicit
+precondition \code{PrincipalReady A} states that every canonical leading
+principal submatrix has nonzero determinant.  Under this invariant, each
+stage performs a bounded extended-gcd row combination, normalizes the pivot,
+and reduces entries above it.  Arithmetic events align one-for-one with the
+primitive trace, so the operation count is derived from the executed path
+rather than reconstructed from the final matrix.
+
+For dimension \(n\), the trace length is at most \(n^3\).  The corresponding
+\code{RingOperationCount} separates additions, multiplications, extended-gcd
+calls, and normalizations.  This separation avoids assigning unit cost to an
+integer gcd when the later theorem needs its binary cost.
+
+\subsection{Removing the readiness assumption}
+
+Nonsingularity does not imply that the input's current leading principal
+minors are all nonzero.  The function \code{Principal.prepare} constructs a
+row permutation recursively.  At each level it inspects complementary minors
+formed by deleting a candidate row and the last column, chooses the first
+nonzero candidate, places that row last, and recurses on the retained block.
+Nonsingularity proves that a candidate exists.
+
+The preparation object stores the permutation, permuted matrix, permutation
+matrix, its explicit inverse certificate, the transformation equation, and a
+proof that the output is ready.  The entry
+\code{preparedPrincipalHermiteNormalForm} composes preparation with the ready
+kernel and proves equality with the core canonical HNF.  Thus callers provide
+only \(\det A\ne0\); the leading-minor obligation does not leak through the
+public research entry point.
+
+\subsection{A charged determinant selector}
+
+Minor selection must not hide determinant work.  Preparation therefore uses
+a cached dense-vector implementation of Bird's division-free determinant
+recurrence~\citep{bird2011determinants}.  Every scalar addition and
+multiplication is performed by the verified binary sign-magnitude reference
+model.  The implementation returns both a value and an exact modeled cost.
+
+The proof stack establishes:
+\begin{enumerate}
+  \item decoding a dense-vector stage equals the algebraic matrix recurrence;
+  \item the recurrence has closed height and bit-length envelopes;
+  \item the costed scalar and matrix iterations satisfy a closed schoolbook
+        budget;
+  \item the recurrence equals the determinant for arbitrary dimension;
+  \item the first-nonzero scan returns exactly the first minor whose
+        determinant is nonzero and is bounded across all recursive levels.
+\end{enumerate}
+The theorem \code{evaluateWithCost\_value\_eq\_det} is the semantic bridge.
+The end-to-end prepared-HNF cost adds the actual recursive determinant scans
+to the ready-kernel arithmetic.
+
+\section{Total Smith Steps 4--7}
+
+\subsection{One pass}
+
+The active block is nonsingular and nonempty.  Step 4 applies a dedicated
+one-column left-HNF reducer to the entire block.  It uses exactly one bounded
+extended-gcd pair step per lower row and one final normalization.  Step 5
+transposes the result, runs prepared principal HNF, and transports the row
+multiplier back as a right transformation.  The resulting
+\code{TwoSidedCertificate} already contains both explicit inverses.
+
+After a pass, the pivot is nonzero and normalized and the first row is
+cleared.  Entries below the pivot fall into two cases.  If one is not
+divisible by the pivot, the next pass replaces the pivot by a proper common
+divisor.  If all are divisible, one certified shear clears the complete first
+column at once.
+
+\subsection{Step 7 and termination}
+
+Once the first row and column are clear, the pivot may still fail to divide an
+entry in the lower-right block.  The search function returns the first such
+position.  Step 7 adds its column into the pivot column, thereby placing the
+offending entry below the pivot without changing the pivot itself.  The next
+pass again produces a proper common divisor.
+
+The total function \code{stabilizeFrom} follows exactly these branches.  Its
+well-founded measure is
+\[
+  \bits{A_{00}} = \operatorname{Nat.size}(|A_{00}|).
+\]
+Each recursive branch proves strict decrease of this measure.  No fuel,
+factorization, or fallback to the core Smith algorithm appears in the primary
+entry.  A separate fuelled function remains useful for diagnostics.
+
+At termination the pivot is normalized and nonzero, both borders are clear,
+and the pivot divides the full lower-right block.  Structural recursion then
+runs the same algorithm on that lower-right block.  Forward and inverse lower
+certificates are lifted through a leading identity block and composed with
+the stabilized certificate.  The resulting \code{smith A hdet} directly has
+type \code{SNFResultFin A}.
+
+The semantic endpoints prove the transformation equation, inverse recovery,
+the Smith predicate, and equality with the stable core canonical Smith
+matrix.  Equality is asserted only for the canonical result; nonunique
+transformation matrices are intentionally not compared.
+
+\section{Four levels of complexity evidence}
+
+The project uses four acceptance levels that must not be conflated.
+
+\paragraph{Semantic correctness.}
+The algorithms return the required normal form and strong transformation
+certificate.  Termination and canonical equality are kernel checked.
+
+\paragraph{Ring-operation count.}
+Exact counters mirror the recursion and separately record additions,
+multiplications, extended-gcd calls, normalizations, and exact divisions.  A
+dimension- and input-width polynomial bounds the total.  Searches,
+comparisons, allocation, and data movement are not mislabeled as ring
+operations.
+
+\paragraph{Coefficient bit length.}
+Bounds cover intermediate active matrices, arithmetic operands, forward
+prefixes, inverse prefixes, clear and injection transformations, and every
+certificate composition.  Determinant invariance keeps lower-right recursive
+levels within a uniform original-input envelope.
+
+\paragraph{Binary bit complexity.}
+The scalar model uses canonical sign-magnitude words, carry/borrow addition,
+schoolbook multiplication, shared Euclidean long division, and costed
+extended gcd; see standard distinctions between algebraic and bit
+cost~\citep{brent2010modern}.  The matrix layer charges the actual scalar
+reference operations rather than assuming native \code{Int} takes unit time.
+
+For dense certificate multiplication, \code{matrixEntryWithCost} evaluates a
+dot product through costed sign-magnitude multiplication and addition.
+\code{matrixProductWithCost\_value} proves each decoded entry equals ordinary
+\code{Matrix.mul}.  Composing two strong certificates charges four such
+products in their true orders:
+\[
+  U_2U_1,\quad U_1^{-1}U_2^{-1},\quad
+  V_1V_2,\quad V_2^{-1}V_1^{-1}.
+\]
+
+The exact recursive function \code{smithBitOperationCost} follows all
+stabilization branches and every lower-right call.  Its closed endpoint is
+\[
+\begin{split}
+ &\code{smithBitOperationCost A hdet}\\
+ &\qquad\le
+ \code{smithPolynomialBitOperationBound n (matrixBitLength A)}.
+\end{split}
+\]
+The right-hand side depends only on the original dimension and maximum input
+coefficient width.  It is intentionally conservative: the theorem's purpose
+is a complete compositional polynomial bound, not a tight performance model.
+
+\section{Theorem and artifact map}
+
+Table~\ref{tab:endpoints} names the principal public endpoints.  The facade
+freeze checks these and their supporting interfaces at compile time.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{p{0.25\linewidth}p{0.66\linewidth}}
+\toprule
+Layer & Public endpoint or evidence \\
+\midrule
+Prepared HNF semantics &
+\code{preparedPrincipalHermiteNormalForm\_eq\_reference} \\
+HNF operation count &
+\code{principalRingOperations\_total\_le} \\
+HNF coefficient width &
+\code{principalIntermediateMatrixBitLength\_le\_polynomial\_of\_ready} \\
+Prepared HNF bit cost &
+\code{preparedPrincipalHNFBitOperationCost\_le} \\
+SNF semantics &
+\code{smith\_sound} and \code{smith\_eq\_reference} \\
+SNF operation count &
+\code{smithOperationCount\_total\_le\_polynomial} \\
+SNF coefficient width &
+\code{smith\_coefficientProfile\_le\_polynomial} \\
+SNF bit cost &
+\code{smithBitOperationCost\_le\_polynomial} \\
+Trust audit & 263 roots; exact allowlist
+\code{propext}, \code{Quot.sound}, \code{Classical.choice} \\
+Surface freeze & 572 compile-time \code{\#check} declarations \\
+\bottomrule
+\end{tabular}
+\caption{Research version 0.1.0 endpoints.}
+\label{tab:endpoints}
+\end{table}
+
+The allowlisted logical axioms arise in the mathlib proof layer.  The audit
+rejects project-defined axioms, \code{sorryAx}, and native/compiler trust.
+Native execution is never used to manufacture a theorem.
+
+\section{Executable evaluation}
+
+The fixed corpus contains three branch-sensitive cases.  Table
+\ref{tab:cases} records deterministic values; these are checked on every
+artifact run before timing is considered.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+Case & \(n\) & input bits & ring ops & XGCD & passes/inj. & modeled cost \\
+\midrule
+prepared HNF & 3 & 5 & 93 & 3 & 0/0 & 242765386189266 \\
+Smith repeat & 2 & 2 & 48 & 2 & 1/0 & 1130326542472 \\
+Smith injection & 2 & 2 & 96 & 4 & 2/1 & 3012432681653 \\
+\bottomrule
+\end{tabular}
+\caption{Deterministic executable telemetry.  ``inj.'' means Step 7
+injections.  Modeled costs are not nanoseconds.}
+\label{tab:cases}
+\end{table}
+
+The HNF input is
+\[
+\begin{pmatrix}2&3&5\\4&7&11\\6&13&17\end{pmatrix},
+\qquad
+H=\begin{pmatrix}2&0&0\\0&1&1\\0&0&2\end{pmatrix}.
+\]
+The two Smith inputs are
+\[
+\begin{pmatrix}2&1\\0&2\end{pmatrix}
+  \longmapsto \operatorname{diag}(1,4),
+\qquad
+\begin{pmatrix}2&0\\0&3\end{pmatrix}
+  \longmapsto \operatorname{diag}(1,6).
+\]
+The second Smith case forces Step 7 because the first pivot does not divide
+the lower-right entry.
+
+The raw benchmark performs one warmup and seven measurements for prepared
+HNF, repeated-pass SNF, injection SNF, and the complete three-case corpus.  It
+stores every observation rather than only an aggregate, computes median and
+inclusive-quartile IQR, and records wall time, user/system time, maximum RSS,
+source revision and patch digest, binary SHA256, Lean version, CPU, memory,
+kernel, libc, and Python version.  Absolute wall time is compared only when
+the hardware fingerprint matches.  The committed JSON and CSV are the source
+of truth; a plotted or prose summary cannot override them.
+
+On the captured host, median wall times are \(4.20\) seconds for prepared HNF,
+\(0.06\) seconds for repeated-pass SNF, \(2.25\) seconds for injection SNF,
+and \(6.38\) seconds for the complete corpus.  Median maximum resident sets
+are respectively 71,980, 72,760, 73,104, and 72,348 KiB.  These numbers
+describe this reproducibility run only; the JSON retains the raw observations
+and IQR needed to interpret them.
+
+The runtime checks recompute transformation equations, inverse recovery,
+expected canonical diagonals, and actual-cost inequalities.  These checks are
+useful regression witnesses but are weaker than the imported proofs.  In
+particular, an executable returning success does not add a theorem to the
+kernel.
+
+\section{Reproducibility and trust boundary}
+
+The host gate builds the research facade, its public API and execution tests,
+the core facade isolation test, and the native benchmark.  It invokes Lean
+directly on the execution regression file so that every \code{\#guard} is
+re-elaborated even when Lake has cached an object.  It then runs the complete
+test suite, all native cases, the exact axiom audit, a fresh benchmark, the
+paper build, metadata validation, and \code{git diff --check}.
+
+The pinned container fixes Debian 13.1, the Lean 4.32.0 binary archive and its
+SHA256, and the committed Lake manifest.  The profile has no FLINT dependency.
+FLINT is an optional untrusted certificate generator elsewhere in the
+project, not a premise of any theorem in this development.
+
+The trust base is Lean's kernel, the Lean implementation and parser used to
+check source, and the ordinary assumptions represented by the exact axiom
+report.  The strict research claim does not rely on \code{native\_decide},
+\code{Lean.ofReduceBool}, \code{Lean.ofReduceNat}, external C arithmetic, the
+benchmark harness, or the operating system's timer.
+
+\section{Limitations and future work}
+
+The present result should not be generalized beyond its statement.
+\begin{itemize}
+  \item Inputs are nonsingular square integer matrices.  A rectangular and
+        rank-deficient wrapper needs a verified fraction-free rank
+        decomposition and a proof that its transformations and coefficient
+        bounds compose with this kernel.
+  \item The modeled cost uses transparent schoolbook arithmetic.  It does not
+        claim to model Lean's optimized native arbitrary-precision integers.
+  \item Searches and allocation are excluded from the bit-operation count.
+        They remain visible in native wall time and RSS.
+  \item Bounds are explicit and polynomial but deliberately loose.  Tighter
+        exponents and constants are separate optimization work.
+  \item This profile does not make the Kannan--Bachem path the core default.
+        Changing the default backend would require independent compatibility
+        and performance evidence.
+\end{itemize}
+
+Related formalizations establish Smith normal-form correctness in other proof
+assistants~\citep{divason2022snf}.  The distinguishing goal here is the
+end-to-end connection between a faithful executable schedule, explicit
+inverse transformations, intermediate coefficient control, and a concrete
+binary arithmetic cost.
+
+\section{Conclusion}
+
+Research version 0.1.0 closes four distinct proof obligations for
+nonsingular-square integer HNF and SNF: semantics, algebraic operation count,
+coefficient growth, and bit complexity.  The key engineering decision is to
+make every source of hidden work explicit.  Row preparation charges its
+determinant scans; extended gcd shares the verified primitive model;
+termination exposes a decreasing pivot width; and certificate composition
+charges the forward and inverse matrix products.  The result is an
+independently reproducible research line whose claims are precise enough to
+audit and whose limitations do not weaken the stable general-purpose core.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

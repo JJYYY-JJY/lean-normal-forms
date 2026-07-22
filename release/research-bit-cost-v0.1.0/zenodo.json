@@ -1,0 +1,22 @@
+{
+  "title": "A Verified Binary Bit-Cost Reference Model for Integer Normal-Form Algorithms in Lean 4",
+  "description": "Independent lean-normal-forms research profile 0.1.0: an executable binary sign-magnitude model for integer addition, schoolbook multiplication, shared Euclidean long division, and extended gcd, with kernel-checked value correctness, coefficient-width bounds, and explicit bit-operation budgets.",
+  "license": "Apache-2.0",
+  "version": "research-bit-cost-0.1.0",
+  "creators": [
+    {
+      "name": "Ji, Junye",
+      "affiliation": "Independent"
+    }
+  ],
+  "keywords": [
+    "Lean 4",
+    "mathlib",
+    "bit complexity",
+    "binary arithmetic",
+    "extended Euclidean algorithm",
+    "Hermite normal form",
+    "Smith normal form",
+    "formalized mathematics"
+  ]
+}

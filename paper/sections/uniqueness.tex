@@ -19,9 +19,10 @@ in \code{IsHermiteNormalFormFin} and \(U\) is unimodular with
 \(U \cdot H_1 = H_2\), then \(H_1 = H_2\).
 \end{theorem}
 
-The internal theorem is
-\code{isHermiteNormalFormFin_unique_of_left_equiv}; the public theorem
-\code{isHermiteNormalForm_unique_of_left_equiv} is obtained by reindexing.
+The \code{Fin} theorem is
+\code{isHermiteNormalFormFin_unique_of_left_equiv}; the arbitrary-index theorem
+\code{isHermiteNormalFormWith_unique_of_left_equiv} requires one explicit,
+fixed indexing.
 The proof proceeds by induction on the recursive HNF witness for \(H_1\). The
 empty-row and empty-column cases are immediate. The zero-column/pivot mismatch is
 impossible because left multiplication preserves the property that the whole

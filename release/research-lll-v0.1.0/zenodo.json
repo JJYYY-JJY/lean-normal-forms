@@ -1,0 +1,22 @@
+{
+  "title": "Certified Exact Integer LLL in Lean 4: Explicit Inverses, Total Rank Handling, and Profiled Costs",
+  "description": "Independent lean-normal-forms research profile 0.1.0: exact row-vector LLL with a source-pinned terminating reducer, synchronized elementary-operation trace, explicit inverse certificates, an HNF-based total rank-deficient wrapper, a transpose-only column adapter, exact event telemetry, intermediate coefficient evidence, and an explicitly scoped profile-dependent bit-operation budget.",
+  "license": "Apache-2.0",
+  "version": "research-lll-0.1.0",
+  "creators": [
+    {
+      "name": "Ji, Junye",
+      "affiliation": "Independent"
+    }
+  ],
+  "keywords": [
+    "Lean 4",
+    "mathlib",
+    "LLL",
+    "lattice reduction",
+    "exact arithmetic",
+    "bit complexity",
+    "explicit inverse certificates",
+    "formalized mathematics"
+  ]
+}

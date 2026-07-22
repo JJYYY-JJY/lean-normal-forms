@@ -1,20 +1,29 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-We described a completed \Lean{} development of executable row-style \HNF{} over
-Euclidean domains. The formalization is centered on three ideas: explicit
-proof-facing left certificates, a recursive kernel built from lifted Bezout and
-diagonal block gadgets, and a narrow \code{CanonicalMod} boundary that upgrades
-computational remainders into exact uniqueness statements. The resulting public
-API provides executable HNF, unimodular left certificates, correctness, and
-uniqueness. The repository also now contains a genuine public \SNF{}
-specification and certificate-packaging layer together with a verified same-size
-lead-reduction foundation, but it does not yet provide an executable \SNF{}
-kernel or a PID bridge, and the paper has been written accordingly.
+The 1.0.0 development establishes certificate, indexing, execution, and
+intrinsic-data seams for certified HNF and SNF in \Lean{}. Transformation
+results carry chosen inverses and both inverse identities; arbitrary finite
+orderings are explicit data; HNF canonicality requires one fixed ordering; and
+SNF canonical data remains invariant under reindexing. Constructive Euclidean
+operations support deterministic integer and rational-polynomial execution,
+and pivot-measure descent removes the former factorization dependency.
 
-From an engineering perspective, the main lesson is that canonical algebraic
-statements in \Lean{} benefit from separating three concerns that are often
-entangled: replay semantics for elementary operations, matrix-level certificate
-composition, and exact canonical-remainder reasoning. The next stage is to reuse
-the same architecture for Smith normal form and then connect the resulting
-invariant factors to \mathlib{}'s abstract PID theory.
+\code{SmithData} and \code{SmithSignature} expose canonical diagonal
+information without execution traces. Determinantal ideals recover rank and
+associate factors, support the canonical mathlib PID bridge, and define
+presentation-level Fitting ideals. Column-oriented finite-free presentations
+derive cokernel decompositions and a \code{Module.Presentation}. A pure
+certificate checker and strict \code{decide_cbv} importer close the external
+trust chain. Pinned process and FFI FLINT adapters share one implementation and
+remain untrusted sources of raw data. Differential tests compare canonical
+factors instead of nonunique transforms, and the raw benchmark profile
+separates generation, native checking, kernel checking, and end-to-end import.
+
+The public facade, certificate schema, indexing/result structures, and
+presentation direction are frozen by exact compile-time tests. Independent
+axiom reports show that the executable and strict certificate roots use only
+\code{propext} and \code{Quot.sound}; the reproducibility profile rebuilds the
+same gates from pinned sources. Post-1.0 applications keep separate APIs,
+tests, benchmarks, papers, and artifacts, so one research backend does not
+delay the stable core.

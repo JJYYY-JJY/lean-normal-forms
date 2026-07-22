@@ -1,0 +1,349 @@
+{
+  "case": {
+    "cols": 2,
+    "companion_repetitions": 1000,
+    "factor_degrees": [
+      0,
+      2
+    ],
+    "maximum_factor_coefficient_bits": 3,
+    "maximum_input_coefficient_bits": 2,
+    "name": "rational-jordan-2x2",
+    "rows": 2
+  },
+  "created_utc": "2026-07-20T15:39:29.379379+00:00",
+  "hardware": {
+    "cpu_model": "AMD Ryzen 9 7940H w/ Radeon 780M Graphics",
+    "lean": "Lean (version 4.32.0, x86_64-unknown-linux-gnu, commit 8c9756b28d64dab099da31a4c09229a9e6a2ef35, Release)",
+    "libc": [
+      "glibc",
+      "2.43"
+    ],
+    "logical_cpus": 16,
+    "machine": "x86_64",
+    "memory_total_kib": 60370128,
+    "python": "3.14.6",
+    "release": "7.0.0-28-generic",
+    "system": "Linux"
+  },
+  "instrumentation": {
+    "gcd_count": null,
+    "pivot_count": null,
+    "ring_operation_count": null,
+    "status": "not exposed by the executable kernel; formal operation telemetry belongs to the independent bit-cost line"
+  },
+  "policy": {
+    "comparison_requires_identical_hardware_fingerprint": true,
+    "hosted_ci_absolute_time_gate": false,
+    "measurements": 7,
+    "summary_method": "median and inclusive quartiles",
+    "warmups": 1
+  },
+  "profile": "v1.1.0-rational-canonical",
+  "schema": "normalforms.benchmark/v1",
+  "source": {
+    "git_revision": "75df6ee1139c41b4616ee79274428f5ebe1dbcd2",
+    "tracked_patch_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "working_tree_clean": true
+  },
+  "stages": [
+    {
+      "description": "choice-free polynomial Smith generation and factor checks",
+      "id": "invariant_generation",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 72820,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 72728,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 72544,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72752,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 73108,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72672,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72544,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 178.0,
+          "maximum": 73108.0,
+          "median": 72728.0,
+          "minimum": 72544.0,
+          "q1": 72608.0,
+          "q3": 72786.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.06,
+          "median": 0.06,
+          "minimum": 0.06,
+          "q1": 0.06,
+          "q3": 0.06
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.07,
+          "median": 0.07,
+          "minimum": 0.07,
+          "q1": 0.07,
+          "q3": 0.07
+        }
+      }
+    },
+    {
+      "description": "1000 structural companion-block checks after factor setup",
+      "id": "companion_verification",
+      "observations": [
+        {
+          "companion_batch_nanoseconds": 612490008,
+          "companion_per_check_nanoseconds": 612490.008,
+          "iteration": 1,
+          "maximum_rss_kib": 72844,
+          "system_seconds": 0.0,
+          "user_seconds": 0.67,
+          "wall_seconds": 0.68
+        },
+        {
+          "companion_batch_nanoseconds": 616971263,
+          "companion_per_check_nanoseconds": 616971.263,
+          "iteration": 2,
+          "maximum_rss_kib": 73036,
+          "system_seconds": 0.0,
+          "user_seconds": 0.68,
+          "wall_seconds": 0.68
+        },
+        {
+          "companion_batch_nanoseconds": 620650790,
+          "companion_per_check_nanoseconds": 620650.79,
+          "iteration": 3,
+          "maximum_rss_kib": 72356,
+          "system_seconds": 0.0,
+          "user_seconds": 0.68,
+          "wall_seconds": 0.69
+        },
+        {
+          "companion_batch_nanoseconds": 614327722,
+          "companion_per_check_nanoseconds": 614327.722,
+          "iteration": 4,
+          "maximum_rss_kib": 72596,
+          "system_seconds": 0.0,
+          "user_seconds": 0.67,
+          "wall_seconds": 0.68
+        },
+        {
+          "companion_batch_nanoseconds": 622091744,
+          "companion_per_check_nanoseconds": 622091.744,
+          "iteration": 5,
+          "maximum_rss_kib": 73020,
+          "system_seconds": 0.0,
+          "user_seconds": 0.69,
+          "wall_seconds": 0.69
+        },
+        {
+          "companion_batch_nanoseconds": 612565008,
+          "companion_per_check_nanoseconds": 612565.008,
+          "iteration": 6,
+          "maximum_rss_kib": 72508,
+          "system_seconds": 0.0,
+          "user_seconds": 0.67,
+          "wall_seconds": 0.68
+        },
+        {
+          "companion_batch_nanoseconds": 637246701,
+          "companion_per_check_nanoseconds": 637246.701,
+          "iteration": 7,
+          "maximum_rss_kib": 72912,
+          "system_seconds": 0.0,
+          "user_seconds": 0.7,
+          "wall_seconds": 0.71
+        }
+      ],
+      "summary": {
+        "isolated_companion_batch_nanoseconds": {
+          "iqr": 7924902.0,
+          "maximum": 637246701.0,
+          "median": 616971263.0,
+          "minimum": 612490008.0,
+          "q1": 613446365.0,
+          "q3": 621371267.0
+        },
+        "isolated_companion_per_check_nanoseconds": {
+          "iqr": 7924.902,
+          "maximum": 637246.701,
+          "median": 616971.263,
+          "minimum": 612490.008,
+          "q1": 613446.365,
+          "q3": 621371.267
+        },
+        "maximum_rss_kib": {
+          "iqr": 414.0,
+          "maximum": 73036.0,
+          "median": 72844.0,
+          "minimum": 72356.0,
+          "q1": 72552.0,
+          "q3": 72966.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.015000000000000013,
+          "maximum": 0.7,
+          "median": 0.68,
+          "minimum": 0.67,
+          "q1": 0.67,
+          "q3": 0.685
+        },
+        "wall_seconds": {
+          "iqr": 0.009999999999999898,
+          "maximum": 0.71,
+          "median": 0.68,
+          "minimum": 0.68,
+          "q1": 0.68,
+          "q3": 0.69
+        }
+      }
+    },
+    {
+      "description": "factor generation plus one companion-block verification",
+      "id": "end_to_end",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 72812,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 73264,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 73172,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72896,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72988,
+          "system_seconds": 0.0,
+          "user_seconds": 0.07,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72812,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 69860,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 268.0,
+          "maximum": 73264.0,
+          "median": 72896.0,
+          "minimum": 69860.0,
+          "q1": 72812.0,
+          "q3": 73080.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.07,
+          "median": 0.06,
+          "minimum": 0.06,
+          "q1": 0.06,
+          "q3": 0.06
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.07,
+          "median": 0.07,
+          "minimum": 0.07,
+          "q1": 0.07,
+          "q3": 0.07
+        }
+      }
+    }
+  ],
+  "trust_boundary": "This native profile is observational regression evidence. The application theorems, not benchmark success, establish rational canonical correctness."
+}

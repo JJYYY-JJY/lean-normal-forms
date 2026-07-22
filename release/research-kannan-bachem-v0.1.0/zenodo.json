@@ -1,0 +1,22 @@
+{
+  "title": "Certified Polynomial-Complexity Hermite and Smith Paths in Lean 4: Explicit Inverses and a Kannan--Bachem Schedule",
+  "description": "Independent lean-normal-forms research profile 0.1.0: executable nonsingular-square integer HNF and SNF paths with explicit inverse certificates, faithful Kannan--Bachem pivot stabilization, verified determinant preparation, polynomial operation and coefficient bounds, and a composed binary bit-operation theorem.",
+  "license": "Apache-2.0",
+  "version": "research-kannan-bachem-0.1.0",
+  "creators": [
+    {
+      "name": "Ji, Junye",
+      "affiliation": "Independent"
+    }
+  ],
+  "keywords": [
+    "Lean 4",
+    "mathlib",
+    "Kannan--Bachem",
+    "Hermite normal form",
+    "Smith normal form",
+    "bit complexity",
+    "explicit inverse certificates",
+    "formalized mathematics"
+  ]
+}

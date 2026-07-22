@@ -1,0 +1,21 @@
+{
+  "title": "lean-normal-forms",
+  "description": "Certified executable Hermite and Smith normal forms in Lean 4, extended in version 1.1.0 with an independently imported rational-canonical application over Rat: executable XI-A, strong polynomial Smith factors, cyclic module decomposition, characteristic and minimal polynomial theorems, explicit companion-block similarity, basis independence, and reproducible native benchmarks.",
+  "license": "Apache-2.0",
+  "version": "1.1.0",
+  "creators": [
+    {
+      "name": "Ji, Junye",
+      "affiliation": "Independent"
+    }
+  ],
+  "keywords": [
+    "Lean 4",
+    "mathlib",
+    "Hermite normal form",
+    "Smith normal form",
+    "rational canonical form",
+    "invariant factors",
+    "formalized mathematics"
+  ]
+}

@@ -1,0 +1,471 @@
+{
+  "binary_sha256": "f0bca5df9e1612d255b773d51193177195ec32b2b01ae94f17a986ca956cbcf9",
+  "cases": [
+    {
+      "additions": 0,
+      "case": "scalar-1x1",
+      "columns": 1,
+      "comparisons": 3,
+      "exact_divisions": 1,
+      "input_bits": 3,
+      "intermediate_height_bits": 6,
+      "modeled_bit_bound_bits": 29,
+      "modeled_bit_cost_bits": 24,
+      "modular_reductions": 1,
+      "modulus_bits": 3,
+      "multiplications": 1,
+      "operation_bound": 24,
+      "operation_total": 7,
+      "result_bits": 3,
+      "rows": 1,
+      "stages": 1,
+      "valid": true,
+      "xgcd_calls": 1
+    },
+    {
+      "additions": 2,
+      "case": "tall-2x1",
+      "columns": 1,
+      "comparisons": 6,
+      "exact_divisions": 3,
+      "input_bits": 4,
+      "intermediate_height_bits": 14,
+      "modeled_bit_bound_bits": 38,
+      "modeled_bit_cost_bits": 33,
+      "modular_reductions": 3,
+      "modulus_bits": 3,
+      "multiplications": 5,
+      "operation_bound": 41,
+      "operation_total": 21,
+      "result_bits": 2,
+      "rows": 2,
+      "stages": 1,
+      "valid": true,
+      "xgcd_calls": 2
+    },
+    {
+      "additions": 5,
+      "case": "square-2x2",
+      "columns": 2,
+      "comparisons": 12,
+      "exact_divisions": 5,
+      "input_bits": 4,
+      "intermediate_height_bits": 50,
+      "modeled_bit_bound_bits": 52,
+      "modeled_bit_cost_bits": 47,
+      "modular_reductions": 7,
+      "modulus_bits": 4,
+      "multiplications": 12,
+      "operation_bound": 136,
+      "operation_total": 44,
+      "result_bits": 3,
+      "rows": 2,
+      "stages": 2,
+      "valid": true,
+      "xgcd_calls": 3
+    }
+  ],
+  "created_utc": "2026-07-21T21:51:10.561566+00:00",
+  "hardware": {
+    "cpu_model": "AMD Ryzen 9 7940H w/ Radeon 780M Graphics",
+    "lean": "Lean (version 4.32.0, x86_64-unknown-linux-gnu, commit 8c9756b28d64dab099da31a4c09229a9e6a2ef35, Release)",
+    "libc": [
+      "glibc",
+      "2.43"
+    ],
+    "logical_cpus": 16,
+    "machine": "x86_64",
+    "memory_total_kib": 60370128,
+    "python": "3.14.6",
+    "release": "7.0.0-28-generic",
+    "system": "Linux"
+  },
+  "policy": {
+    "comparison_requires_identical_hardware_fingerprint": true,
+    "hosted_ci_absolute_time_gate": false,
+    "measurements": 7,
+    "summary_method": "median and inclusive quartiles",
+    "warmups": 1
+  },
+  "profile": "research-modular-hnf-v0.1.0",
+  "research_version": "0.1.0",
+  "schema": "normalforms.modular-hnf-benchmark/v1",
+  "source": {
+    "git_revision": "02cf30e04fb4cdaa4a5241078976d70f1bc1963f",
+    "tracked_patch_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "working_tree_clean": true
+  },
+  "stages": [
+    {
+      "case_names": [
+        "scalar-1x1"
+      ],
+      "description": "one-column scalar determinant-modulus run",
+      "id": "scalar",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 71896,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 72408,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 73180,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72348,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72644,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72044,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 71716,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 556.0,
+          "maximum": 73180.0,
+          "median": 72348.0,
+          "minimum": 71716.0,
+          "q1": 71970.0,
+          "q3": 72526.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.004999999999999999,
+          "maximum": 0.02,
+          "median": 0.01,
+          "minimum": 0.01,
+          "q1": 0.01,
+          "q3": 0.015
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.02,
+          "median": 0.02,
+          "minimum": 0.02,
+          "q1": 0.02,
+          "q3": 0.02
+        }
+      }
+    },
+    {
+      "case_names": [
+        "tall-2x1"
+      ],
+      "description": "rectangular full-column-rank run",
+      "id": "tall",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 72340,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 71796,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 72796,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72136,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72696,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72548,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72704,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 462.0,
+          "maximum": 72796.0,
+          "median": 72548.0,
+          "minimum": 71796.0,
+          "q1": 72238.0,
+          "q3": 72700.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.02,
+          "median": 0.01,
+          "minimum": 0.01,
+          "q1": 0.01,
+          "q3": 0.01
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.02,
+          "median": 0.02,
+          "minimum": 0.02,
+          "q1": 0.02,
+          "q3": 0.02
+        }
+      }
+    },
+    {
+      "case_names": [
+        "square-2x2"
+      ],
+      "description": "two-column determinant-modulus run",
+      "id": "square",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 74376,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 74348,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 75020,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 74428,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 74568,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 75440,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 74236,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 432.0,
+          "maximum": 75440.0,
+          "median": 74428.0,
+          "minimum": 74236.0,
+          "q1": 74362.0,
+          "q3": 74794.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.004999999999999999,
+          "maximum": 0.02,
+          "median": 0.01,
+          "minimum": 0.01,
+          "q1": 0.01,
+          "q3": 0.015
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.02,
+          "median": 0.02,
+          "minimum": 0.02,
+          "q1": 0.02,
+          "q3": 0.02
+        }
+      }
+    },
+    {
+      "case_names": [
+        "scalar-1x1",
+        "tall-2x1",
+        "square-2x2"
+      ],
+      "description": "all three deterministic modular-HNF cases",
+      "id": "end_to_end",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 74984,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 74216,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 72860,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 75072,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 74400,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 73780,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 74096,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 754.0,
+          "maximum": 75072.0,
+          "median": 74216.0,
+          "minimum": 72860.0,
+          "q1": 73938.0,
+          "q3": 74692.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.01,
+          "maximum": 0.02,
+          "median": 0.01,
+          "minimum": 0.01,
+          "q1": 0.01,
+          "q3": 0.02
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.02,
+          "median": 0.02,
+          "minimum": 0.02,
+          "q1": 0.02,
+          "q3": 0.02
+        }
+      }
+    }
+  ],
+  "trust_boundary": "Native time and RSS are observational regression evidence. Kernel-checked theorems establish normal-form correctness, operation bounds, coefficient bounds, the standard-XGCD mirror, and modeled bit cost."
+}

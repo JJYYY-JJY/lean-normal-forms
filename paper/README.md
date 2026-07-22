@@ -1,8 +1,11 @@
-# paper
+# Core paper
 
-LaTeX sources for the arXiv preprint on executable Hermite normal form in Lean 4.
+Working title:
 
-Build steps:
+> Certified Executable Hermite and Smith Normal Forms in Lean 4:
+> Canonicality, Explicit Inverses, and a Mathlib PID Bridge
+
+Build:
 
 ```sh
 latexmk -pdf main.tex
@@ -14,26 +17,32 @@ Quick visual check:
 pdftoppm -png main.pdf preview
 ```
 
-Figure workflow:
+Version 1.0.0 is the unified core manuscript. It covers the explicit-inverse,
+indexing-semantics,
+constructive-execution, strict external-certificate, intrinsic Smith, and
+presentation layers:
+strong `Fin` results, caller-controlled enumeration, fixed-index HNF
+uniqueness, canonical Smith invariance under reindexing, direct `Int` and
+`Polynomial Rat` execution, pivot-measure termination, pure certificate
+checking, chunked kernel import, and a pinned untrusted FLINT generator.
+The process and FFI adapters now share one C implementation; fixed-seed
+differential regressions and a seven-stage raw benchmark profile keep run
+reports distinct from kernel theorems. Determinantal ideals recover Smith rank
+and associate factors, the PID bridge compares canonical data at three levels,
+and finite-free presentations fix columns as relations and derive cokernel
+decompositions.
 
-- The paper now uses TikZ figure sources under `figures/`.
-- `latexmk -pdf main.tex` compiles those figures directly into `main.pdf`.
-- `scripts/generate_figures.py` is retained only as a legacy asset and is no longer
-  part of the build path.
-
-Scope notes:
-
-- The manuscript still centers on the completed HNF layer.
-- `NormalForms.Matrix.Smith.Basic` is no longer just a frozen placeholder API:
-  it already contains a real public Smith specification, invariant-factor
-  reader, certificate/result packaging helpers, internal recursive
-  scaffolding, and a verified same-size lead-reduction foundation, even though
-  the executable kernel and uniqueness layer are still future work.
-- `NormalForms.Bridge.MathlibPID.Basic` remains future work rather than a
-  completed comparison-theorem layer.
-- If the manuscript scope expands before submission, the Smith discussion should
-  describe the current public packaging boundary and same-size lead-reduction
-  foundation separately from the still-missing nondivisible pivot-improvement
-  and outer recursive kernel layers, since the repository deliberately avoids
-  aggressive public `simp` lemmas through `Fintype.equivFin` for elaboration
-  stability.
+Exact type tests freeze terminology and public interfaces; the evaluation
+section records the benchmark table, trust boundary, and reproducibility
+profile.
+The completed rational-canonical application has its independent v1.1 paper
+under [`rational-canonical`](rational-canonical/README.md), and the completed
+homology line has its v1.2.2 paper under
+[`homology`](homology/README.md). The binary primitive cost model has an
+independent research 0.1.0 paper under
+[`bit-cost`](bit-cost/README.md). The completed nonsingular-square
+Kannan--Bachem research line has its independent 0.1.0 manuscript under
+[`kannan-bachem`](kannan-bachem/README.md). The completed modular-HNF research
+line has its independent 0.1.0 manuscript under
+[`modular-hnf`](modular-hnf/README.md). The completed exact-integer LLL profile
+has its independent 0.1.0 manuscript under [`lll`](lll/README.md).

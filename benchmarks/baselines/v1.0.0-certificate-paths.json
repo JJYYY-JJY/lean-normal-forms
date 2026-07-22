@@ -1,0 +1,684 @@
+{
+  "case": {
+    "cols": 3,
+    "maximum_cli_certificate_integer_bits": 4,
+    "maximum_ffi_certificate_integer_bits": 4,
+    "maximum_input_integer_bits": 4,
+    "maximum_polynomial_degree": null,
+    "name": "benchmark-small-2x3-int-snf",
+    "nonzero_entries": 4,
+    "polynomial_degree_status": "not applicable to Int profile",
+    "rows": 2
+  },
+  "certificate_bytes": {
+    "cli": 1149,
+    "ffi": 1149,
+    "generated_lean": 3888
+  },
+  "created_utc": "2026-07-20T11:05:21.081371+00:00",
+  "hardware": {
+    "cpu_model": "AMD Ryzen 9 7940H w/ Radeon 780M Graphics",
+    "lean": "Lean (version 4.32.0, x86_64-unknown-linux-gnu, commit 8c9756b28d64dab099da31a4c09229a9e6a2ef35, Release)",
+    "libc": [
+      "glibc",
+      "2.43"
+    ],
+    "logical_cpus": 16,
+    "machine": "x86_64",
+    "memory_total_kib": 60370128,
+    "python": "3.14.6",
+    "release": "7.0.0-28-generic",
+    "system": "Linux"
+  },
+  "instrumentation": {
+    "gcd_count": null,
+    "pivot_count": null,
+    "ring_operation_count": null,
+        "status": "not exposed by the pure kernel or FLINT API; formal operation telemetry is a separate research gate"
+  },
+  "policy": {
+    "comparison_requires_identical_hardware_fingerprint": true,
+    "hosted_ci_absolute_time_gate": false,
+    "measurements": 7,
+    "warmups": 1
+  },
+    "profile": "v1.0.0-certificate-paths",
+  "ratios": {
+    "cli_generation_to_native_check": 1.5,
+    "cli_total_to_generation": 244.33333333333334,
+    "ffi_generation_to_native_check": 3.0,
+    "ffi_total_to_generation": 121.66666666666667
+  },
+  "schema": "normalforms.benchmark/v1",
+  "source": {
+    "git_revision": "a1c5fb154534a9b65a07f4e25e538422393b610e",
+    "tracked_patch_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "working_tree_clean": true
+  },
+  "stages": [
+    {
+      "description": "internal Lean SNF generation and inverse checks",
+      "id": "internal_lean",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 64304,
+          "system_seconds": 0.0,
+          "user_seconds": 0.09,
+          "wall_seconds": 0.1
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 64352,
+          "system_seconds": 0.01,
+          "user_seconds": 0.09,
+          "wall_seconds": 0.1
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 64396,
+          "system_seconds": 0.0,
+          "user_seconds": 0.09,
+          "wall_seconds": 0.1
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 64104,
+          "system_seconds": 0.0,
+          "user_seconds": 0.09,
+          "wall_seconds": 0.1
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 63964,
+          "system_seconds": 0.01,
+          "user_seconds": 0.12,
+          "wall_seconds": 0.13
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 64512,
+          "system_seconds": 0.0,
+          "user_seconds": 0.09,
+          "wall_seconds": 0.1
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 64240,
+          "system_seconds": 0.0,
+          "user_seconds": 0.09,
+          "wall_seconds": 0.1
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 202.0,
+          "maximum": 64512.0,
+          "median": 64304.0,
+          "minimum": 63964.0,
+          "q1": 64172.0,
+          "q3": 64374.0
+        },
+        "system_seconds": {
+          "iqr": 0.005,
+          "maximum": 0.01,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.005
+        },
+        "user_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.12,
+          "median": 0.09,
+          "minimum": 0.09,
+          "q1": 0.09,
+          "q3": 0.09
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.13,
+          "median": 0.1,
+          "minimum": 0.1,
+          "q1": 0.1,
+          "q3": 0.1
+        }
+      }
+    },
+    {
+      "description": "FLINT process worker plus JSON wrapper",
+      "id": "flint_cli_generation",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 20860,
+          "system_seconds": 0.01,
+          "user_seconds": 0.03,
+          "wall_seconds": 0.04
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 20816,
+          "system_seconds": 0.01,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.03
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 20836,
+          "system_seconds": 0.01,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.03
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 20828,
+          "system_seconds": 0.01,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.03
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 20884,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.03
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 20840,
+          "system_seconds": 0.0,
+          "user_seconds": 0.03,
+          "wall_seconds": 0.03
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 20608,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.03
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 28.0,
+          "maximum": 20884.0,
+          "median": 20836.0,
+          "minimum": 20608.0,
+          "q1": 20822.0,
+          "q3": 20850.0
+        },
+        "system_seconds": {
+          "iqr": 0.01,
+          "maximum": 0.01,
+          "median": 0.01,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.01
+        },
+        "user_seconds": {
+          "iqr": 0.005000000000000001,
+          "maximum": 0.03,
+          "median": 0.02,
+          "minimum": 0.02,
+          "q1": 0.02,
+          "q3": 0.025
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.04,
+          "median": 0.03,
+          "minimum": 0.03,
+          "q1": 0.03,
+          "q3": 0.03
+        }
+      }
+    },
+    {
+      "description": "Lean FFI worker plus the same JSON wrapper",
+      "id": "flint_ffi_generation",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 67252,
+          "system_seconds": 0.02,
+          "user_seconds": 0.04,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 66744,
+          "system_seconds": 0.01,
+          "user_seconds": 0.04,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 67128,
+          "system_seconds": 0.01,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 66504,
+          "system_seconds": 0.01,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 66612,
+          "system_seconds": 0.02,
+          "user_seconds": 0.04,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 67024,
+          "system_seconds": 0.01,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 66616,
+          "system_seconds": 0.01,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 462.0,
+          "maximum": 67252.0,
+          "median": 66744.0,
+          "minimum": 66504.0,
+          "q1": 66614.0,
+          "q3": 67076.0
+        },
+        "system_seconds": {
+          "iqr": 0.004999999999999999,
+          "maximum": 0.02,
+          "median": 0.01,
+          "minimum": 0.01,
+          "q1": 0.01,
+          "q3": 0.015
+        },
+        "user_seconds": {
+          "iqr": 0.010000000000000002,
+          "maximum": 0.05,
+          "median": 0.05,
+          "minimum": 0.04,
+          "q1": 0.04,
+          "q3": 0.05
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.06,
+          "median": 0.06,
+          "minimum": 0.06,
+          "q1": 0.06,
+          "q3": 0.06
+        }
+      }
+    },
+    {
+      "description": "strict generated module checked with decide_cbv",
+      "id": "kernel_checker",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 4179952,
+          "system_seconds": 1.55,
+          "user_seconds": 7.05,
+          "wall_seconds": 7.03
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 4174196,
+          "system_seconds": 1.54,
+          "user_seconds": 7.06,
+          "wall_seconds": 7.04
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 4147232,
+          "system_seconds": 1.51,
+          "user_seconds": 7.07,
+          "wall_seconds": 7.03
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 4228752,
+          "system_seconds": 1.63,
+          "user_seconds": 7.22,
+          "wall_seconds": 7.27
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 4178000,
+          "system_seconds": 1.54,
+          "user_seconds": 7.0,
+          "wall_seconds": 6.99
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 4125960,
+          "system_seconds": 1.66,
+          "user_seconds": 6.95,
+          "wall_seconds": 7.06
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 4188548,
+          "system_seconds": 1.59,
+          "user_seconds": 7.1,
+          "wall_seconds": 7.14
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 23536.0,
+          "maximum": 4228752.0,
+          "median": 4178000.0,
+          "minimum": 4125960.0,
+          "q1": 4160714.0,
+          "q3": 4184250.0
+        },
+        "system_seconds": {
+          "iqr": 0.06999999999999984,
+          "maximum": 1.66,
+          "median": 1.55,
+          "minimum": 1.51,
+          "q1": 1.54,
+          "q3": 1.6099999999999999
+        },
+        "user_seconds": {
+          "iqr": 0.05999999999999961,
+          "maximum": 7.22,
+          "median": 7.06,
+          "minimum": 6.95,
+          "q1": 7.025,
+          "q3": 7.085
+        },
+        "wall_seconds": {
+          "iqr": 0.0699999999999994,
+          "maximum": 7.27,
+          "median": 7.04,
+          "minimum": 6.99,
+          "q1": 7.03,
+          "q3": 7.1
+        }
+      }
+    },
+    {
+      "description": "pure checker executed as native run report",
+      "id": "native_checker",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 64464,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 64060,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 64696,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 64264,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 64528,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 64672,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 64100,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 418.0,
+          "maximum": 64696.0,
+          "median": 64464.0,
+          "minimum": 64060.0,
+          "q1": 64182.0,
+          "q3": 64600.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.01,
+          "maximum": 0.02,
+          "median": 0.02,
+          "minimum": 0.01,
+          "q1": 0.01,
+          "q3": 0.02
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.02,
+          "median": 0.02,
+          "minimum": 0.02,
+          "q1": 0.02,
+          "q3": 0.02
+        }
+      }
+    },
+    {
+      "description": "CLI generation, source emission, and kernel import",
+      "id": "cli_generate_import_total",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 4119228,
+          "system_seconds": 1.55,
+          "user_seconds": 7.09,
+          "wall_seconds": 7.13
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 4139764,
+          "system_seconds": 1.59,
+          "user_seconds": 7.25,
+          "wall_seconds": 7.25
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 4144616,
+          "system_seconds": 1.67,
+          "user_seconds": 7.37,
+          "wall_seconds": 7.46
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 4144008,
+          "system_seconds": 1.59,
+          "user_seconds": 7.49,
+          "wall_seconds": 7.52
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 4151104,
+          "system_seconds": 1.68,
+          "user_seconds": 7.34,
+          "wall_seconds": 7.47
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 4155760,
+          "system_seconds": 1.61,
+          "user_seconds": 7.27,
+          "wall_seconds": 7.33
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 4194860,
+          "system_seconds": 1.55,
+          "user_seconds": 7.13,
+          "wall_seconds": 7.14
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 11546.0,
+          "maximum": 4194860.0,
+          "median": 4144616.0,
+          "minimum": 4119228.0,
+          "q1": 4141886.0,
+          "q3": 4153432.0
+        },
+        "system_seconds": {
+          "iqr": 0.07000000000000006,
+          "maximum": 1.68,
+          "median": 1.59,
+          "minimum": 1.55,
+          "q1": 1.57,
+          "q3": 1.6400000000000001
+        },
+        "user_seconds": {
+          "iqr": 0.16500000000000092,
+          "maximum": 7.49,
+          "median": 7.27,
+          "minimum": 7.09,
+          "q1": 7.1899999999999995,
+          "q3": 7.355
+        },
+        "wall_seconds": {
+          "iqr": 0.2699999999999996,
+          "maximum": 7.52,
+          "median": 7.33,
+          "minimum": 7.13,
+          "q1": 7.195,
+          "q3": 7.465
+        }
+      }
+    },
+    {
+      "description": "FFI generation, source emission, and kernel import",
+      "id": "ffi_generate_import_total",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 4171756,
+          "system_seconds": 1.61,
+          "user_seconds": 7.25,
+          "wall_seconds": 7.25
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 4184276,
+          "system_seconds": 1.7,
+          "user_seconds": 7.19,
+          "wall_seconds": 7.3
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 4118224,
+          "system_seconds": 1.6,
+          "user_seconds": 7.23,
+          "wall_seconds": 7.24
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 4153496,
+          "system_seconds": 1.69,
+          "user_seconds": 7.44,
+          "wall_seconds": 7.53
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 4156040,
+          "system_seconds": 1.61,
+          "user_seconds": 7.2,
+          "wall_seconds": 7.26
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 4195524,
+          "system_seconds": 1.62,
+          "user_seconds": 7.22,
+          "wall_seconds": 7.3
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 4212272,
+          "system_seconds": 1.63,
+          "user_seconds": 7.6,
+          "wall_seconds": 7.59
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 35132.0,
+          "maximum": 4212272.0,
+          "median": 4171756.0,
+          "minimum": 4118224.0,
+          "q1": 4154768.0,
+          "q3": 4189900.0
+        },
+        "system_seconds": {
+          "iqr": 0.04999999999999982,
+          "maximum": 1.7,
+          "median": 1.62,
+          "minimum": 1.6,
+          "q1": 1.61,
+          "q3": 1.66
+        },
+        "user_seconds": {
+          "iqr": 0.13500000000000068,
+          "maximum": 7.6,
+          "median": 7.23,
+          "minimum": 7.19,
+          "q1": 7.21,
+          "q3": 7.345000000000001
+        },
+        "wall_seconds": {
+          "iqr": 0.16000000000000014,
+          "maximum": 7.59,
+          "median": 7.3,
+          "minimum": 7.24,
+          "q1": 7.255,
+          "q3": 7.415
+        }
+      }
+    }
+  ],
+  "trust_boundary": "Only recompiling a generated strict module yields a Lean theorem. CLI, FFI, differential, and native-checker success are untrusted run reports."
+}

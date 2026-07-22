@@ -1,10 +1,21 @@
-import NormalForms.Matrix.Hermite.Defs
+/-
+Copyright (c) 2026 Junye Ji. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Junye Ji
+-/
+module
+
+import all NormalForms.Matrix.Hermite.Defs
+import all NormalForms.Matrix.Certificates.Basic
+import all NormalForms.Matrix.Constructive
 
 /-!
 # Hermite Transform Infrastructure
 
 Row-only transform packaging and replay-transport lemmas for the Hermite algorithm.
 -/
+
+set_option linter.privateModule false
 
 namespace NormalForms.Matrix.Hermite
 
@@ -70,18 +81,26 @@ structure LeftTransform {m n : Type _} {R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
     (A : _root_.Matrix m n R) where
   U : _root_.Matrix m m R
+  U_cert : MatrixInverseCertificate U
   B : _root_.Matrix m n R
   left_mul : U * A = B
-  unimodular : Unimodular U
+
+
+/-- Determinant compatibility view derived from the stored inverse certificate. -/
+theorem LeftTransform.unimodular {m n : Type _} {R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
+    {A : _root_.Matrix m n R} (t : LeftTransform A) :
+    Unimodular t.U :=
+  t.U_cert.unimodular
 
 
 def LeftTransform.refl {m n : Type _} {R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
     (A : _root_.Matrix m n R) : LeftTransform A :=
   { U := 1
+    U_cert := MatrixInverseCertificate.one
     B := A
-    left_mul := by simp
-    unimodular := unimodular_one }
+    left_mul := NormalForms.Matrix.Constructive.one_mul A }
 
 
 def LeftTransform.trans {m n : Type _} {R : Type _}
@@ -89,35 +108,23 @@ def LeftTransform.trans {m n : Type _} {R : Type _}
     {A : _root_.Matrix m n R} (first : LeftTransform A) (second : LeftTransform first.B) :
     LeftTransform A :=
   { U := second.U * first.U
+    U_cert := second.U_cert.mul first.U_cert
     B := second.B
     left_mul := by
       calc
         (second.U * first.U) * A = second.U * (first.U * A) := by
-          rw [Matrix.mul_assoc]
+          rw [NormalForms.Matrix.Constructive.mul_assoc]
         _ = second.U * first.B := by rw [first.left_mul]
-        _ = second.B := second.left_mul
-    unimodular := unimodular_mul second.unimodular first.unimodular }
-
-
-def LeftTransform.ofRowTransform {m n : Type _} {R : Type _}
-    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R] [NormalizationMonoid R]
-    {A : _root_.Matrix m n R} (t : RowTransform A) : LeftTransform A :=
-  { U := leftAccumulator t.log
-    B := t.B
-    left_mul := by
-      have hright := rightAccumulator_eq_one_of_forall_isRow t.log t.rowLog
-      have hmul := replayLog_eq_left_right A t.log
-      simpa [hright, t.replay_eq] using hmul
-    unimodular := leftAccumulator_unimodular_of_forall t.log t.unimodular }
+        _ = second.B := second.left_mul }
 
 
 def LeftTransform.swap {m n : Type _} {R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
     (A : _root_.Matrix m n R) (i j : m) : LeftTransform A :=
   { U := rowOperationMatrix (.swap i j)
+    U_cert := rowSwapInverseCertificate i j
     B := applyRowOperation A (.swap i j)
-    left_mul := rowOperationMatrix_mul A (.swap i j)
-    unimodular := unimodular_rowOperationMatrix (.swap i j) (by trivial) }
+    left_mul := rowOperationMatrix_mul A (.swap i j) }
 
 
 def LeftTransform.add {m n : Type _} {R : Type _}
@@ -125,18 +132,18 @@ def LeftTransform.add {m n : Type _} {R : Type _}
     (A : _root_.Matrix m n R) (src dst : m) (c : R) (hne : src ≠ dst) :
     LeftTransform A :=
   { U := rowOperationMatrix (.add src dst c)
+    U_cert := rowAddInverseCertificate src dst c hne
     B := applyRowOperation A (.add src dst c)
-    left_mul := rowOperationMatrix_mul A (.add src dst c)
-    unimodular := unimodular_rowOperationMatrix (.add src dst c) hne }
+    left_mul := rowOperationMatrix_mul A (.add src dst c) }
 
 
 def LeftTransform.unitSmul {m n : Type _} {R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] [CommRing R]
-    (A : _root_.Matrix m n R) (i : m) (c : R) (hc : IsUnit c) : LeftTransform A :=
-  { U := rowOperationMatrix (.smul i c)
-    B := applyRowOperation A (.smul i c)
-    left_mul := rowOperationMatrix_mul A (.smul i c)
-    unimodular := unimodular_rowOperationMatrix (.smul i c) hc }
+    (A : _root_.Matrix m n R) (i : m) (u : Rˣ) : LeftTransform A :=
+  { U := rowOperationMatrix (.smul i (u : R))
+    U_cert := rowUnitScaleInverseCertificate i u
+    B := applyRowOperation A (.smul i (u : R))
+    left_mul := rowOperationMatrix_mul A (.smul i (u : R)) }
 
 
 def mapRowOperation {m m' R : Type _} (f : m -> m') : RowOperation R m -> RowOperation R m'

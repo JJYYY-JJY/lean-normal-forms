@@ -1,5 +1,14 @@
-import Mathlib.Data.Int.ModEq
-import NormalForms.Matrix.Certificates
+/-
+Copyright (c) 2026 Junye Ji. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Junye Ji
+-/
+module
+
+public import NormalForms.Basic
+public import NormalForms.Euclidean.ComputableOps
+public import NormalForms.Matrix.Certificates
+public import NormalForms.Matrix.Indexing
 
 /-!
 # Hermite Normal Form Definitions
@@ -7,11 +16,11 @@ import NormalForms.Matrix.Certificates
 Core Hermite predicates, canonical remainder assumptions, and lightweight search lemmas.
 -/
 
+@[expose] public section
+
 namespace NormalForms.Matrix.Hermite
 
 open scoped Matrix
-open NormalForms.Matrix.Elementary
-open NormalForms.Matrix.Certificates
 
 /-- A Euclidean domain whose remainder choice is canonical, so `%` is idempotent. -/
 class CanonicalMod (R : Type _) [EuclideanDomain R] : Prop where
@@ -88,12 +97,33 @@ inductive IsHermiteNormalFormFin {R : Type _}
       IsHermiteNormalFormFin A
 
 
-def IsHermiteNormalForm {m n R : Type _}
+/-- Strong Hermite result at the canonical `Fin` indexing seam. -/
+structure HNFResultFin {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix (Fin m) (Fin n) R) where
+  U : _root_.Matrix (Fin m) (Fin m) R
+  U_cert : NormalForms.Matrix.Certificates.MatrixInverseCertificate U
+  H : _root_.Matrix (Fin m) (Fin n) R
+  equation : U * A = H
+  isHermite : IsHermiteNormalFormFin H
+
+
+/-- Hermite semantics relative to an explicit row/column enumeration. -/
+def IsHermiteNormalFormWith {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (indexing : NormalForms.Matrix.MatrixIndexing m n)
     (A : _root_.Matrix m n R) : Prop :=
   IsHermiteNormalFormFin
-    (_root_.Matrix.reindex (Fintype.equivFin m) (Fintype.equivFin n) A)
+    (indexing.reindex A)
+
+
+/-- Hermite semantics for the increasing enumeration of finite linear orders. -/
+def IsHermiteNormalFormOrdered {m n R : Type _}
+    [Fintype m] [Fintype n] [LinearOrder m] [LinearOrder n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (A : _root_.Matrix m n R) : Prop :=
+  IsHermiteNormalFormWith (NormalForms.Matrix.MatrixIndexing.ordered m n) A
 
 
 

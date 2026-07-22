@@ -1,0 +1,24 @@
+{
+  "title": "lean-normal-forms",
+  "description": "Certified executable Hermite and Smith normal forms in Lean 4, with independently imported rational-canonical and finite-free integer homology applications. Version 1.2.1 derives normalized integer boundary matrices from finite nondegenerate-simplex face tables, explicitly erases degenerate faces, validates alternating signs and the chain equation, and executes the resulting certified homology calculations.",
+  "license": "Apache-2.0",
+  "version": "1.2.1",
+  "creators": [
+    {
+      "name": "Ji, Junye",
+      "affiliation": "Independent"
+    }
+  ],
+  "keywords": [
+    "Lean 4",
+    "mathlib",
+    "Hermite normal form",
+    "Smith normal form",
+    "rational canonical form",
+    "homology",
+    "chain complexes",
+    "simplicial sets",
+    "invariant factors",
+    "formalized mathematics"
+  ]
+}

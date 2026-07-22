@@ -1,0 +1,47 @@
+\section{Execution, audit, and artifact}
+
+The regression suite covers scalar and diagonal matrices, a nontrivial
+coordinate swap, a size-two Jordan block, exact companion layouts, both
+change-of-basis inverse identities, and dimension zero.  The independent API
+test compiles the main entry points and exact result equations.  The
+rational-canonical axiom audit observes only \code{propext},
+\code{Quot.sound}, and \code{Classical.choice}.  Choice occurs in the semantic
+quotient and basis layer; no project axiom, \code{sorryAx}, or native/compiler
+trust axiom is admitted.
+
+The native benchmark uses
+\[
+  A=\begin{pmatrix}1/2&1\\0&1/2\end{pmatrix}.
+\]
+Its factors have degrees $[0,2]$, and the maximum rational coefficient bit
+length grows from 2 in the input to 3 in the output.  Table~\ref{tab:bench}
+summarizes one warmup followed by seven observations on the host fingerprint
+stored with the raw data.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Stage & Median wall time & Median maximum RSS\\
+\midrule
+Invariant generation & 0.07 s & 72,728 KiB\\
+Companion batch (1,000 checks) & 0.68 s & 72,844 KiB\\
+End to end (one check) & 0.07 s & 72,896 KiB\\
+\bottomrule
+\end{tabular}
+\caption{Native rational-canonical profile.  The isolated median companion
+batch is 0.617 s, approximately 617 microseconds per structural check.}
+\label{tab:bench}
+\end{table}
+
+Wall time is observational and is never a portable hosted-CI threshold.  The
+authoritative JSON and CSV contain all observations, inclusive-quartile
+summaries, source revision, and hardware data.  Operation, pivot, and gcd
+counts remain explicitly unavailable; assigning guessed counts would blur
+the boundary with the separate formal bit-cost project.
+
+The artifact profile rebuilds the application facade, API tests, full
+regression driver, native executable, audit, and fresh benchmark.  It does
+not link FLINT.  Benchmark success is not used to construct a theorem; the
+kernel-checked Smith, module, companion, and similarity proofs establish
+correctness.

@@ -1,0 +1,19 @@
+{
+  "title": "lean-normal-forms",
+  "description": "Certified executable Hermite and Smith normal forms in Lean 4 over Euclidean domains, with explicit inverse certificates, explicit indexing semantics, constructive integer and rational-polynomial runtimes, strict kernel-checked external certificates, isolated FLINT CLI/FFI generators, reproducible certificate-path benchmarks, intrinsic Smith signatures, finite-free presentations, and a bridge to mathlib's PID results.",
+  "license": "Apache-2.0",
+  "version": "1.0.0",
+  "creators": [
+    {
+      "name": "Ji, Junye",
+      "affiliation": "Independent"
+    }
+  ],
+  "keywords": [
+    "Lean 4",
+    "mathlib",
+    "Hermite normal form",
+    "Smith normal form",
+    "formalized mathematics"
+  ]
+}

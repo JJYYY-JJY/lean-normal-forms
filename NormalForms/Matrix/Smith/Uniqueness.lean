@@ -1,7 +1,14 @@
-import Mathlib.Algebra.GCDMonoid.Finset
-import Mathlib.Data.Fin.SuccPred
-import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
-import NormalForms.Matrix.Smith.Basic
+/-
+Copyright (c) 2026 Junye Ji. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Junye Ji
+-/
+module
+
+public import NormalForms.Matrix.Smith.Basic
+import all NormalForms.Matrix.Certificates.Basic
+import all NormalForms.Matrix.Hermite.Transform
+import all NormalForms.Matrix.Smith.Defs
 
 /-!
 # Smith Uniqueness Helpers
@@ -140,7 +147,7 @@ private theorem det_submatrix_mul_aux {k m n p : Nat} {R : Type _}
       (↑(Equiv.Perm.sign σ : ℤˣ) : R) * ∏ i, M (r (σ i)) (f i) * N (f i) (c i)) = 0 := by
   obtain ⟨i, j, hij, hne⟩ : ∃ i j, f i = f j ∧ i ≠ j := by
     rw [Function.Injective] at hf
-    push_neg at hf
+    push Not at hf
     exact hf
   have hFactor :
       (∑ σ : Equiv.Perm (Fin k),
@@ -165,7 +172,7 @@ private theorem det_submatrix_mul_aux {k m n p : Nat} {R : Type _}
             simp
     _ = 0 := by simp [hdet]
 
-private theorem det_submatrix_mul_sum_embeddings {k m n p : Nat} {R : Type _}
+theorem det_submatrix_mul_sum_embeddings {k m n p : Nat} {R : Type _}
     [CommRing R]
     (M : _root_.Matrix (Fin m) (Fin n) R)
     (N : _root_.Matrix (Fin n) (Fin p) R)
@@ -576,7 +583,7 @@ private theorem diagPrefixProduct_head_mul_lowerRight {m n : Nat} {R : Type _}
       A 0 0 * diagPrefixProduct (lowerRight A) k hk := by
   let f : Fin (k + 1) → R := fun i =>
     diagEntry A i.1 (lt_of_lt_of_le i.is_lt (succ_le_min_succ hk))
-  simpa [diagPrefixProduct, f, diagEntry, diagEntry_lowerRight] using Fin.prod_univ_succ f
+  simpa [diagPrefixProduct, f, diagEntry, lowerRight] using Fin.prod_univ_succ f
 private theorem diagPrefixProduct_dvd_minor_step {m n k : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R]
     {A : _root_.Matrix (Fin (m + 1)) (Fin (n + 1)) R}
@@ -729,7 +736,10 @@ private theorem diagPrefixProduct_dvd_minor_step {m n k : Nat} {R : Type _}
             _root_.Matrix.det (B.submatrix Fin.succ (Fin.succAbove j)) := by
         dsimp [B]
         rw [_root_.Matrix.submatrix_submatrix]
-        simpa [rTail, cTail, Function.comp] using hTail rTail cTail
+        change
+          diagPrefixProduct (lowerRight A) k hk ∣
+            _root_.Matrix.det ((lowerRight A).submatrix rTail cTail)
+        exact hTail rTail cTail
       have hmul :
           A 0 0 * diagPrefixProduct (lowerRight A) k hk ∣
             B 0 j * _root_.Matrix.det (B.submatrix Fin.succ (Fin.succAbove j)) := by
@@ -737,7 +747,7 @@ private theorem diagPrefixProduct_dvd_minor_step {m n k : Nat} {R : Type _}
       simpa [B, mul_assoc, mul_left_comm, mul_comm] using
         dvd_mul_of_dvd_right hmul ((-1 : R) ^ (j : Nat))
 
-private theorem diagPrefixProduct_dvd_minor {m n k : Nat} {R : Type _}
+theorem diagPrefixProduct_dvd_minor {m n k : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R]
     {A : _root_.Matrix (Fin m) (Fin n) R}
     (hOff : offDiagZero A) (hChain : diagChain A)
@@ -787,9 +797,7 @@ private theorem diagPrefixProduct_dvd_minor {m n k : Nat} {R : Type _}
                   simp [hdiagZero]
                 intro r c
                 have hdetZero : _root_.Matrix.det (A.submatrix r c) = 0 := by
-                  simpa [hAzero] using
-                    (_root_.Matrix.det_zero (R := R) (n := Fin (k + 1))
-                      (by infer_instance : Nonempty (Fin (k + 1))))
+                  simp [hAzero]
                 rw [hprefixZero, hdetZero]
               · have hTail : ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n,
                     diagPrefixProduct (lowerRight A) k hkTail ∣
@@ -797,7 +805,7 @@ private theorem diagPrefixProduct_dvd_minor {m n k : Nat} {R : Type _}
                   ih (A := lowerRight A) (offDiagZero_lowerRight hOff)
                     (diagChain_lowerRight hChain) hkTail
                 exact diagPrefixProduct_dvd_minor_step (A := A) hOff hChain hzero hkTail hTail
-private theorem invariantFactors_length_le_min {m n : Nat} {R : Type _}
+theorem invariantFactors_length_le_min {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     (A : _root_.Matrix (Fin m) (Fin n) R) :
     (invariantFactors A).length ≤ Nat.min m n := by
@@ -823,7 +831,7 @@ private theorem lt_min_of_succ_lt_min_succ {a b k : Nat}
     ⟨Nat.lt_of_succ_lt_succ (Nat.lt_of_lt_of_le hk (Nat.min_le_left _ _)),
       Nat.lt_of_succ_lt_succ (Nat.lt_of_lt_of_le hk (Nat.min_le_right _ _))⟩
 
-private theorem diagEntry_ne_zero_of_lt_invariantFactors_length {m n : Nat} {R : Type _}
+theorem diagEntry_ne_zero_of_lt_invariantFactors_length {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin m) (Fin n) R}
     (hA : IsSmithNormalFormFin A) :
@@ -853,7 +861,7 @@ private theorem diagEntry_ne_zero_of_lt_invariantFactors_length {m n : Nat} {R :
           have hne := ih k hkLen' hk'
           simpa [diagEntry_lowerRight (A := A) k hk'] using hne
 
-private theorem diagEntry_eq_zero_of_invariantFactors_length_le {m n : Nat} {R : Type _}
+theorem diagEntry_eq_zero_of_invariantFactors_length_le {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin m) (Fin n) R}
     (hA : IsSmithNormalFormFin A) :
@@ -888,7 +896,7 @@ private theorem diagEntry_eq_zero_of_invariantFactors_length_le {m n : Nat} {R :
           have hk' : k < Nat.min _ _ := lt_min_of_succ_lt_min_succ hk
           rw [← diagEntry_lowerRight (A := A) k hk']
           exact ih k hkLen' hk'
-private theorem diagEntry_dvd_of_diagChain {m n : Nat} {R : Type _}
+theorem diagEntry_dvd_of_diagChain {m n : Nat} {R : Type _}
     [EuclideanDomain R]
     {A : _root_.Matrix (Fin m) (Fin n) R}
     (hChain : diagChain A) :
@@ -925,7 +933,7 @@ private theorem diagEntry_dvd_of_diagChain {m n : Nat} {R : Type _}
                   rw [← diagEntry_lowerRight (A := A) i hi', ← diagEntry_lowerRight (A := A) j hj']
                   exact ih (A := lowerRight A) (diagChain_lowerRight hChain) i j
                     (Nat.succ_le_succ_iff.mp hij) hi' hj'
-private def initialEmbedding {k m : Nat} (hk : k ≤ m) : Fin k ↪ Fin m where
+def initialEmbedding {k m : Nat} (hk : k ≤ m) : Fin k ↪ Fin m where
   toFun := fun i => ⟨i.1, Nat.lt_of_lt_of_le i.is_lt hk⟩
   inj' := by
     intro i j hij
@@ -934,7 +942,7 @@ private def initialEmbedding {k m : Nat} (hk : k ≤ m) : Fin k ↪ Fin m where
     cases hij
     rfl
 
-private theorem det_leadingMinor_eq_diagPrefixProduct {m n k : Nat} {R : Type _}
+theorem det_leadingMinor_eq_diagPrefixProduct {m n k : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R]
     {A : _root_.Matrix (Fin m) (Fin n) R}
     (hOff : offDiagZero A) (hk : k ≤ Nat.min m n) :
@@ -961,19 +969,6 @@ private theorem det_leadingMinor_eq_diagPrefixProduct {m n k : Nat} {R : Type _}
       exact hOff (r i) (c j) (by simpa [r, c, initialEmbedding] using hijVal)
   rw [hDiag, _root_.Matrix.det_diagonal, diagPrefixProduct]
 
-private theorem diagPrefixProduct_normalized {m n : Nat} {R : Type _}
-    [EuclideanDomain R] [NormalizationMonoid R]
-    {A : _root_.Matrix (Fin m) (Fin n) R}
-    (hNorm : diagNormalized A) :
-    ∀ k (hk : k ≤ Nat.min m n),
-      normalize (diagPrefixProduct A k hk) = diagPrefixProduct A k hk
-  | 0, hk => by
-      simp [diagPrefixProduct_zero (A := A) hk]
-  | k + 1, hk => by
-      rw [diagPrefixProduct_succ A k hk, normalize.map_mul,
-        diagPrefixProduct_normalized hNorm k (Nat.le_trans (Nat.le_succ k) hk),
-        ← hNorm k (lt_of_lt_of_le (Nat.lt_succ_self k) hk)]
-
 private theorem diagPrefixProduct_ne_zero_of_le_invariantFactors_length {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin m) (Fin n) R}
@@ -992,7 +987,7 @@ private theorem diagPrefixProduct_ne_zero_of_le_invariantFactors_length {m n : N
           (Nat.lt_of_succ_le hlen)
           (lt_of_lt_of_le (Nat.lt_succ_self k) hk)
 
-private theorem diagPrefixProduct_eq_zero_of_invariantFactors_length_lt {m n : Nat} {R : Type _}
+theorem diagPrefixProduct_eq_zero_of_invariantFactors_length_lt {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix (Fin m) (Fin n) R}
     (hA : IsSmithNormalFormFin A) :
@@ -1009,20 +1004,17 @@ private theorem diagPrefixProduct_eq_zero_of_invariantFactors_length_lt {m n : N
       rw [diagPrefixProduct_succ A k hk]
       simp [hDiagZero]
 
-private theorem diagPrefixProduct_eq_of_two_sided_equiv {m n : Nat} {R : Type _}
-    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+private theorem diagPrefixProduct_dvd_of_two_sided_equiv {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R]
     {A B : _root_.Matrix (Fin m) (Fin n) R}
-    (hA : IsSmithNormalFormFin A)
-    (hB : IsSmithNormalFormFin B)
+    (hAOff : offDiagZero A)
+    (hAChain : diagChain A)
+    (hBOff : offDiagZero B)
     {U : _root_.Matrix (Fin m) (Fin m) R}
     {V : _root_.Matrix (Fin n) (Fin n) R}
-    (hU : NormalForms.Matrix.Certificates.Unimodular U)
-    (hV : NormalForms.Matrix.Certificates.Unimodular V)
     (hEq : U * A * V = B) :
     ∀ k (hk : k ≤ Nat.min m n),
-      diagPrefixProduct A k hk = diagPrefixProduct B k hk := by
-  rcases isSmithNormalFormFin_toDiag hA with ⟨hAOff, hANorm, hAChain⟩
-  rcases isSmithNormalFormFin_toDiag hB with ⟨hBOff, hBNorm, hBChain⟩
+      diagPrefixProduct A k hk ∣ diagPrefixProduct B k hk := by
   intro k hk
   have hAminors :
       ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n,
@@ -1049,6 +1041,22 @@ private theorem diagPrefixProduct_eq_of_two_sided_equiv {m n : Nat} {R : Type _}
           (initialEmbedding (Nat.le_trans hk (Nat.min_le_left _ _)))
           (initialEmbedding (Nat.le_trans hk (Nat.min_le_right _ _)))
     simpa [det_leadingMinor_eq_diagPrefixProduct (A := B) hBOff hk] using hMinor
+  exact hAB
+
+private theorem diagPrefixProduct_eq_of_two_sided_equiv {m n : Nat} {R : Type _}
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A B : _root_.Matrix (Fin m) (Fin n) R}
+    (hA : IsSmithNormalFormFin A)
+    (hB : IsSmithNormalFormFin B)
+    {U : _root_.Matrix (Fin m) (Fin m) R}
+    {V : _root_.Matrix (Fin n) (Fin n) R}
+    (hU : NormalForms.Matrix.Certificates.Unimodular U)
+    (hV : NormalForms.Matrix.Certificates.Unimodular V)
+    (hEq : U * A * V = B) :
+    ∀ k (hk : k ≤ Nat.min m n),
+      diagPrefixProduct A k hk = diagPrefixProduct B k hk := by
+  rcases isSmithNormalFormFin_toDiag hA with ⟨hAOff, hANorm, hAChain⟩
+  rcases isSmithNormalFormFin_toDiag hB with ⟨hBOff, hBNorm, hBChain⟩
   have hEqInv : U⁻¹ * B * V⁻¹ = A := by
     calc
       U⁻¹ * B * V⁻¹ = U⁻¹ * (U * A * V) * V⁻¹ := by rw [hEq]
@@ -1057,36 +1065,50 @@ private theorem diagPrefixProduct_eq_of_two_sided_equiv {m n : Nat} {R : Type _}
         rw [_root_.Matrix.nonsing_inv_mul_cancel_left (A := U) (B := A * V) hU]
       _ = A := by
         rw [_root_.Matrix.mul_nonsing_inv_cancel_right (A := V) (B := A) hV]
-  have hBminors :
-      ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n,
-        diagPrefixProduct B k hk ∣ _root_.Matrix.det (B.submatrix r c) :=
-    diagPrefixProduct_dvd_minor (A := B) hBOff hBChain hk
-  have hLeftInv :
-      ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n,
-        diagPrefixProduct B k hk ∣ _root_.Matrix.det ((U⁻¹ * B).submatrix r c) :=
-    minor_dvd_of_left_mul (k := k) (U := U⁻¹) (M := B) (d := diagPrefixProduct B k hk) hBminors
-  have hRightInv :
-      ∀ r : Fin k ↪ Fin m, ∀ c : Fin k ↪ Fin n,
-        diagPrefixProduct B k hk ∣ _root_.Matrix.det (((U⁻¹ * B) * V⁻¹).submatrix r c) :=
-    minor_dvd_of_right_mul (k := k) (M := U⁻¹ * B) (N := V⁻¹)
-      (d := diagPrefixProduct B k hk) hLeftInv
-  have hBA : diagPrefixProduct B k hk ∣ diagPrefixProduct A k hk := by
-    have hMinor :
-        diagPrefixProduct B k hk ∣
-          _root_.Matrix.det
-            (A.submatrix
-              (initialEmbedding (Nat.le_trans hk (Nat.min_le_left _ _)))
-              (initialEmbedding (Nat.le_trans hk (Nat.min_le_right _ _)))) := by
-      rw [← hEqInv]
-      simpa [_root_.Matrix.mul_assoc] using
-        hRightInv
-          (initialEmbedding (Nat.le_trans hk (Nat.min_le_left _ _)))
-          (initialEmbedding (Nat.le_trans hk (Nat.min_le_right _ _)))
-    simpa [det_leadingMinor_eq_diagPrefixProduct (A := A) hAOff hk] using hMinor
-  exact dvd_antisymm_of_normalize_eq
-    (diagPrefixProduct_normalized hANorm k hk)
-    (diagPrefixProduct_normalized hBNorm k hk)
-    hAB hBA
+  intro k
+  induction k with
+  | zero =>
+      intro hk
+      simp [diagPrefixProduct_zero]
+  | succ k ih =>
+      intro hk
+      have hkPrev : k ≤ Nat.min m n := Nat.le_trans (Nat.le_succ k) hk
+      have hPrev :
+          diagPrefixProduct A k hkPrev = diagPrefixProduct B k hkPrev :=
+        ih hkPrev
+      by_cases hPrevZero : diagPrefixProduct A k hkPrev = 0
+      · have hPrevBZero : diagPrefixProduct B k hkPrev = 0 :=
+          hPrev.symm.trans hPrevZero
+        rw [diagPrefixProduct_succ A k hk, diagPrefixProduct_succ B k hk,
+          hPrevZero, hPrevBZero]
+        simp
+      · have hAB :
+            diagPrefixProduct A (k + 1) hk ∣ diagPrefixProduct B (k + 1) hk :=
+          diagPrefixProduct_dvd_of_two_sided_equiv hAOff hAChain hBOff hEq (k + 1) hk
+        have hBA :
+            diagPrefixProduct B (k + 1) hk ∣ diagPrefixProduct A (k + 1) hk :=
+          diagPrefixProduct_dvd_of_two_sided_equiv hBOff hBChain hAOff hEqInv (k + 1) hk
+        have hPrevBNe : diagPrefixProduct B k hkPrev ≠ 0 := by
+          rw [← hPrev]
+          exact hPrevZero
+        have hEntryAB :
+            diagEntry A k (lt_of_lt_of_le (Nat.lt_succ_self k) hk) ∣
+              diagEntry B k (lt_of_lt_of_le (Nat.lt_succ_self k) hk) := by
+          rw [diagPrefixProduct_succ A k hk, diagPrefixProduct_succ B k hk, hPrev] at hAB
+          exact (mul_dvd_mul_iff_left hPrevBNe).1 hAB
+        have hEntryBA :
+            diagEntry B k (lt_of_lt_of_le (Nat.lt_succ_self k) hk) ∣
+              diagEntry A k (lt_of_lt_of_le (Nat.lt_succ_self k) hk) := by
+          rw [diagPrefixProduct_succ A k hk, diagPrefixProduct_succ B k hk, ← hPrev] at hBA
+          exact (mul_dvd_mul_iff_left hPrevZero).1 hBA
+        have hEntry :
+            diagEntry A k (lt_of_lt_of_le (Nat.lt_succ_self k) hk) =
+              diagEntry B k (lt_of_lt_of_le (Nat.lt_succ_self k) hk) :=
+          dvd_antisymm_of_normalize_eq
+            (hANorm k (lt_of_lt_of_le (Nat.lt_succ_self k) hk)).symm
+            (hBNorm k (lt_of_lt_of_le (Nat.lt_succ_self k) hk)).symm
+            hEntryAB hEntryBA
+        rw [diagPrefixProduct_succ A k hk, diagPrefixProduct_succ B k hk, hPrev, hEntry]
 
 private theorem invariantFactors_length_eq_of_two_sided_equiv {m n : Nat} {R : Type _}
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
@@ -1243,8 +1265,15 @@ theorem isSmithNormalFormDiag_toFin {m n : Nat} {R : Type _}
                     i.succ = ⟨j.1 + 1, Nat.succ_lt_succ (by simpa [hij] using i.is_lt)⟩ := by
                   ext
                   simp [hij]
+                have hcol :
+                    j.succ =
+                      ⟨j.1 + 1,
+                        Nat.lt_of_lt_of_le (succ_lt_min_succ hk) (Nat.min_le_right _ _)⟩ := by
+                  ext
+                  rfl
                 rw [hrow]
-                simpa [diagEntry] using hdiag
+                rw [hcol]
+                exact hdiag
               · rw [hOff i.succ j.succ (by simpa using hij)]
                 exact dvd_zero (A 0 0)
 
@@ -1338,20 +1367,21 @@ theorem isSmithNormalFormDiag_eq_of_invariantFactors_eq {m n : Nat} {R : Type _}
 
 end Internal
 
-theorem isSmithNormalForm_unique_of_two_sided_equiv {m n R : Type _}
+public theorem isSmithNormalFormWith_unique_of_two_sided_equiv {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (indexing : NormalForms.Matrix.MatrixIndexing m n)
     {A B : _root_.Matrix m n R}
-    (hA : IsSmithNormalForm A)
-    (hB : IsSmithNormalForm B)
+    (hA : IsSmithNormalFormWith indexing A)
+    (hB : IsSmithNormalFormWith indexing B)
     {U : _root_.Matrix m m R}
     {V : _root_.Matrix n n R}
     (hU : NormalForms.Matrix.Certificates.Unimodular U)
     (hV : NormalForms.Matrix.Certificates.Unimodular V)
     (hEq : U * A * V = B) :
     A = B := by
-  let em := Fintype.equivFin m
-  let en := Fintype.equivFin n
+  let em := indexing.rows.equiv
+  let en := indexing.cols.equiv
   have hEqFin :
       _root_.Matrix.reindex em em U *
           _root_.Matrix.reindex em en A *
@@ -1376,7 +1406,7 @@ theorem isSmithNormalForm_unique_of_two_sided_equiv {m n R : Type _}
   have hUniqueFin :
       _root_.Matrix.reindex em en A =
         _root_.Matrix.reindex em en B := by
-    unfold IsSmithNormalForm at hA hB
+    unfold IsSmithNormalFormWith NormalForms.Matrix.MatrixIndexing.reindex at hA hB
     exact Internal.isSmithNormalFormFin_unique_of_two_sided_equiv
       (Internal.isSmithNormalFormDiag_toFin hA)
       (Internal.isSmithNormalFormDiag_toFin hB)
@@ -1387,54 +1417,75 @@ theorem isSmithNormalForm_unique_of_two_sided_equiv {m n R : Type _}
   simpa [em, en] using congrFun (congrFun hUniqueFin (em i)) (en j)
 
 /-- Smith-normal-form matrices are uniquely determined by their invariant factors. -/
-theorem isSmithNormalForm_eq_of_invariantFactors_eq {m n R : Type _}
+public theorem isSmithNormalFormWith_eq_of_invariantFactors_eq {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    (indexing : NormalForms.Matrix.MatrixIndexing m n)
     {A B : _root_.Matrix m n R}
-    (hA : IsSmithNormalForm A)
-    (hB : IsSmithNormalForm B)
-    (hInv : smithInvariantFactors A = smithInvariantFactors B) :
+    (hA : IsSmithNormalFormWith indexing A)
+    (hB : IsSmithNormalFormWith indexing B)
+    (hInv :
+      smithInvariantFactorsWith indexing A = smithInvariantFactorsWith indexing B) :
     A = B := by
-  let em := Fintype.equivFin m
-  let en := Fintype.equivFin n
+  let em := indexing.rows.equiv
+  let en := indexing.cols.equiv
   have hEqFin :
       _root_.Matrix.reindex em en A =
         _root_.Matrix.reindex em en B := by
     exact Internal.isSmithNormalFormDiag_eq_of_invariantFactors_eq hA hB <|
-      by simpa [smithInvariantFactors, em, en] using hInv
+      by simpa [smithInvariantFactorsWith, smithInvariantFactorsFin,
+        NormalForms.Matrix.MatrixIndexing.reindex, em, en] using hInv
   ext i j
   simpa [em, en] using congrFun (congrFun hEqFin (em i)) (en j)
 
-theorem SNFResult.eq_of_invariantFactors_eq {m n R : Type _}
+/-- The canonical `Fin` Smith matrix is independent of the stored indexing. -/
+public theorem SNFResult.finResult_S_eq {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix m n R}
+    (source target : SNFResult A) :
+    source.finResult.S = target.finResult.S := by
+  let cert := source.finChangeIndexingCertificate target
+  exact Internal.isSmithNormalFormFin_unique_of_two_sided_equiv
+    source.finResult.isSmith target.finResult.isSmith
+    cert.U_cert.unimodular cert.V_cert.unimodular cert.equation
+
+/-- Canonical invariant factors do not depend on the chosen indexing. -/
+public theorem SNFResult.invariantFactors_eq_of_indexing_change {m n R : Type _}
+    [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
+    [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
+    {A : _root_.Matrix m n R}
+    (source target : SNFResult A) :
+    source.invariantFactors = target.invariantFactors := by
+  rw [source.invariantFactors_eq_fin, target.invariantFactors_eq_fin,
+    source.finResult_S_eq target]
+
+public theorem SNFResult.eq_of_invariantFactors_eq {m n R : Type _}
     [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
     [EuclideanDomain R] [NormalizationMonoid R] [DecidableEq R]
     {A : _root_.Matrix m n R}
     (result₁ result₂ : SNFResult A)
+    (hindexing : result₁.indexing = result₂.indexing)
     (hInv : result₁.invariantFactors = result₂.invariantFactors) :
-    result₁.S = result₂.S :=
-  isSmithNormalForm_eq_of_invariantFactors_eq result₁.isSmith result₂.isSmith hInv
+    result₁.S = result₂.S := by
+  have hSmith₂ :
+      IsSmithNormalFormWith result₁.indexing result₂.S := by
+    rw [hindexing]
+    exact result₂.isSmith
+  have hInv' :
+      smithInvariantFactorsWith result₁.indexing result₁.S =
+        smithInvariantFactorsWith result₁.indexing result₂.S := by
+    calc
+      smithInvariantFactorsWith result₁.indexing result₁.S =
+          result₁.invariantFactors := result₁.invariantFactorsWith_S
+      _ = result₂.invariantFactors := hInv
+      _ = smithInvariantFactorsWith result₂.indexing result₂.S :=
+        result₂.invariantFactorsWith_S.symm
+      _ = smithInvariantFactorsWith result₁.indexing result₂.S := by rw [hindexing]
+  exact isSmithNormalFormWith_eq_of_invariantFactors_eq result₁.indexing
+    result₁.isSmith hSmith₂ hInv'
 
 end NormalForms.Matrix.Smith
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

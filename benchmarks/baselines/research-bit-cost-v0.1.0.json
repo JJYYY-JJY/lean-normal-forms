@@ -1,0 +1,187 @@
+{
+  "schema": "normalforms.bit-cost-benchmark/v1",
+  "researchVersion": "0.1.0",
+  "sourceCommit": "529c7455347b8d0da53a2fda9b9735645ed0dc9b",
+  "binarySha256": "2ca367e661ed4baacc68ae9177ff0b47926694f7341a24b5821b6dcd9e2d183a",
+  "warmups": 1,
+  "measurementCount": 7,
+  "hardware": {
+    "cpu": "AMD Ryzen 9 7940H w/ Radeon 780M Graphics",
+    "logicalCpus": 16,
+    "machine": "x86_64",
+    "kernel": "7.0.0-28-generic",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.43",
+    "python": "3.14.6"
+  },
+  "measurements": [
+    {
+      "wall_ns": 23259883,
+      "max_rss_kib": 69468
+    },
+    {
+      "wall_ns": 25594011,
+      "max_rss_kib": 69700
+    },
+    {
+      "wall_ns": 23625818,
+      "max_rss_kib": 69452
+    },
+    {
+      "wall_ns": 22955865,
+      "max_rss_kib": 69620
+    },
+    {
+      "wall_ns": 22634062,
+      "max_rss_kib": 70156
+    },
+    {
+      "wall_ns": 24241881,
+      "max_rss_kib": 69332
+    },
+    {
+      "wall_ns": 22913966,
+      "max_rss_kib": 69744
+    }
+  ],
+  "summary": {
+    "wall_ns_median": 23259883,
+    "wall_ns_iqr": 998934.0,
+    "max_rss_kib_median": 69620,
+    "max_rss_kib_iqr": 262.0
+  },
+  "cases": [
+    {
+      "operation": "add",
+      "left": -37,
+      "right": 19,
+      "value": -18,
+      "cost": 8,
+      "bound": 289,
+      "valid": true
+    },
+    {
+      "operation": "add",
+      "left": 65535,
+      "right": 1,
+      "value": 65536,
+      "cost": 18,
+      "bound": 649,
+      "valid": true
+    },
+    {
+      "operation": "add",
+      "left": -1048576,
+      "right": 1048575,
+      "value": -1,
+      "cost": 23,
+      "bound": 3529,
+      "valid": true
+    },
+    {
+      "operation": "mul",
+      "left": -13,
+      "right": 11,
+      "value": -143,
+      "cost": 18,
+      "bound": 789,
+      "valid": true
+    },
+    {
+      "operation": "mul",
+      "left": 255,
+      "right": 257,
+      "value": 65535,
+      "cost": 19,
+      "bound": 6571,
+      "valid": true
+    },
+    {
+      "operation": "mul",
+      "left": 0,
+      "right": 1048576,
+      "value": 0,
+      "cost": 1,
+      "bound": 11131,
+      "valid": true
+    },
+    {
+      "operation": "divmod",
+      "left": -37,
+      "right": 5,
+      "quotient": -8,
+      "remainder": 3,
+      "cost": 48,
+      "bound": 89,
+      "valid": true
+    },
+    {
+      "operation": "divmod",
+      "left": 37,
+      "right": -5,
+      "quotient": -7,
+      "remainder": 2,
+      "cost": 37,
+      "bound": 89,
+      "valid": true
+    },
+    {
+      "operation": "divmod",
+      "left": 17,
+      "right": 0,
+      "quotient": 0,
+      "remainder": 17,
+      "cost": 1,
+      "bound": 38,
+      "valid": true
+    },
+    {
+      "operation": "xgcd",
+      "left": 240,
+      "right": 46,
+      "gcd": 2,
+      "left_coeff": -9,
+      "right_coeff": 47,
+      "cost": 188,
+      "coefficient_bound": 116,
+      "bound": 298384,
+      "valid": true
+    },
+    {
+      "operation": "xgcd",
+      "left": -240,
+      "right": 46,
+      "gcd": 2,
+      "left_coeff": 9,
+      "right_coeff": 47,
+      "cost": 268,
+      "coefficient_bound": 228,
+      "bound": 1972001,
+      "valid": true
+    },
+    {
+      "operation": "xgcd",
+      "left": 17,
+      "right": -5,
+      "gcd": 1,
+      "left_coeff": 3,
+      "right_coeff": 10,
+      "cost": 78,
+      "coefficient_bound": 29,
+      "bound": 7594,
+      "valid": true
+    },
+    {
+      "operation": "xgcd",
+      "left": 0,
+      "right": 0,
+      "gcd": 0,
+      "left_coeff": 1,
+      "right_coeff": 0,
+      "cost": 1,
+      "coefficient_bound": 1,
+      "bound": 1,
+      "valid": true
+    }
+  ],
+  "interpretation": "Native wall time is experimental. Formal claims use the modeled cost, coefficient_bound, and proved bound fields."
+}

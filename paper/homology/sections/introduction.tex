@@ -1,0 +1,61 @@
+\section{Introduction}
+
+For a chain complex of free abelian groups,
+\[
+  \cdots \longrightarrow C_{n+1}
+  \xrightarrow{d_{n+1}} C_n
+  \xrightarrow{d_n} C_{n-1}\longrightarrow\cdots,
+  \qquad d_nd_{n+1}=0,
+\]
+ordinary homology is
+\[
+  H_n=\ker d_n/\operatorname{im}d_{n+1}.
+\]
+Smith normal form classifies cokernels of integer matrices, but computing
+$H_n$ requires more than applying Smith form independently to the two
+boundaries.  One must extract an integral basis of the kernel, express the
+incoming boundary in exactly that basis, prove that the resulting
+coordinates are valid, and relate the second cokernel to the original
+quotient.
+
+These steps are especially important in a proof assistant.  A rank count
+alone cannot supply the change of basis.  A determinant-based invertibility
+witness does not expose the inverse needed to transport coordinates.  A
+runtime list of invariant factors is not itself a theorem about the quotient.
+Index arithmetic also has to cover zero groups and the top and bottom
+degrees without informal dimension conventions.
+
+We implement the complete construction in Lean 4~\citep{demoura2021lean4}
+and mathlib~\citep{mathlib2020}, using the strong Smith-normal-form results
+of \code{lean-normal-forms}.  Each Smith result records $U$, $V$, chosen
+inverses, both inverse identities, and
+\[
+  Ud_nV=S.
+\]
+The main contributions are:
+
+\begin{enumerate}
+\item a finite-free integer chain-complex interface with a fixed matrix
+  orientation and an intrinsic homology quotient;
+\item an explicit linear equivalence between Smith tail coordinates and
+  $\ker d_n$;
+\item a proof that $V^{-1}d_{n+1}$ has zero non-kernel prefix;
+\item a second certified Smith calculation and an additive decomposition of
+  ordinary homology into cyclic and free summands;
+\item a finite normalized simplicial frontend deriving signed boundary
+  matrices from nondegenerate face tables;
+\item an exact comparison with mathlib categorical homology, including the
+  exceptional shape of the degree-zero short complex;
+\item chain isomorphisms with mathlib's normalized nondegenerate and
+  normalized Moore complexes from an explicit simplicial-realization
+  witness;
+\item a theorem-connected executable projection, independent facade, native
+  regression, axiom audit, and reproducible artifact.
+\end{enumerate}
+
+The v1.2.2 scope covers explicit boundary matrices, finite normalized
+nondegenerate-simplex tables, and their comparison with mathlib's abstract
+homological-complex infrastructure.  The normalized face table stores less
+structure than a full simplicial set; accordingly, the normalized Moore
+result assumes a checked realization witness rather than manufacturing
+missing simplicial identities or degeneracy maps.

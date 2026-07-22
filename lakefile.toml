@@ -1,7 +1,9 @@
 name = "NormalForms"
-version = "0.1.0"
+version = "1.2.2"
 keywords = ["lean", "mathlib", "normal-forms"]
 defaultTargets = ["NormalForms"]
+testDriver = "NormalFormsTests"
+lintDriver = "normalformsLint"
 
 [leanOptions]
 pp.unicode.fun = true
@@ -10,9 +12,88 @@ weak.linter.mathlibStandardSet = true
 maxSynthPendingDepth = 3
 
 [[require]]
+name = "HexLLLMathlib"
+git = "https://github.com/leanprover/hex-lll-mathlib.git"
+rev = "c10d6681dee9a4f963c1035bcbe34fc3eb60a769"
+
+[[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.28.0"
+rev = "v4.32.0"
 
 [[lean_lib]]
 name = "NormalForms"
+
+[[lean_lib]]
+name = "NormalFormsTests"
+globs = ["NormalFormsTests"]
+
+[[lean_exe]]
+name = "normalforms-polynomial-smoke"
+root = "NormalForms.Tests.PolynomialNative"
+
+[[lean_exe]]
+name = "normalformsLint"
+root = "NormalForms.Tests.Lint"
+
+[[lean_exe]]
+name = "normalforms-check"
+root = "NormalForms.CLI.Main"
+
+[[lean_exe]]
+name = "normalforms-certificate-benchmark"
+root = "NormalForms.Tests.CertificatePathBenchmark"
+
+[[lean_exe]]
+name = "normalforms-rational-canonical-benchmark"
+root = "NormalForms.Benchmarks.RationalCanonical"
+
+[[lean_exe]]
+name = "normalforms-homology-smoke"
+root = "NormalForms.Benchmarks.Homology"
+
+[[lean_exe]]
+name = "normalforms-bit-cost-benchmark"
+root = "NormalForms.Benchmarks.BitCost"
+
+[[lean_exe]]
+name = "normalforms-kannan-bachem-benchmark"
+root = "NormalForms.Benchmarks.KannanBachem"
+
+[[lean_exe]]
+name = "normalforms-modular-hnf-benchmark"
+root = "NormalForms.Benchmarks.ModularHNF"
+
+[[lean_exe]]
+name = "normalforms-lll-smoke"
+root = "NormalForms.Benchmarks.LLL"
+
+[[lean_exe]]
+name = "normalforms-flint-ffi-worker"
+root = "NormalForms.External.Flint.Main"
+moreLinkArgs = [
+  ".lake/externals/prefix/lib/libnormalforms_flint_leanffi.a",
+  "-L.lake/externals/prefix/lib",
+  "-Wl,--no-as-needed",
+  "-lflint",
+  "-lmpfr",
+  "-lgmp",
+  "-Wl,--allow-shlib-undefined",
+  "-Wl,--as-needed",
+  "-Wl,-rpath,$ORIGIN/../../externals/prefix/lib",
+]
+
+[[lean_exe]]
+name = "normalforms-flint-differential"
+root = "NormalForms.Tests.External.FlintDifferential"
+moreLinkArgs = [
+  ".lake/externals/prefix/lib/libnormalforms_flint_leanffi.a",
+  "-L.lake/externals/prefix/lib",
+  "-Wl,--no-as-needed",
+  "-lflint",
+  "-lmpfr",
+  "-lgmp",
+  "-Wl,--allow-shlib-undefined",
+  "-Wl,--as-needed",
+  "-Wl,-rpath,$ORIGIN/../../externals/prefix/lib",
+]

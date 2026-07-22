@@ -1,0 +1,15 @@
+We formalize an executable rational canonical form for finite square matrices
+over $\Q$ in Lean 4.  The construction computes the polynomial presentation
+$XI-A$ with the certified Smith-normal-form kernel from
+\code{lean-normal-forms}, proves that presentation equal to mathlib's
+\code{Matrix.charmatrix}, and transports the complete normalized Smith
+diagonal to standard polynomials.  We derive a cyclic
+$\Q[X]$-module decomposition, prove that the product of all invariant factors
+is the characteristic polynomial and that the last factor is the monic
+minimal polynomial, and construct an explicit basis whose matrix is a
+reindexed block diagonal of companion matrices.  The result carries a chosen
+change-of-basis inverse and both inverse identities.  A separate similarity
+certificate proves exact factor and canonical-block invariance, yielding
+basis-independent statements for abstract endomorphisms.  Native execution,
+raw benchmark data, API checks, and an axiom audit are packaged in an
+independent artifact without enlarging the stable HNF/SNF core facade.

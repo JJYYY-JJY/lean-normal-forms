@@ -1,0 +1,563 @@
+{
+  "binary_sha256": "c1ceb0a97fda49b5a14acbcce6b7408ddbabdb9af84f3305eea29d93e94fb557",
+  "cases": [
+    {
+      "case": "gauss-2x2",
+      "columns": 2,
+      "fuel": 9,
+      "input_bits": 1,
+      "intermediate_coefficient_bits": 1,
+      "kind": "profiled-full-rank",
+      "modeled_bit_bound": 2470176,
+      "modeled_bit_cost": 182976,
+      "operation_bound": 54,
+      "operation_total": 4,
+      "rank": 2,
+      "refreshes": 2,
+      "result_bits": 1,
+      "rows": 2,
+      "size_reductions": 1,
+      "strong_result": true,
+      "swaps": 1,
+      "valid": true
+    },
+    {
+      "case": "dense-3x3",
+      "columns": 3,
+      "fuel": 1252,
+      "input_bits": 3,
+      "intermediate_coefficient_bits": 3,
+      "kind": "profiled-full-rank",
+      "modeled_bit_bound": 2648430720,
+      "modeled_bit_cost": 4230720,
+      "operation_bound": 10016,
+      "operation_total": 16,
+      "rank": 3,
+      "refreshes": 8,
+      "result_bits": 1,
+      "rows": 3,
+      "size_reductions": 4,
+      "strong_result": true,
+      "swaps": 4,
+      "valid": true
+    },
+    {
+      "case": "dependent-3x3",
+      "columns": 3,
+      "input_bits": 2,
+      "kind": "total-row",
+      "rank": 1,
+      "result_bits": 1,
+      "rows": 3,
+      "strong_result": true,
+      "valid": true
+    },
+    {
+      "case": "column-3x3",
+      "columns": 3,
+      "input_bits": 2,
+      "kind": "transpose-column",
+      "rank": 1,
+      "result_bits": 1,
+      "rows": 3,
+      "strong_result": true,
+      "valid": true
+    }
+  ],
+  "created_utc": "2026-07-22T00:17:19.361469+00:00",
+  "hardware": {
+    "cpu_model": "AMD Ryzen 9 7940H w/ Radeon 780M Graphics",
+    "lean": "Lean (version 4.32.0, x86_64-unknown-linux-gnu, commit 8c9756b28d64dab099da31a4c09229a9e6a2ef35, Release)",
+    "libc": [
+      "glibc",
+      "2.43"
+    ],
+    "logical_cpus": 16,
+    "machine": "x86_64",
+    "memory_total_kib": 60370128,
+    "python": "3.14.6",
+    "release": "7.0.0-28-generic",
+    "system": "Linux"
+  },
+  "policy": {
+    "comparison_requires_identical_hardware_fingerprint": true,
+    "hosted_ci_absolute_time_gate": false,
+    "measurements": 7,
+    "summary_method": "median and inclusive quartiles",
+    "warmups": 1
+  },
+  "profile": "research-lll-v0.1.0",
+  "research_version": "0.1.0",
+  "schema": "normalforms.lll-benchmark/v1",
+  "source": {
+    "git_revision": "5481209d643493de10a2f03d894dfb565ba3f3c2",
+    "tracked_patch_sha256": "e10f41fb79d40c5afef54693150631772c318f3c91326671b3261207146ceabf",
+    "working_tree_clean": false
+  },
+  "stages": [
+    {
+      "case_names": [
+        "gauss-2x2"
+      ],
+      "description": "profiled two-row Gaussian reduction",
+      "id": "gauss",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 73456,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 72864,
+          "system_seconds": 0.0,
+          "user_seconds": 0.02,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 72940,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 73360,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72924,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72860,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72800,
+          "system_seconds": 0.0,
+          "user_seconds": 0.01,
+          "wall_seconds": 0.02
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 288.0,
+          "maximum": 73456.0,
+          "median": 72924.0,
+          "minimum": 72800.0,
+          "q1": 72862.0,
+          "q3": 73150.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.02,
+          "median": 0.01,
+          "minimum": 0.01,
+          "q1": 0.01,
+          "q3": 0.01
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.02,
+          "median": 0.02,
+          "minimum": 0.02,
+          "q1": 0.02,
+          "q3": 0.02
+        }
+      }
+    },
+    {
+      "case_names": [
+        "dense-3x3"
+      ],
+      "description": "profiled dense three-row reduction",
+      "id": "dense",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 73084,
+          "system_seconds": 0.0,
+          "user_seconds": 0.19,
+          "wall_seconds": 0.2
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 72296,
+          "system_seconds": 0.0,
+          "user_seconds": 0.22,
+          "wall_seconds": 0.23
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 73128,
+          "system_seconds": 0.0,
+          "user_seconds": 0.22,
+          "wall_seconds": 0.22
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72576,
+          "system_seconds": 0.0,
+          "user_seconds": 0.19,
+          "wall_seconds": 0.2
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72676,
+          "system_seconds": 0.0,
+          "user_seconds": 0.19,
+          "wall_seconds": 0.2
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72180,
+          "system_seconds": 0.0,
+          "user_seconds": 0.19,
+          "wall_seconds": 0.2
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72488,
+          "system_seconds": 0.0,
+          "user_seconds": 0.19,
+          "wall_seconds": 0.19
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 488.0,
+          "maximum": 73128.0,
+          "median": 72576.0,
+          "minimum": 72180.0,
+          "q1": 72392.0,
+          "q3": 72880.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.015000000000000013,
+          "maximum": 0.22,
+          "median": 0.19,
+          "minimum": 0.19,
+          "q1": 0.19,
+          "q3": 0.20500000000000002
+        },
+        "wall_seconds": {
+          "iqr": 0.010000000000000009,
+          "maximum": 0.23,
+          "median": 0.2,
+          "minimum": 0.19,
+          "q1": 0.2,
+          "q3": 0.21000000000000002
+        }
+      }
+    },
+    {
+      "case_names": [
+        "dependent-3x3"
+      ],
+      "description": "total rank-deficient row wrapper",
+      "id": "dependent",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 73196,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 72464,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 72808,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72800,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72376,
+          "system_seconds": 0.01,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72708,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72876,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.06
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 256.0,
+          "maximum": 73196.0,
+          "median": 72800.0,
+          "minimum": 72376.0,
+          "q1": 72586.0,
+          "q3": 72842.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.01,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.0049999999999999975,
+          "maximum": 0.06,
+          "median": 0.06,
+          "minimum": 0.05,
+          "q1": 0.055,
+          "q3": 0.06
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.06,
+          "median": 0.06,
+          "minimum": 0.06,
+          "q1": 0.06,
+          "q3": 0.06
+        }
+      }
+    },
+    {
+      "case_names": [
+        "column-3x3"
+      ],
+      "description": "transpose-only total column adapter",
+      "id": "column",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 73332,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.07
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 72748,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 72196,
+          "system_seconds": 0.0,
+          "user_seconds": 0.07,
+          "wall_seconds": 0.08
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72636,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 71932,
+          "system_seconds": 0.0,
+          "user_seconds": 0.06,
+          "wall_seconds": 0.06
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72060,
+          "system_seconds": 0.0,
+          "user_seconds": 0.07,
+          "wall_seconds": 0.08
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72360,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.06
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 564.0,
+          "maximum": 73332.0,
+          "median": 72360.0,
+          "minimum": 71932.0,
+          "q1": 72128.0,
+          "q3": 72692.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.015,
+          "maximum": 0.07,
+          "median": 0.06,
+          "minimum": 0.05,
+          "q1": 0.05,
+          "q3": 0.065
+        },
+        "wall_seconds": {
+          "iqr": 0.015000000000000013,
+          "maximum": 0.08,
+          "median": 0.06,
+          "minimum": 0.06,
+          "q1": 0.06,
+          "q3": 0.07500000000000001
+        }
+      }
+    },
+    {
+      "case_names": [
+        "gauss-2x2",
+        "dense-3x3",
+        "dependent-3x3",
+        "column-3x3"
+      ],
+      "description": "all deterministic LLL cases",
+      "id": "end_to_end",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 72636,
+          "system_seconds": 0.0,
+          "user_seconds": 0.32,
+          "wall_seconds": 0.33
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 72736,
+          "system_seconds": 0.0,
+          "user_seconds": 0.27,
+          "wall_seconds": 0.28
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 73192,
+          "system_seconds": 0.0,
+          "user_seconds": 0.27,
+          "wall_seconds": 0.27
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 71876,
+          "system_seconds": 0.0,
+          "user_seconds": 0.27,
+          "wall_seconds": 0.27
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72844,
+          "system_seconds": 0.0,
+          "user_seconds": 0.27,
+          "wall_seconds": 0.27
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72716,
+          "system_seconds": 0.0,
+          "user_seconds": 0.26,
+          "wall_seconds": 0.27
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72860,
+          "system_seconds": 0.0,
+          "user_seconds": 0.27,
+          "wall_seconds": 0.28
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 176.0,
+          "maximum": 73192.0,
+          "median": 72736.0,
+          "minimum": 71876.0,
+          "q1": 72676.0,
+          "q3": 72852.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.32,
+          "median": 0.27,
+          "minimum": 0.26,
+          "q1": 0.27,
+          "q3": 0.27
+        },
+        "wall_seconds": {
+          "iqr": 0.010000000000000009,
+          "maximum": 0.33,
+          "median": 0.27,
+          "minimum": 0.27,
+          "q1": 0.27,
+          "q3": 0.28
+        }
+      }
+    }
+  ],
+  "trust_boundary": "Native time and RSS are observational regression evidence. Kernel-checked theorems establish strong row/column results, the tracked-event bound, intermediate coefficient evidence, and the profile-dependent sign-magnitude reference budget. The cost claim excludes HNF rank decomposition and is not an input-only polynomial bound."
+}

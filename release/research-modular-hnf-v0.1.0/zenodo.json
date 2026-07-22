@@ -1,0 +1,22 @@
+{
+  "title": "A Certified Modular Hermite Normal Form Kernel in Lean 4: Determinant Contracts, Canonicality, and Explicit Bit Budgets",
+  "description": "Independent lean-normal-forms research profile 0.1.0: a pure determinant-modulus Hermite normal form value kernel, canonicality proof, fraction-free general-rank wrapper, explicit inverse result boundary, exact operation telemetry, coefficient bounds, and a schoolbook bit-operation budget mirroring Lean's standard integer XGCD.",
+  "license": "Apache-2.0",
+  "version": "research-modular-hnf-0.1.0",
+  "creators": [
+    {
+      "name": "Ji, Junye",
+      "affiliation": "Independent"
+    }
+  ],
+  "keywords": [
+    "Lean 4",
+    "mathlib",
+    "Hermite normal form",
+    "modular algorithms",
+    "Domich--Kannan--Trotter",
+    "bit complexity",
+    "explicit inverse certificates",
+    "formalized mathematics"
+  ]
+}

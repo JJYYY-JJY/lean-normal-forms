@@ -1,58 +1,77 @@
 \section{Introduction}
 \label{sec:introduction}
 
-Executable algebra in a proof assistant has to satisfy two incompatible-looking
-requirements. The algorithmic layer wants concrete data: Euclidean division,
-Bezout coefficients, structural recursion on dimensions, and explicit row
-operations. The mathematical layer wants exact statements: canonical pivots,
-unimodular equivalence, and uniqueness stated as literal equality rather than
-``equal up to an unspecified representative.'' Matrix normal forms make this
-tension unusually visible. A practical implementation must compute by local row
-manipulations, but the theorem one wants at the end is a clean canonical object.
+Executable algebra in a proof assistant needs concrete algorithms and exact
+mathematical interfaces. Matrix normal forms make the tension especially
+visible: elimination uses local row and column operations, but the result must
+record a canonical matrix and a transformation whose invertibility is trusted
+by the kernel.
 
-This paper reports a completed \HNF{} phase in a standalone \Lean{} repository
-targeted at later integration with \mathlib{} \citep{deMouraUllrich2021Lean4,
-mathlib2020, ji2026normalforms}. The public API is phrased over arbitrary finite
-index types, while the internal executable kernel reindexes to \code{Fin} and
-recurses directly on matrix dimensions. The current code base also contains a
-partially realized public \SNF{} layer: a real Smith specification, public
-invariant-factor and certificate-packaging interfaces, and internal recursive
-scaffolding are already present, and the same-size lead-reduction phase is now
-verified, but neither the executable \SNF{} algorithm nor its proofs are
-complete. Accordingly, this manuscript is intentionally narrow: it documents
-only the completed HNF layer, together with the design decisions that made
-correctness and uniqueness tractable.
-
-That scope matters for novelty. Formalized HNF and SNF are not new in theorem
-proving as such. Executable normal-form developments already exist in
-Isabelle/HOL and Coq \citep{divasonThiemann2022snf, cano2016coq}. Our claim is
-therefore not ``first HNF formalization'' or ``first Smith normal form in a
-proof assistant.'' The Lean-specific contribution is architectural: how to
-combine executable Euclidean elimination, explicit transformation certificates,
-exact canonical-remainder assumptions, and a future path toward existing
-abstract algebra in \mathlib.
-
-The paper makes exactly three completed contributions.
+This project develops \HNF{} and \SNF{} in \Lean{} against \mathlib{}
+\citep{deMouraUllrich2021Lean4,mathlib2020,ji2026normalforms}. The current
+1.0.0 release fixes five public interfaces.
 
 \begin{itemize}
-  \item We introduce a proof-facing certificate layer
-    \code{LeftTransform with fields U, B, left_mul, unimodular}, and we explain why
-    explicitly carrying \code{Unimodular U} is not bookkeeping but the key to
-    composing recursive block lifts and to keeping the uniqueness proof local.
-  \item We formalize an executable three-stage HNF kernel over Euclidean
-    domains: clear the first column, recurse on the lower-right block, and
-    reduce the top row. The implementation is driven by a reusable \(2 \times 2\)
-    Bezout gadget and two block-lift constructions.
-  \item We prove uniqueness by isolating exact canonical remainder behavior in a
-    separate mixin \code{CanonicalMod}. This boundary lets the algorithm compute
-    with Euclidean division while the final uniqueness theorem reasons about
-    exact equality of already-reduced representatives.
+  \item A strong certificate stores a chosen inverse and proofs of both
+    multiplication identities. HNF and SNF results carry these certificates
+    end to end, including elementary operations, Bezout blocks, recursive
+    lifts, and composition.
+  \item Normal-form semantics never hide an enumeration of an arbitrary finite
+    type. Public callers may choose an indexing explicitly, supply
+    equivalences, request increasing order, or use a convenience arbitrary
+    indexing that is retained in the result.
+  \item Executable branching is isolated behind
+    \code{ComputableEuclideanOps}. The matrix kernels retain ordinary ring
+    arithmetic, while equality, division with remainder, normalization,
+    extended gcd, and the termination measure have constructive
+    implementations and semantic laws.
+  \item External generators return only raw data. A pure checker binds the
+    certificate to a caller-supplied matrix, and strict generated modules reduce
+    each obligation with \code{decide_cbv} before obtaining a strong result
+    through the checker soundness theorem.
+  \item Intrinsic Smith data and finite-free presentations omit execution
+    traces. Determinantal ideals characterize rank and associate factors, and a
+    presentation matrix always maps relations to generators by columns.
 \end{itemize}
 
-The rest of the paper expands these points. Section~\ref{sec:background} introduces the
-Lean representation of matrices, the algebraic typeclass boundary, and the
-recursive HNF specification. Section~\ref{sec:certificates} explains the certificate
-architecture. Section~\ref{sec:algorithm} presents the executable kernel and its lifted
-Bezout machinery. Section~\ref{sec:uniqueness} develops the uniqueness proof and the
-role of canonical remainder representatives. Section~\ref{sec:future} records the
-current \SNF{} executable and PID-bridge status as future work.
+The \code{Fin}-indexed HNF and SNF kernels are complete with correctness and
+canonicality theorems. HNF uniqueness is deliberately stated only for one
+fixed indexing; changing column order yields a constructive left equivalence,
+not an unjustified equality. Smith uniqueness is strong enough to prove that
+the canonical \code{Fin} Smith matrix and its invariant factors are independent
+of indexing. \code{SmithData} records the exact nonzero prefix and full
+diagonal, while \code{SmithSignature} records all nonzero associate factors.
+Determinantal ideals prove that the signature is invariant under certified
+transforms and reindexing. A canonical wrapper compares it with mathlib's PID
+Smith witnesses. \code{FiniteFreePresentation} fixes columns as relations,
+defines the cokernel and Fitting ideals, and derives a Smith decomposition.
+Both integer and rational-polynomial matrices execute through deterministic
+\code{\#eval} and native baselines; the polynomial implementation includes
+direct finite-support arithmetic, long division, monic normalization, and
+well-founded extended gcd.
+
+The optional FLINT 3.6.0 adapter offers two untrusted routes. A process worker
+and a separately linked Lean FFI call the same C computation and strict decimal
+protocol; the Python standard-library wrapper emits
+\code{normalforms.cert/v1}. FLINT, GMP, and MPFR are pinned and dynamically
+linked, but none is a theorem dependency. Both routes pass through the same
+pure checker. Lean independently checks the expected input, transformation
+equation, both inverse directions, and normal-form predicate.
+
+Fixed-seed differential regressions compare normalized invariant factors, not
+the nonunique transformation matrices. A recorded performance profile
+separates internal Lean generation, process and FFI generation, native
+checking, strict kernel checking, and complete generation/import costs. Its
+raw observations and hardware fingerprint make clear that generator or native
+success is experimental evidence; only recompiling a strict generated module
+constructs a theorem.
+
+Formal normal forms already exist in other provers
+\citep{divasonThiemann2022snf,cano2016coq}; the intended contribution is the
+Lean/\mathlib architecture: explicit inverses, precise indexing semantics,
+canonicality, a PID bridge, and a certifying external-computation path.
+
+The version 1 release freezes the facade and presentation direction. Exact
+type tests, synchronized metadata checks, separate executable-core and
+certificate axiom audits, and a pinned artifact profile make that boundary
+machine-checkable.
