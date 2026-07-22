@@ -75,15 +75,10 @@ def validate(version: str, require_release_materials: bool) -> None:
     require_contains("docs/PUBLIC_API.md", f"Version: {version}")
     require_contains("artifact/README.md", f"Current {version} baseline")
     require_contains("CHANGELOG.md", f"## {version} - ")
-    require_contains("paper/main.tex", f"Version {version}")
     require_contains("CITATION.cff", f"version: {version}")
     require_contains("patches/mathlib/README.md", mathlib_revision)
 
     if version in {"1.1.0", "1.2.0", "1.2.1", "1.2.2"}:
-        require_contains(
-            "paper/rational-canonical/main.tex",
-            "Version 1.1.0",
-        )
         require_contains(
             "docs/RATIONAL_CANONICAL_API.md",
             "Version: 1.1.0",
@@ -92,10 +87,6 @@ def validate(version: str, require_release_materials: bool) -> None:
             fail("rational-canonical artifact Dockerfile is missing")
 
     if version in {"1.2.0", "1.2.1", "1.2.2"}:
-        require_contains(
-            "paper/homology/main.tex",
-            f"Version {version}",
-        )
         require_contains(
             "docs/HOMOLOGY_API.md",
             f"Version: {version}",
@@ -326,7 +317,6 @@ def validate(version: str, require_release_materials: bool) -> None:
     if bit_cost_version != "0.1.0":
         fail("bit-cost artifact version is inconsistent")
     require_contains("docs/BIT_COST_API.md", "research API 0.1.0")
-    require_contains("paper/bit-cost/main.tex", "Research version 0.1.0")
     bit_cost_metadata = load_json(
         ROOT / "release/research-bit-cost-v0.1.0/zenodo.json"
     )
@@ -351,10 +341,6 @@ def validate(version: str, require_release_materials: bool) -> None:
     if kannan_version != "0.1.0":
         fail("Kannan--Bachem artifact version is inconsistent")
     require_contains("docs/KANNAN_BACHEM_API.md", "Research version: 0.1.0")
-    require_contains(
-        "paper/kannan-bachem/main.tex",
-        "Research version 0.1.0",
-    )
     kannan_metadata = load_json(
         ROOT / "release/research-kannan-bachem-v0.1.0/zenodo.json"
     )
@@ -393,10 +379,6 @@ def validate(version: str, require_release_materials: bool) -> None:
     if modular_version != "0.1.0":
         fail("modular-HNF artifact version is inconsistent")
     require_contains("docs/MODULAR_HNF_API.md", "Research version: 0.1.0")
-    require_contains(
-        "paper/modular-hnf/main.tex",
-        "Research version 0.1.0",
-    )
     modular_metadata = load_json(
         ROOT / "release/research-modular-hnf-v0.1.0/zenodo.json"
     )
@@ -430,10 +412,6 @@ def validate(version: str, require_release_materials: bool) -> None:
     if lll_version != "0.1.0":
         fail("LLL artifact version is inconsistent")
     require_contains("docs/LLL_API.md", "Research version: 0.1.0")
-    require_contains(
-        "paper/lll/main.tex",
-        "Research version 0.1.0",
-    )
     lll_metadata = load_json(
         ROOT / "release/research-lll-v0.1.0/zenodo.json"
     )

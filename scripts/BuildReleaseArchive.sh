@@ -7,14 +7,10 @@ set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd -- "$repo_root"
 
-skip_paper=0
 with_flint_sources=0
 
 for argument in "$@"; do
   case "$argument" in
-    --skip-paper)
-      skip_paper=1
-      ;;
     --with-flint-sources)
       with_flint_sources=1
       ;;
@@ -32,16 +28,6 @@ version="$(
 prefix="lean-normal-forms-$version"
 destination="$repo_root/dist/v$version"
 archive="$destination/$prefix.tar.gz"
-paper_root="paper"
-paper_filename="$prefix-paper.pdf"
-
-if [[ "$version" == "1.1.0" ]]; then
-  paper_root="paper/rational-canonical"
-  paper_filename="$prefix-rational-canonical-paper.pdf"
-elif [[ "$version" == "1.2.0" || "$version" == "1.2.1" || "$version" == "1.2.2" ]]; then
-  paper_root="paper/homology"
-  paper_filename="$prefix-homology-paper.pdf"
-fi
 
 scripts/ValidateReleaseMetadata.py \
   --version "$version" \
@@ -72,17 +58,6 @@ install -m 0644 "release/v$version/RELEASE_NOTES.md" \
   "$destination/RELEASE_NOTES.md"
 install -m 0644 "release/v$version/zenodo.json" \
   "$destination/zenodo.json"
-
-if [[ "$skip_paper" -eq 0 ]]; then
-  command -v latexmk >/dev/null
-  (
-    cd -- "$paper_root"
-    SOURCE_DATE_EPOCH="$source_epoch" FORCE_SOURCE_DATE=1 \
-      latexmk -pdf -interaction=nonstopmode main.tex
-  )
-  install -m 0644 "$paper_root/main.pdf" \
-    "$destination/$paper_filename"
-fi
 
 if [[ "$with_flint_sources" -eq 1 ]]; then
   bundle_root="$temporary/$prefix-flint-sources"
