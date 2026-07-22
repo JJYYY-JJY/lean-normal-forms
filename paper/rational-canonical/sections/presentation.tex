@@ -11,7 +11,8 @@ For $A\in M_n(\Q)$ we define
 The Lean definition \code{endomorphismPresentationMatrix} is executable and a
 separate theorem identifies it exactly with
 \code{Matrix.charmatrix}.  This bridge fixes the sign convention once and
-allows later statements to use mathlib's characteristic polynomial API.
+allows later statements to use the manifest-pinned mathlib characteristic
+polynomial API \citep{mathlib4320charmatrix}.
 
 The core polynomial algorithm runs over an explicit finite-support runtime
 whose rational arithmetic, division, normalization, and extended gcd are

@@ -1,7 +1,7 @@
 \section{Finite normalized simplicial input}
 \label{sec:normalized-input}
 
-Version 1.2.1 adds a finite input layer whose indices enumerate only
+Version 1.2.2 includes a finite input layer whose indices enumerate only
 nondegenerate simplices.  The function \code{simplexCount n} fixes their
 order in dimension $n$.  For a nondegenerate $(n+1)$-simplex $\sigma$, the
 face table has type
@@ -28,7 +28,10 @@ The boundary matrix is derived entrywise:
 \]
 This definition handles two details without auxiliary postprocessing.
 Repeated faces remain distinct summands and can cancel by sign, while
-degenerate faces contribute zero immediately.  The fields of
+degenerate faces contribute zero immediately.  This follows the normalized
+chain complex, in which degenerate simplices split off
+\citep[Definition 8.3.6 and Theorem 8.3.8]{weibel1994simplicial}.
+The fields of
 \code{FiniteNormalizedSimplicialData} include finite support and a proof
 that these derived matrices satisfy $D_{n+1}D_{n+2}=0$.  Thus a supplied
 face table cannot drift from a separately stored boundary matrix.

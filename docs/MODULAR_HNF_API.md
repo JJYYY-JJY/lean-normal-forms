@@ -27,7 +27,9 @@ ModulusWitness
 
 `DeterminantModulusWitness` records a positive modulus divisible by the
 absolute determinant of one explicitly nonsingular selected square minor.
-The DKT value kernel accepts this contract. `ElementaryDivisorModulusWitness`
+The value kernel follows the modulo-determinant algorithm class of
+[Domich--Kannan--Trotter](https://doi.org/10.1287/moor.12.1.50) and accepts this
+contract. `ElementaryDivisorModulusWitness`
 is intentionally distinct and is not accepted by that entry point.
 
 ## Raw value kernel

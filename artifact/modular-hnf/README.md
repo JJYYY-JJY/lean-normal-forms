@@ -1,8 +1,9 @@
 # Modular-HNF artifact profile
 
 This profile reproduces research version 0.1.0 of the independently imported
-modular Hermite-normal-form development. It formalizes the determinant-modulus
-value kernel used by the Domich--Kannan--Trotter schedule, proves its candidate
+modular Hermite-normal-form development. It formalizes a determinant-modulus
+value kernel in the algorithm class of
+[Domich--Kannan--Trotter](https://doi.org/10.1287/moor.12.1.50), proves its candidate
 is the project's canonical HNF, and does not enlarge the frozen `NormalForms`
 facade.
 
@@ -53,8 +54,9 @@ docker run --rm lean-normal-forms-modular-hnf:0.1.0
 ```
 
 The image pins the same Debian base, Lean 4.32.0 archive hash, and Lake
-manifest as the core artifact. It has no FLINT dependency: FLINT informed the
-transition order but is not a theorem or runtime dependency.
+manifest as the core artifact. It has no FLINT dependency. The pinned
+[FLINT 3.6.0 documentation](https://github.com/flintlib/flint/blob/8d5454b96761fafe4d5a9da76a369a602f500f49/doc/source/fmpz_mat.rst#L1295-L1314)
+was consulted only to distinguish its two unchecked modular-HNF contracts.
 
 ## Evidence, cost scope, and trust
 

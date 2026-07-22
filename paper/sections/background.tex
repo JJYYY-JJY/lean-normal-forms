@@ -9,14 +9,19 @@ arbitrary finite types. This generality is convenient for users, but structural
 recursion over an arbitrary finite type is awkward. The repository therefore
 splits the development into two layers.
 
-The kernel works over \code{Matrix (Fin m) (Fin n) R} and proves the recursive
-predicate \code{IsHermiteNormalFormFin}. For arbitrary finite index types,
-\code{FiniteIndexing} and \code{MatrixIndexing} store explicit equivalences to
-\code{Fin}. The public predicates \code{IsHermiteNormalFormWith} and
-\code{IsHermiteNormalFormOrdered} therefore state exactly which enumeration
-defines the normal-form semantics. An \code{HNFResult} stores that indexing and
-the underlying strong \code{Fin} result; matrices and certificates on the
-original index types are derived projections.
+The kernel works over matrices whose row and column indices are both
+\code{Fin}, and proves the recursive predicate
+\code{IsHermiteNormalFormFin}. For arbitrary finite index types,
+the structures \code{FiniteIndexing} and \code{MatrixIndexing} store explicit
+equivalences to \code{Fin}. The public predicates are
+\begin{center}
+\code{IsHermiteNormalFormWith}\qquad
+\code{IsHermiteNormalFormOrdered}.
+\end{center}
+They therefore state exactly which enumeration defines the normal-form
+semantics. An \code{HNFResult} stores that indexing and the underlying strong
+\code{Fin} result; matrices and certificates on the original index types are
+derived projections.
 
 \subsection{Euclidean computation versus canonical representatives}
 
@@ -39,9 +44,8 @@ argument:
     their difference is divisible by that pivot.
 \end{itemize}
 
-The repository isolates exactly these requirements in the following Prop-valued
-mixin, following the lightweight instance-refinement style common in \mathlib{}
-\citep{baanen2025instance}.
+The repository isolates exactly these requirements in the following
+Prop-valued mixin.
 
 \begin{lstlisting}[style=leanstyle,caption={The \code{CanonicalMod} boundary.},label={lst:canonicalmod}]
 class CanonicalMod (R : Type _) [EuclideanDomain R] : Prop where
@@ -82,8 +86,9 @@ The last clause is recorded by the field \code{hreduced} in the constructor
 above later pivots are reduced'' and the executable reduction loop that modifies
 only the top row.
 
-This recursive specification is narrower than textbook HNF definitions phrased
-for all rows at once \citep{dummitfoote2004, cohen1993}, but in Lean it has two
+This recursive specification is the row-oriented transpose of the HNF
+conditions and Euclidean column-reduction schedule in Cohen's Algorithm 2.4.5
+\citep[pp. 68--69]{cohen1993}, but in Lean it has two
 decisive advantages. First, it matches the actual structure of the algorithm:
 first isolate a pivot column, then recurse on a smaller matrix. Second, its
 destructors expose exactly the local zero and reduction information that the

@@ -75,7 +75,7 @@ def validate(version: str, require_release_materials: bool) -> None:
     require_contains("docs/PUBLIC_API.md", f"Version: {version}")
     require_contains("artifact/README.md", f"Current {version} baseline")
     require_contains("CHANGELOG.md", f"## {version} - ")
-    require_contains("paper/main.tex", "Version 1.0.0")
+    require_contains("paper/main.tex", f"Version {version}")
     require_contains("CITATION.cff", f"version: {version}")
     require_contains("patches/mathlib/README.md", mathlib_revision)
 

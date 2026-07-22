@@ -24,8 +24,8 @@
 
 \title{A Verified Binary Bit-Cost Reference Model for\\
 Integer Normal-Form Algorithms in Lean 4}
-\author{Junye Ji}
-\date{Research version 0.1.0, July 2026}
+\author{Junye Ji\\University of Washington}
+\date{Research version 0.1.0, July 21, 2026}
 
 \begin{document}
 
@@ -58,10 +58,10 @@ integer division and gcd.  A proof that the result is canonical answers a
 semantic question.  Counting calls to ring operations answers a different
 question, since the cost of an integer multiplication depends on operand
 size.  Controlling final output size is also insufficient: intermediate
-coefficients can be much larger.  Classical algorithm analyses therefore
-couple algebraic invariants with concrete arithmetic models
-\citep{knuth1997seminumerical,brent2010modern}.  Formal developments need the
-same separation.
+coefficients can be much larger.  A bit-level analysis must instead define a
+concrete representation and charge the algorithms that operate on it.
+Matrix-level invariants must then supply operand-width bounds before those
+charges can be composed.
 
 The \code{lean-normal-forms} core already proves executable HNF and SNF with
 strong transformation certificates.  The present component supplies a lower
@@ -107,7 +107,8 @@ to compose multiplication and addition costs at each recursive step.
 
 \section{Representation and proof carriers}
 
-The model reuses mathlib's inductive \code{ZNum}.  Its zero constructor is
+The model reuses mathlib's inductive \code{ZNum} from the manifest-pinned
+source commit \citep{mathlib4320znum}.  Its zero constructor is
 unique; positive and negative constructors carry a \code{PosNum}, an
 inductive, nonzero binary magnitude.  We expose it as
 \code{SignMagnitude} rather than introducing a second encoding.  The
@@ -167,17 +168,19 @@ constructor case.  For left and right widths $\ell$ and $r$, the budget is
 \]
 The value theorem identifies the result with integer multiplication, and the
 product width is at most $\ell+r$.  This is explicitly a schoolbook
-reference model.  It does not assume the asymptotics of Lean's native
-arbitrary-precision integer implementation.
+reference model, following the classical multiple-precision shift-and-add
+model \citep[Section 4.3.1]{knuth1997seminumerical}.  It does not assume the
+asymptotics of Lean's native arbitrary-precision integer implementation.
 
 \section{A shared Euclidean long-division pass}
 
 The structure \code{DivModResult} stores quotient and remainder together.
-The positive kernel mirrors binary long division: it scans numerator bits,
+The positive kernel mirrors binary long division
+\citep[Section 1.4]{brentZimmermann2010}: it scans numerator bits,
 updates a partial remainder, conditionally subtracts the divisor, and emits
-one quotient bit.  The signed wrapper reproduces Lean's Euclidean \code{/}
+one quotient bit.  The signed wrapper reproduces Lean 4.32.0's Euclidean \code{/}
 and \code{\%} conventions, including negative numerators, negative divisors,
-and division by zero.
+and division by zero \citep{lean4320intDivMod}.
 
 Producing both fields from one pass is important.  An extended-gcd step needs
 both $q$ and $r$ from
@@ -203,7 +206,8 @@ switching to truncating division.
 
 \section{Extended gcd and compositional bounds}
 
-The function \code{xgcdWithCost} follows the textbook Euclidean recurrence.
+The function \code{xgcdWithCost} follows the extended Euclidean recurrence
+\citep[Section 1.6]{brentZimmermann2010}.
 At a nonzero second argument it computes the shared division, recursively
 solves $(b,r)$, and transforms recursive coefficients $(s,t)$ into
 \[
@@ -246,7 +250,8 @@ observed intermediate sizes.
 
 \section{Lean organization and trust boundary}
 
-The code is built with Lean/mathlib 4.32.0 \citep{demoura2021lean4}.  The
+The code is built with Lean 4.32.0 and its matching mathlib snapshot
+\citep{deMouraUllrich2021Lean4,lean4320source,mathlib4320source}.  The
 research facade is named
 \begin{center}
 \code{NormalForms.Research.BitCost}.
@@ -313,8 +318,10 @@ Debian/Lean container profile provides an independent reproduction path.
 Efficient normal-form algorithms require more than primitive arithmetic.
 For example, HNF analyses must bound pivot searches, row operations, and
 intermediate determinants; SNF introduces additional gcd and divisibility
-steps.  Fast algorithms may also use modular reconstruction or lattice
-reduction \citep{cohen1996hnf}.  The present model supplies a concrete cost for
+steps.  Kannan--Bachem bound both the operation count and coefficient lengths
+for HNF and SNF \citep{kannanBachem1979}; Domich--Kannan--Trotter use
+modulo-determinant arithmetic for polynomial-time HNF
+\citep{domichKannanTrotter1987}.  The present model supplies a concrete cost for
 the integer leaves of such an analysis, but does not choose a matrix
 algorithm or hide its proof obligations.
 
@@ -337,6 +344,6 @@ its actual scope.  This is a reusable arithmetic foundation for later
 normal-form complexity proofs, not a substitute for them.
 
 \bibliographystyle{plainnat}
-\bibliography{references}
+\bibliography{../references}
 
 \end{document}

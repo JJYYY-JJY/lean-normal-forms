@@ -26,8 +26,8 @@
 
 \title{Certified Exact Integer LLL in Lean 4:\\
 Explicit Inverses, Total Rank Handling, and Profiled Costs}
-\author{Junye Ji}
-\date{Research version 0.1.0, July 2026}
+\author{Junye Ji\\University of Washington}
+\date{Research version 0.1.0, July 21, 2026}
 
 \begin{document}
 
@@ -56,8 +56,12 @@ seven-measurement observations for four deterministic cases.
 
 \section{Introduction}
 
-LLL reduction is both a central lattice algorithm and a common preprocessing
-step for exact matrix algorithms~\citep{lll1982,cohen1993}.  A formal
+Lenstra, Lenstra, and Lov\'asz introduced LLL reduction in their polynomial-time
+algorithm for factoring rational polynomials
+\citep{lenstraLenstraLovasz1982}.  Thiemann et al. later formalized LLL basis
+reduction, an executable integer implementation, complexity bounds, and a
+certified external-checking path in Isabelle/HOL
+\citep{thiemannEtAl2020lll}.  A Lean
 implementation must make several conventions explicit.  Are vectors stored
 as rows or columns?  Which size-reduction interval is accepted at a tie?  Is
 linear independence an unchecked precondition?  Does a reported unimodular
@@ -70,7 +74,7 @@ The facade
   \code{NormalForms.Research.LLL}
 \end{center}
 answers these questions without changing the stable normal-forms API.  Lean 4
-and mathlib supply the ambient exact matrix theory~\citep{demoura2021lean4,
+and mathlib supply the ambient exact matrix theory~\citep{deMouraUllrich2021Lean4,
 mathlib2020}.  The contributions are:
 \begin{itemize}
   \item a fixed exact LLL predicate for integer row bases;
@@ -108,6 +112,9 @@ Third, every adjacent pair satisfies
   \mu_{i+1,i}^2\lVert b_i^*\rVert^2,
   \qquad \delta=\frac34.
 \]
+These are the original reducedness conditions specialized to
+$\eta=1/2$ and $\delta=3/4$
+\citep[Section 1, equations (1.4)--(1.5)]{lenstraLenstraLovasz1982}.
 The executable \code{isLLLReducedB} uses the same exact integer-backed data,
 and \code{isLLLReducedB\_sound} promotes acceptance to the proposition.  No
 floating point tolerance occurs in either path.
@@ -123,13 +130,18 @@ together with exact reducedness of $B'$.
 
 \section{Terminating backend and explicit transform trace}
 
-The dense reducer is source-pinned through the Lake manifest.  Its integer
+The executable dense reducer is HexLLL at the Lake-pinned commit
+\citep{hexLLL2026}; the imported reducedness, termination, fuel-sufficiency,
+and checker proofs are HexLLLMathlib at its separately pinned commit
+\citep{hexLLLMathlib2026}.  Its integer
 state stores the live basis, scaled Gram--Schmidt coefficients, and leading
 Gram determinants.  Termination uses the classical product potential and the
 lexicographic row index.  For initial state $s$, the executable fuel is
 \[
   F(s)=(\operatorname{potential}(s)+1)(m+1).
 \]
+The decreasing product potential is the termination argument in the original
+algorithm \citep[Section 1, equations (1.23)--(1.25)]{lenstraLenstraLovasz1982}.
 The imported theorem proves this fuel reaches the completed branch for an
 independent basis; the zero-fuel fallback is therefore unreachable through
 the public positive-row entry.
@@ -297,6 +309,6 @@ provides a reproducible foundation for a future input-only polynomial analysis
 without overstating what the present implementation proves.
 
 \bibliographystyle{plainnat}
-\bibliography{references}
+\bibliography{../references}
 
 \end{document}

@@ -8,8 +8,9 @@ record a canonical matrix and a transformation whose invertibility is trusted
 by the kernel.
 
 This project develops \HNF{} and \SNF{} in \Lean{} against \mathlib{}
-\citep{deMouraUllrich2021Lean4,mathlib2020,ji2026normalforms}. The current
-1.0.0 release fixes five public interfaces.
+\citep{deMouraUllrich2021Lean4,mathlib2020}. Version 1.2.2 of the accompanying
+software artifact fixes the five public interfaces below
+\citep{ji2026normalforms}.
 
 \begin{itemize}
   \item A strong certificate stores a chosen inverse and proofs of both
@@ -25,13 +26,17 @@ This project develops \HNF{} and \SNF{} in \Lean{} against \mathlib{}
     arithmetic, while equality, division with remainder, normalization,
     extended gcd, and the termination measure have constructive
     implementations and semantic laws.
-  \item External generators return only raw data. A pure checker binds the
+  \item External generators return only raw data. Following the skeptical
+    integration pattern for computer-algebra output
+    \citep{harrisonThery1998}, a pure checker binds the
     certificate to a caller-supplied matrix, and strict generated modules reduce
     each obligation with \code{decide_cbv} before obtaining a strong result
     through the checker soundness theorem.
   \item Intrinsic Smith data and finite-free presentations omit execution
     traces. Determinantal ideals characterize rank and associate factors, and a
-    presentation matrix always maps relations to generators by columns.
+    presentation matrix always maps relations to generators by columns. The
+    Fitting-ideal convention follows the minors of a presentation matrix
+    \citep{stacksFittingIdeals}.
 \end{itemize}
 
 The \code{Fin}-indexed HNF and SNF kernels are complete with correctness and
@@ -66,12 +71,17 @@ raw observations and hardware fingerprint make clear that generator or native
 success is experimental evidence; only recompiling a strict generated module
 constructs a theorem.
 
-Formal normal forms already exist in other provers
-\citep{divasonThiemann2022snf,cano2016coq}; the intended contribution is the
-Lean/\mathlib architecture: explicit inverses, precise indexing semantics,
-canonicality, a PID bridge, and a certifying external-computation path.
+Divas\'on and Thiemann formalize Smith normal form in Isabelle/HOL, and Cano
+et al. formalize linear algebra over elementary divisor rings in Coq
+\citep{divasonThiemann2022snf,cano2016coq}. Ma, Wang, and Wen give a Lean
+framework whose bridge-derived Smith and rational-canonical results are
+intentionally noncomputable and do not establish normalized uniqueness or an
+executable reduction trajectory \citep[Sections 3.4, 5.1, and
+6.2]{maWangWen2026}. The contribution here is an executable Lean/\mathlib
+architecture with explicit inverses, precise indexing semantics, canonicality,
+a PID bridge, and a certifying external-computation path.
 
-The version 1 release freezes the facade and presentation direction. Exact
+The version 1.2.2 release freezes the facade and presentation direction. Exact
 type tests, synchronized metadata checks, separate executable-core and
 certificate axiom audits, and a pinned artifact profile make that boundary
 machine-checkable.

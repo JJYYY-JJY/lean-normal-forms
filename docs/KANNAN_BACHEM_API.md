@@ -12,7 +12,8 @@ It is not re-exported by `NormalForms` and does not alter the frozen core API.
 
 ## Nonsingular square HNF
 
-`principalRun` executes the transposed principal-minor schedule with primitive
+`principalRun` executes the row-oriented transpose of the column-HNF schedule
+in [Kannan--Bachem, Algorithm HNF](https://doi.org/10.1137/0208040), with primitive
 row operations and directly accumulated transforms and inverses. For every
 nonsingular square integer input, `principalHermiteNormalForm` returns the
 existing strong `HNFResultFin` type.
@@ -57,7 +58,8 @@ checks the transform equation and both inverse identities.
 
 ## Total square SNF semantics
 
-The SNF namespace now implements the paper's Steps 4--7 on a nonsingular
+The SNF namespace implements the row-HNF transpose of
+[Kannan--Bachem Steps 4--7](https://doi.org/10.1137/0208040) on a nonsingular
 square active block:
 
 ```lean
@@ -153,7 +155,9 @@ nonsingular square input and states it using the original matrix bit width.
 It charges only the principal run after preparation.
 
 `DivisionFreeDeterminant.evaluateWithCost` is the certified determinant
-program used by preparation. It stores each Bird recurrence stage in nested `Vector`s,
+program used by preparation. It implements the matrix recurrence in
+[Bird (2011), p. 1072](https://doi.org/10.1016/j.ipl.2011.08.006), stores each
+stage in nested `Vector`s,
 executes all scalar arithmetic through the verified binary sign-magnitude
 addition and multiplication primitives, and returns their exact modeled cost.
 The following layers are already proved over the same implementation:

@@ -13,8 +13,9 @@ same data presents the vector space as a module over the polynomial ring:
   V_A \cong
   \prod_{i=1}^{n} \Q[X]/(d_i).
 \]
-This description makes Smith normal form the natural computational and
-proof-theoretic interface.
+This is the invariant-factor classification and companion-block construction
+of rational canonical form \citep[Chapter VI]{macduffee1943rcf}.  It makes
+Smith normal form the natural computational and proof-theoretic interface.
 
 A formal construction has several obligations hidden by a textbook proof.
 The matrix $XI-A$ must use a fixed sign and index convention.  The executable
@@ -25,7 +26,7 @@ indices and the original finite index.  Finally, a similarity result should
 carry an inverse matrix rather than appeal to a determinant or an unspecified
 existence proof.
 
-We implement these obligations in Lean 4~\citep{demoura2021lean4} on top of
+We implement these obligations in Lean 4~\citep{deMouraUllrich2021Lean4} on top of
 mathlib~\citep{mathlib2020}.  The underlying HNF/SNF library supplies a strong
 result
 \[
@@ -45,6 +46,13 @@ The application then proves:
   similarity certificate and independent of the chosen basis.
 \end{enumerate}
 
+Ma, Wang, and Wen also derive a rational-canonical theorem through a general
+matrix-decomposition bridge \citep[Sections 5.1 and 6.2]{maWangWen2026}.  Their
+result is structured existence built from noncomputable choices; it does not
+supply an executable reduction, normalized-factor uniqueness, or the explicit
+similarity certificate constructed here.  This states the overlap without
+using their work as evidence for this implementation.
+
 The rational-canonical facade, paper, benchmark, and artifact are versioned
-independently from the frozen 1.0 core.  In particular,
+independently from the frozen 1.2.2 core.  In particular,
 \code{import NormalForms} does not expose this application.

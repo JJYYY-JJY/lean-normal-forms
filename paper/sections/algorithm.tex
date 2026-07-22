@@ -10,7 +10,9 @@
   \label{fig:hnf-pipeline}
 \end{figure}
 
-The executable kernel is \code{hermiteNormalFormFin}. It returns an internal
+The executable kernel follows the row-oriented transpose of Cohen's
+column-operation HNF Algorithm 2.4.5 \citep[pp. 68--69]{cohen1993}.
+\code{hermiteNormalFormFin} returns an internal
 result package containing the left multiplier \(U\), the output matrix \(H\), the
 equation \(U A = H\), a chosen inverse \(U^{-1}\), both multiplication
 identities, and a proof that \(H\) is in
@@ -24,7 +26,8 @@ For a nonempty matrix, the kernel first checks whether the entire first column i
 zero. If so, it recurses on \(\tailCols A\). Otherwise it finds the first nonzero
 entry of the first column, swaps that row into the top position, and normalizes
 the new pivot with \code{normUnit}. It then clears the rest of the first column
-by iterating \code{clearFirstColumnStep}.
+by iterating \code{clearFirstColumnStep}. This is the gcd-elimination part of
+the transposed HNF schedule.
 
 \begin{lstlisting}[style=leanstyle,caption={The local first-column elimination step.},label={lst:clearstep}]
 def clearFirstColumnStep (i : Fin (m + 1)) (t : LeftTransform A) :
@@ -118,7 +121,8 @@ lower-right block is unchanged, zeros below the top-left pivot are preserved, an
 the pivot itself is not disturbed. The final theorem
 \code{reduceTopRowLoop_reduced_prefix} packages these preservation facts into
 the exact reduction condition needed by the \code{pivot} constructor of
-\code{IsHermiteNormalFormFin}.
+\code{IsHermiteNormalFormFin}; it implements the final canonical-remainder
+reduction in the transposed row-HNF algorithm.
 
 \subsection{Public extraction and current execution boundary}
 

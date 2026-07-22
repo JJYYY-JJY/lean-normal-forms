@@ -25,8 +25,8 @@
 
 \title{Certified Polynomial-Complexity Hermite and Smith Paths in Lean 4:\\
 Explicit Inverses and a Kannan--Bachem Schedule}
-\author{Junye Ji}
-\date{Research version 0.1.0, July 2026}
+\author{Junye Ji\\University of Washington}
+\date{Research version 0.1.0, July 21, 2026}
 
 \begin{document}
 
@@ -61,7 +61,7 @@ Elementary row and column operations preserve the relevant equivalence, but
 uncontrolled choices can produce enormous intermediate coefficients.  The
 Kannan--Bachem analysis was the first to bound both the number of algebraic
 operations and the binary length of intermediates by polynomials in the input
-size~\citep{kannan1979polynomial}.  A mechanized treatment must expose more
+size~\citep[pp. 499--505]{kannanBachem1979}.  A mechanized treatment must expose more
 than the final normal-form predicate: it must connect the executed branches,
 transformation matrices, termination measure, coefficient envelopes, and a
 concrete integer cost model.
@@ -72,7 +72,7 @@ seam in the project.  It is available through the additive facade
 \code{NormalForms.Research.KannanBachem}.
 \end{center}
 The stable core facade does not re-export it.  The implementation uses Lean 4
-and mathlib~\citep{demoura2021lean4,mathlib2020} and returns the same strong HNF and SNF
+and mathlib~\citep{deMouraUllrich2021Lean4,mathlib2020} and returns the same strong HNF and SNF
 types as the core algorithms.  Consequently the research path can be compared
 with the canonical core result without inventing a second mathematical API.
 
@@ -82,7 +82,7 @@ The main contributions are:
         accumulated forward and inverse row transformations;
   \item deterministic row preparation for every nonsingular square input,
         driven by a costed, division-free determinant evaluator;
-  \item a faithful total implementation of the Smith Steps 4--7, including
+  \item a row-oriented adaptation of Smith Steps 4--7, including
         the nondivisible lower-block injection and a strict pivot-width
         termination proof;
   \item explicit polynomial bounds for algebraic operations and all
@@ -91,7 +91,8 @@ The main contributions are:
         the executed arithmetic and whose closed endpoint depends only on
         dimension and original input width;
   \item a reproducible, independently versioned paper, artifact, axiom audit,
-        API freeze, native corpus, and raw benchmark profile.
+        API freeze, native corpus, and raw benchmark profile
+        \citep{ji2026normalforms}.
 \end{itemize}
 
 The scope is exact.  Research version 0.1.0 proves these results for
@@ -136,6 +137,12 @@ accumulators to the explicit inverse identities.
 
 \section{Prepared principal-minor HNF}
 
+Kannan--Bachem state their HNF schedule in a column convention.  This section
+uses its transposed row form: left row transformations replace the original
+right column transformations, while the principal-minor and coefficient
+arguments are transported unchanged \citep[Algorithm HNF and Theorem
+2]{kannanBachem1979}.
+
 \subsection{The ready kernel}
 
 The square HNF kernel processes leading principal blocks.  Its explicit
@@ -146,7 +153,8 @@ and reduces entries above it.  Arithmetic events align one-for-one with the
 primitive trace, so the operation count is derived from the executed path
 rather than reconstructed from the final matrix.
 
-For dimension \(n\), the trace length is at most \(n^3\).  The corresponding
+For dimension \(n\), the trace length is at most \(n^3\), a concrete refinement
+of the polynomial operation bound in the cited HNF analysis.  The corresponding
 \code{RingOperationCount} separates additions, multiplications, extended-gcd
 calls, and normalizations.  This separation avoids assigning unit cost to an
 integer gcd when the later theorem needs its binary cost.
@@ -172,7 +180,7 @@ public research entry point.
 
 Minor selection must not hide determinant work.  Preparation therefore uses
 a cached dense-vector implementation of Bird's division-free determinant
-recurrence~\citep{bird2011determinants}.  Every scalar addition and
+recurrence~\citep[p. 1072]{bird2011determinants}.  Every scalar addition and
 multiplication is performed by the verified binary sign-magnitude reference
 model.  The implementation returns both a value and an exact modeled cost.
 
@@ -192,6 +200,10 @@ to the ready-kernel arithmetic.
 
 \section{Total Smith Steps 4--7}
 
+The presentation below is the row-HNF transpose of Kannan--Bachem's
+column-oriented Smith schedule \citep[Algorithm SNF, Steps 4--7,
+p.~505]{kannanBachem1979}.
+
 \subsection{One pass}
 
 The active block is nonsingular and nonempty.  Step 4 applies a dedicated
@@ -205,7 +217,7 @@ After a pass, the pivot is nonzero and normalized and the first row is
 cleared.  Entries below the pivot fall into two cases.  If one is not
 divisible by the pivot, the next pass replaces the pivot by a proper common
 divisor.  If all are divisible, one certified shear clears the complete first
-column at once.
+column at once.  These are the repeated Steps 4--6 of the cited schedule.
 
 \subsection{Step 7 and termination}
 
@@ -213,7 +225,8 @@ Once the first row and column are clear, the pivot may still fail to divide an
 entry in the lower-right block.  The search function returns the first such
 position.  Step 7 adds its column into the pivot column, thereby placing the
 offending entry below the pivot without changing the pivot itself.  The next
-pass again produces a proper common divisor.
+pass again produces a proper common divisor, matching the cited Step 7 after
+the row/column transpose.
 
 The total function \code{stabilizeFrom} follows exactly these branches.  Its
 well-founded measure is
@@ -249,19 +262,23 @@ Exact counters mirror the recursion and separately record additions,
 multiplications, extended-gcd calls, normalizations, and exact divisions.  A
 dimension- and input-width polynomial bounds the total.  Searches,
 comparisons, allocation, and data movement are not mislabeled as ring
-operations.
+operations.  This discharges the operation-count obligation corresponding to
+Kannan--Bachem's HNF Theorem 2 and SNF Theorem 4
+\citep[pp. 503--505]{kannanBachem1979}.
 
 \paragraph{Coefficient bit length.}
 Bounds cover intermediate active matrices, arithmetic operands, forward
 prefixes, inverse prefixes, clear and injection transformations, and every
 certificate composition.  Determinant invariance keeps lower-right recursive
-levels within a uniform original-input envelope.
+levels within a uniform original-input envelope.  This is the formal
+coefficient-control obligation represented by their HNF Lemmas 1--3 and SNF
+Theorem 5 \citep[pp. 502--505]{kannanBachem1979}.
 
 \paragraph{Binary bit complexity.}
 The scalar model uses canonical sign-magnitude words, carry/borrow addition,
 schoolbook multiplication, shared Euclidean long division, and costed
 extended gcd; see standard distinctions between algebraic and bit
-cost~\citep{brent2010modern}.  The matrix layer charges the actual scalar
+cost~\citep[Chapter 1]{brentZimmermann2010}.  The matrix layer charges the actual scalar
 reference operations rather than assuming native \code{Int} takes unit time.
 
 For dense certificate multiplication, \code{matrixEntryWithCost} evaluates a
@@ -430,8 +447,8 @@ The present result should not be generalized beyond its statement.
 \end{itemize}
 
 Related formalizations establish Smith normal-form correctness in other proof
-assistants~\citep{divason2022snf}.  The distinguishing goal here is the
-end-to-end connection between a faithful executable schedule, explicit
+assistants~\citep{divasonThiemann2022snf}.  The distinguishing goal here is the
+end-to-end connection between a row-oriented executable adaptation, explicit
 inverse transformations, intermediate coefficient control, and a concrete
 binary arithmetic cost.
 
@@ -448,6 +465,6 @@ independently reproducible research line whose claims are precise enough to
 audit and whose limitations do not weaken the stable general-purpose core.
 
 \bibliographystyle{plainnat}
-\bibliography{references}
+\bibliography{../references}
 
 \end{document}

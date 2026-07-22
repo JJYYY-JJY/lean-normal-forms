@@ -5,9 +5,10 @@ type: software
 authors:
   - family-names: Ji
     given-names: Junye
+    affiliation: University of Washington
 license: Apache-2.0
 version: 1.2.2
-date-released: 2026-07-20
+date-released: 2026-07-21
 abstract: >-
   Certified Hermite and Smith normal forms in Lean 4 over Euclidean domains,
   with explicit inverse certificates, explicit indexing semantics,

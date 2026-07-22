@@ -74,7 +74,9 @@ reproduced through `artifact/bit-cost`, has its own paper, audit, native
 corpus, benchmark, and release gate, and does not enlarge the core facade or
 claim matrix-algorithm complexity.
 
-The independent `research/kannan-bachem` 0.1.0 profile closes semantic,
+The independent `research/kannan-bachem` 0.1.0 profile implements a
+row-oriented adaptation of the
+[Kannan--Bachem algorithms](https://doi.org/10.1137/0208040) and closes semantic,
 ring-operation, coefficient-width, and schoolbook bit-complexity tiers for
 nonsingular square integer HNF and SNF. It includes deterministic prepared-HNF,
 repeated-pass, and Step-7-injection cases, an exact audit and API freeze, raw
@@ -90,9 +92,11 @@ bounds, including an exact mirror of Lean's standard integer XGCD path. Its
 157-entry API freeze, 43-root audit, native corpus, raw benchmark, manuscript,
 and pinned container are reproduced through `artifact/modular-hnf`. It remains
 outside the stable core facade; transform construction cost is not part of its
-value-kernel complexity claim.
+value-kernel complexity claim. Its high-level algorithm attribution is the
+[DKT paper](https://doi.org/10.1287/moor.12.1.50).
 
-The independent `research/lll` 0.1.0 profile fixes exact row-basis LLL at
+The independent `research/lll` 0.1.0 profile fixes exact row-basis LLL as
+introduced in the [original paper](https://doi.org/10.1007/BF01457454), at
 `delta = 3/4` and `eta = 1/2`. It pairs the source-pinned terminating reducer
 with an explicit-inverse elementary trace, extends it to every row rank through
 a verified HNF decomposition, and exposes columns only through transposition.

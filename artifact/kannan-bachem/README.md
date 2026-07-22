@@ -7,9 +7,13 @@ nonsingular square integer HNF and SNF and does not change the frozen core
 
 The profile checks:
 
-- prepared principal-minor HNF with explicit forward and inverse transforms;
-- the division-free, costed Bird determinant used by row preparation;
-- faithful Smith Steps 4--7, including the repeated-pass and injection paths;
+- the row-oriented transpose of the
+  [Kannan--Bachem HNF schedule](https://doi.org/10.1137/0208040), with explicit
+  forward and inverse transforms;
+- the division-free, costed
+  [Bird determinant](https://doi.org/10.1016/j.ipl.2011.08.006) used by row preparation;
+- the row-oriented adaptation of Kannan--Bachem Smith Steps 4--7, including
+  the repeated-pass and injection paths;
 - total pivot stabilization by strict binary pivot decrease;
 - lower-right Smith recursion returning the core `SNFResultFin` type;
 - canonical equality with the core HNF/SNF implementations;

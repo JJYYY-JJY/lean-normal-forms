@@ -6,8 +6,9 @@ Core package compatibility: 1.2.2
 
 Lean/mathlib: 4.32.0
 
-Verified dense backend: `hex-lll-mathlib` at
-`c10d6681dee9a4f963c1035bcbe34fc3eb60a769`
+Executable backend: [HexLLL at `a73f188`](https://github.com/leanprover/hex-lll/tree/a73f188bbd7ea48c4a1bb1e6d608b4f131026512)
+
+Proof backend: [HexLLLMathlib at `c10d668`](https://github.com/leanprover/hex-lll-mathlib/tree/c10d6681dee9a4f963c1035bcbe34fc3eb60a769)
 
 Import the independent facade with:
 
@@ -27,6 +28,9 @@ Rows are lattice vectors. The fixed parameters are:
 delta : Rat  -- 3 / 4
 eta   : Rat  -- 1 / 2
 ```
+
+They specialize the reducedness conditions in the
+[original LLL paper](https://doi.org/10.1007/BF01457454).
 
 The exact predicate is split into:
 
@@ -65,8 +69,9 @@ The chosen inverse is accumulated from every elementary row step. Neither
 `Matrix.inv`, determinants, `nonsing_inv`, nor a choice-based inverse recovery
 appears on the algorithm path.
 
-The terminating value reducer and reducedness theorem come from the pinned
-Hex backend. `toDense` and `ofDense` are the representation boundary, with
+The terminating value reducer comes from the pinned HexLLL source, while the
+reducedness and fuel-sufficiency theorems come from pinned HexLLLMathlib.
+`toDense` and `ofDense` are the representation boundary, with
 proved round trips and row-add/swap compatibility. The local trace follows the
 same dense control flow and accumulates the project certificate.
 

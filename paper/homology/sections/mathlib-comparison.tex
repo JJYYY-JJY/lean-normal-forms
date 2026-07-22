@@ -1,6 +1,7 @@
 \section{Comparison with mathlib homology}
 
-The definition \code{toMathlibChainComplex} sends an
+At the manifest-pinned mathlib source commit
+\citep{mathlib4320homology}, the definition \code{toMathlibChainComplex} sends an
 \code{IntChainComplex} to
 \[
   \code{ChainComplex}\;(\code{ModuleCat}\ \Z)\;\mathbb{N}.
@@ -45,9 +46,12 @@ to its nondegenerate simplices, degreewise basis equivalences, agreement of
 canonical generators, and differential commutation.
 
 Given this witness, \code{chainIso} identifies the explicit matrix complex
-with mathlib's nondegenerate normalized chain complex.  The canonical
-splitting of the free module on a simplicial set then connects that complex
-to the normalized Moore complex in the Karoubi envelope.  Both endpoints are
+with mathlib's nondegenerate normalized chain complex
+\citep{mathlib4320normalizedChains}.  The canonical splitting of the free
+module on a simplicial set then connects that complex to the normalized Moore
+complex in the Karoubi envelope \citep{mathlib4320normalizedMoore}; the underlying
+normalized/degenerate splitting is the classical one
+\citep[Lemma 8.3.7 and Theorem 8.3.8]{weibel1994simplicial}.  Both endpoints are
 in the image of the fully faithful Karoubi embedding, so
 \code{normalizedMooreChainIso} reflects the result to an actual isomorphism
 of chain complexes.  Applying mathlib's homology functor and the explicit

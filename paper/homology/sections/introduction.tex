@@ -11,7 +11,8 @@ ordinary homology is
 \[
   H_n=\ker d_n/\operatorname{im}d_{n+1}.
 \]
-Smith normal form classifies cokernels of integer matrices, but computing
+Smith normal form supplies the standard finite-chain algorithm for computing
+integer homology \citep[Chapter 3]{kaczynskiMischaikowMrozek2004}, but computing
 $H_n$ requires more than applying Smith form independently to the two
 boundaries.  One must extract an integral basis of the kernel, express the
 incoming boundary in exactly that basis, prove that the resulting
@@ -25,7 +26,7 @@ runtime list of invariant factors is not itself a theorem about the quotient.
 Index arithmetic also has to cover zero groups and the top and bottom
 degrees without informal dimension conventions.
 
-We implement the complete construction in Lean 4~\citep{demoura2021lean4}
+We implement the complete construction in Lean 4~\citep{deMouraUllrich2021Lean4}
 and mathlib~\citep{mathlib2020}, using the strong Smith-normal-form results
 of \code{lean-normal-forms}.  Each Smith result records $U$, $V$, chosen
 inverses, both inverse identities, and

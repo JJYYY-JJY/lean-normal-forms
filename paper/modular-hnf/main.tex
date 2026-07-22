@@ -27,8 +27,8 @@
 
 \title{A Certified Modular Hermite Normal Form Kernel in Lean 4:\\
 Determinant Contracts, Canonicality, and Explicit Bit Budgets}
-\author{Junye Ji}
-\date{Research version 0.1.0, July 2026}
+\author{Junye Ji\\University of Washington}
+\date{Research version 0.1.0, July 21, 2026}
 
 \begin{document}
 
@@ -37,8 +37,9 @@ Determinant Contracts, Canonicality, and Explicit Bit Budgets}
 \begin{abstract}
 Modulo-determinant Hermite normal form algorithms control intermediate
 coefficients by reducing arithmetic modulo a legal determinant multiple.  We
-give an executable Lean 4 formalization of the Domich--Kannan--Trotter value
-schedule for full-column-rank integer matrices.  Its input type records a
+give an executable Lean 4 modulo-determinant schedule in the algorithm class
+introduced by Domich--Kannan--Trotter for full-column-rank integer matrices.
+Its input type records a
 positive modulus and divisibility by one explicitly nonsingular selected
 minor; a different elementary-divisor contract is represented by a different
 type.  The executable kernel returns its candidate, stage schedule, and exact
@@ -65,10 +66,9 @@ Hermite normal form is canonical, but elementary row reduction alone does not
 control the size of intermediate integers.  Modulo-determinant algorithms
 replace uncontrolled representatives by bounded congruent values and recover
 the exact canonical matrix from a sufficiently strong modulus.  The schedule
-formalized here follows the algorithm attributed to Domich, Kannan, and
-Trotter~\citep{domich1987hnf}; the same attribution appears in the FLINT
-integer-matrix documentation~\citep{flint2026fmpzmat}.  Our implementation is
-pure Lean and has no FLINT runtime or proof dependency.
+formalized here belongs to the modulo-determinant algorithm class introduced
+by Domich--Kannan--Trotter \citep{domichKannanTrotter1987}.  Our implementation
+is pure Lean and has no FLINT runtime or proof dependency.
 
 The formalization must answer several questions that a conventional routine
 can leave implicit.  Which modulus theorem is required?  What invariant is
@@ -100,7 +100,7 @@ facade.  The main contributions are:
 \end{itemize}
 
 Lean 4 and mathlib provide the ambient matrix, determinant, module, and
-normal-form theory~\citep{demoura2021lean4,mathlib2020}.  All executable
+normal-form theory~\citep{deMouraUllrich2021Lean4,mathlib2020}.  All executable
 branches use the project's constructive integer Euclidean instance.
 
 \section{Contracts and result boundary}
@@ -119,8 +119,11 @@ determinant-modulus witness then stores $D\in\Z$ with
 \]
 The selected minor makes the rectangular contract concrete and checkable.
 
-FLINT also exposes a different routine whose modulus is a multiple of the
-largest elementary divisor.  That premise is represented by
+FLINT 3.6.0 exposes two unchecked modular-HNF contracts
+\citep{flint360fmpzmat}.  Its determinant-modulus routine requires full column
+rank and a positive multiple of the determinant of the nonzero HNF rows.  Its
+other routine instead requires a positive multiple of the largest elementary
+divisor.  That second premise is represented by
 \code{ElementaryDivisorModulusWitness}.  The disjoint sum
 \code{ModulusWitness} can describe either contract, but the DKT entry
 \code{runWithDeterminantWitness} accepts only the determinant witness.  In
@@ -144,6 +147,11 @@ type but also fixes the cost scope: the modular transition theorem prices the
 value kernel, not construction of $U$ and $U^{-1}$.
 
 \section{Executable modular schedule}
+
+The transition order below belongs to the modulo-determinant procedure class of
+Domich--Kannan--Trotter \citep{domichKannanTrotter1987}.  This release does not
+claim that the local transition order is a line-by-line reconstruction of the
+published schedule.
 
 The kernel processes columns from left to right.  At column $k$, the canonical
 pivot row is $k$.  If the pivot is zero it is seeded by the current modulus.
@@ -177,6 +185,9 @@ is therefore observable on every raw run.  It is not reconstructed from the
 final HNF.
 
 \section{Semantic invariant and canonicality}
+
+The following correctness argument is for this repository's typed row-HNF
+schedule.
 
 For a matrix $M$, modulus $D$, and processed prefix length $k$, define
 \[
@@ -286,9 +297,10 @@ magnitude.  It implements carry/borrow addition, schoolbook multiplication,
 long division with remainder, and extended gcd, with a natural-number cost
 field.  Value projections are proved equal to standard integer operations and
 each cost is bounded in operand bit lengths, following the usual schoolbook
-model~\citep{brent2010modern}.
+model~\citep[Chapter 1]{brentZimmermann2010}.
 
-The modular kernel calls the project's standard integer XGCD instance, which
+The modular kernel calls the project's standard integer XGCD instance from
+the manifest-pinned mathlib source \citep{mathlib4320intGCD}, which
 is based on \code{Nat.xgcdAux}, \code{Int.gcdA}, and \code{Int.gcdB}.  Reusing
 a differently normalized bounded-XGCD implementation would leave a gap between
 the cost theorem and executed code.  We instead define
@@ -402,6 +414,6 @@ remaining transform-cost boundary is stated rather than hidden, leaving a
 clear target for a future primitive modular operation log.
 
 \bibliographystyle{plainnat}
-\bibliography{references}
+\bibliography{../references}
 
 \end{document}

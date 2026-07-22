@@ -11,13 +11,22 @@ Build:
 latexmk -pdf main.tex
 ```
 
+From the repository root, the paper-only citation gate checks the canonical
+bibliography, missing and unused keys, duplicate keys and DOIs, local `.bib`
+files, BibTeX output, undefined citations/references, and overfull boxes across
+all seven manuscripts:
+
+```sh
+scripts/CheckPaperCitations.py --build
+```
+
 Quick visual check:
 
 ```sh
 pdftoppm -png main.pdf preview
 ```
 
-Version 1.0.0 is the unified core manuscript. It covers the explicit-inverse,
+Version 1.2.2 is the unified core manuscript. It covers the explicit-inverse,
 indexing-semantics,
 constructive-execution, strict external-certificate, intrinsic Smith, and
 presentation layers:

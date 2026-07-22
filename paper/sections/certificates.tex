@@ -73,16 +73,21 @@ an input mismatch, the transformation equation, either inverse direction, or
 the normal-form predicate independently. Checked data is only typed data. A
 strong result follows from \code{checkHNF\_sound} or
 \code{checkSNF\_sound} and an equation showing checker success.
+This proof-search/proof-checking separation follows the skeptical integration
+principle of Harrison and Th\'ery \citep{harrisonThery1998}.
 
 The \code{normalforms-check emit-lean} command renders a module importing the
 caller's matrix, a typed raw certificate literal, and separate Boolean
 obligations for dimensions, input identity, transformation, inverses, and
 normal form. Each obligation is closed with \code{decide_cbv}; the final
-declaration uses only checker soundness. The strict declaration audit permits
+declaration uses only checker soundness. At Lean 4.32.0 this tactic performs
+call-by-value reduction and does not rely on the code generator
+\citep{lean4320decideCbv}. The strict declaration audit permits
 \code{propext} and \code{Quot.sound}, but rejects
 \code{Classical.choice}, native reduction, and compiler trust.
 
-FLINT is isolated outside this trusted path. The optional C computation uses
+FLINT is isolated outside this trusted path. Against the pinned FLINT 3.6.0
+integer-matrix interface \citep{flint360fmpzmat}, the optional C computation uses
 \code{fmpz\_mat\_hnf\_transform}, \code{fmpz\_mat\_snf\_transform}, and
 \code{fmpz\_mat\_inv}; it accepts inverse output only when the common
 denominator is \(1\) or \(-1\). The process worker and Lean FFI invoke the same
