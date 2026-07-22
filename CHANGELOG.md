@@ -161,7 +161,7 @@
 - No GitHub release, tag, deposit, DOI, or upstream pull request is created by
   these materials.
 
-## 1.2.2 - 2026-07-21
+## 1.2.2 - 2026-07-22
 
 ### Added
 
