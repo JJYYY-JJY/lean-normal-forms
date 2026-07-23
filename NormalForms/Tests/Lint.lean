@@ -72,8 +72,12 @@ public def main (arguments : List String) : IO UInt32 := do
       "Applications\\.(RationalCanonical|Homology))")
     #[]
     #["NormalForms.lean"]
-  let whitespaceClean ← requireSuccess
-    "git diff contains whitespace errors" "git" #["diff", "--check"]
+  let gitMetadataPresent ← (".git" : System.FilePath).pathExists
+  let whitespaceClean ←
+    if gitMetadataPresent then
+      requireSuccess "git diff contains whitespace errors" "git" #["diff", "--check"]
+    else
+      pure true
   let importsAnalyzed ← checkImports
   if noPlaceholders && noCompilerTrust && facadeIsNarrow && whitespaceClean && importsAnalyzed then
     IO.println "repository lint passed"
