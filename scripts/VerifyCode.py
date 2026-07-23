@@ -833,7 +833,7 @@ AUDIT_SPECS: dict[
     "kannan-bachem": [
         (
             "normalforms.kannan-bachem-axiom-audit/v1",
-            291,
+            296,
             SEMANTIC_ALLOWLIST,
             SEMANTIC_OBSERVED,
         )
