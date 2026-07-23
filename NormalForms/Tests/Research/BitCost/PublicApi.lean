@@ -31,6 +31,12 @@ open NormalForms.Research.BitCost
 #check WithCost.pure
 #check WithCost.map
 #check WithCost.bind
+#check isZeroWithCost
+#check magnitudeCompareWithCost
+#check magnitudeCompareWithCost_value
+#check magnitudeLeWithCost
+#check magnitudeLeWithCost_value
+#check magnitudeLeWithCost_cost_le
 #check DivModResult
 #check XGCDResult
 #check addWithCost
@@ -93,6 +99,7 @@ open NormalForms.Research.BitCost
 #check boundedXGCDRawCoefficientBitLengthBound
 #check boundedEuclideanXGCDWithCost_coefficient_bitLength_le
 #check boundedXGCDReductionCostBound
+#check Internal.reduceBezoutWithCost_uses_costed_comparison
 #check boundedXGCDEuclideanUpdateCostBound
 #check boundedXGCDStepCostBound
 #check boundedEuclideanXGCDDivisions

@@ -514,15 +514,15 @@ private def smithInjectionExpected : Matrix (Fin 2) (Fin 2) Int :=
 /- Freeze actual bit-operation charges for the repeated-pass and injection paths. -/
 #guard
   boundedColumnBitOperationCost smithRepeatInput = 2521951 ∧
-    passBitOperationCost smithRepeatInput (by decide) = 1130155896875 ∧
-    stabilizeBitOperationCost smithRepeatInput (by decide) = 1130155898469 ∧
-    smithBitOperationCost smithRepeatInput (by decide) = 1130326542472
+    passBitOperationCost smithRepeatInput (by decide) = 1130155896879 ∧
+    stabilizeBitOperationCost smithRepeatInput (by decide) = 1130155898473 ∧
+    smithBitOperationCost smithRepeatInput (by decide) = 1130326542476
 
 #guard
   boundedColumnBitOperationCost smithInjectionInput = 2521951 ∧
     passBitOperationCost smithInjectionInput (by decide) = 1130155896826 ∧
-    stabilizeBitOperationCost smithInjectionInput (by decide) = 3012262037638 ∧
-    smithBitOperationCost smithInjectionInput (by decide) = 3012432681653
+    stabilizeBitOperationCost smithInjectionInput (by decide) = 3012262037648 ∧
+    smithBitOperationCost smithInjectionInput (by decide) = 3012432681663
 
 example :
     (stabilize smithInjectionInput (by decide)).passes ≤
@@ -620,8 +620,13 @@ open NormalForms.Research.KannanBachem
 open NormalForms.Matrix.Certificates
 
 private def zeroSM : SignMagnitude := SignMagnitude.ofInt 0
+private def threeSM : SignMagnitude := SignMagnitude.ofInt 3
 private def sixSM : SignMagnitude := SignMagnitude.ofInt 6
 private def negTwelveSM : SignMagnitude := SignMagnitude.ofInt (-12)
+private def reductionRaw : NormalForms.Research.BitCost.XGCDResult :=
+  { gcd := threeSM
+    leftCoeff := SignMagnitude.ofInt 4
+    rightCoeff := SignMagnitude.ofInt (-1) }
 
 #guard (magnitudeCompareWithCost zeroSM sixSM).value = .lt
 #guard (magnitudeCompareWithCost sixSM zeroSM).value = .gt
@@ -632,6 +637,24 @@ private def negTwelveSM : SignMagnitude := SignMagnitude.ofInt (-12)
   (magnitudeCompareWithCost (SignMagnitude.ofInt 3)
     (SignMagnitude.ofInt 16)).value = .lt
 #guard (magnitudeLeWithCost zeroSM sixSM).value
+
+#guard
+  (Internal.reduceBezoutWithCost zeroSM zeroSM reductionRaw).value =
+    Internal.reduceBezoutValue zeroSM zeroSM reductionRaw
+#guard
+  (Internal.reduceBezoutWithCost sixSM threeSM reductionRaw).value =
+    Internal.reduceBezoutValue sixSM threeSM reductionRaw
+#guard
+  (isZeroWithCost sixSM).cost +
+      (magnitudeLeWithCost threeSM sixSM).cost ≤
+    (Internal.reduceBezoutWithCost sixSM threeSM reductionRaw).cost
+#guard
+  (Internal.reduceBezoutWithCost threeSM sixSM reductionRaw).value =
+    Internal.reduceBezoutValue threeSM sixSM reductionRaw
+#guard
+  (isZeroWithCost threeSM).cost +
+      (magnitudeLeWithCost sixSM threeSM).cost ≤
+    (Internal.reduceBezoutWithCost threeSM sixSM reductionRaw).cost
 
 #guard
   (exactDivWithCost negTwelveSM (SignMagnitude.ofInt 3)
@@ -670,23 +693,36 @@ private def searchLocation : ArithmeticChargeLocation :=
     (dvdExecution searchLocation (SignMagnitude.ofInt 3)
       (SignMagnitude.ofInt 12)).charges = [.smithSearch]
 
-private def bezoutLeafExecution : ArithmeticLeafExecution :=
-  principalEventChargeExecution 2
-    (.xgcd 0 1 6 15) (by
-      exact ⟨by omega, by omega⟩)
+private def bezoutBlockLocation : ArithmeticChargeLocation :=
+  ArithmeticChargeLocation.ofIndices .bezoutBlock 2 [0, 1] (by
+    intro index member
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at member
+    rcases member with rfl | rfl <;> omega)
 
-#guard bezoutLeafExecution.charges.length = 4
+private def bezoutBlockCharges
+    (left right : SignMagnitude) :
+    List KannanBachemArithmeticCharge :=
+  let run := boundedBezoutBlockWithCost left right
+  [KannanBachemArithmeticCharge.boundedBezoutBlockOfRun
+    bezoutBlockLocation left right run rfl]
+
+#guard (bezoutBlockCharges zeroSM zeroSM).length = 1
 #guard
-  traceStandaloneDivModEvents bezoutLeafExecution.charges =
+  traceStandaloneDivModEvents (bezoutBlockCharges zeroSM zeroSM) = []
+#guard
+  traceOperationCount (bezoutBlockCharges zeroSM zeroSM) =
+    { additions := 0, multiplications := 0, xgcdCalls := 1,
+      normalizations := 0, standaloneDivModCalls := 0 }
+#guard (bezoutBlockCharges sixSM (SignMagnitude.ofInt 15)).length = 1
+#guard
+  traceStandaloneDivModEvents
+      (bezoutBlockCharges sixSM (SignMagnitude.ofInt 15)) =
     [.bezoutLeftExact, .bezoutRightExact]
 #guard
-  (traceOperationCount bezoutLeafExecution.charges).xgcdCalls = 1
-#guard
-  (principalEventChargeExecution 2 (.xgcd 0 1 0 6) (by
-    exact ⟨by omega, by omega⟩)).charges.length = 4
-#guard
-  (principalEventChargeExecution 2 (.xgcd 0 1 6 0) (by
-    exact ⟨by omega, by omega⟩)).charges.length = 4
+  traceOperationCount
+      (bezoutBlockCharges sixSM (SignMagnitude.ofInt 15)) =
+    { additions := 0, multiplications := 0, xgcdCalls := 1,
+      normalizations := 0, standaloneDivModCalls := 2 }
 #guard composeExecutionDenseProductCount = 4
 
 #guard decodeFramedPrefix [true, false] = none
@@ -824,6 +860,50 @@ example :
     one_mul]
 
 example :
+    PrincipalExecutionCoverage
+      { B := principalInput, U := 1, Uinv := 1 }
+      { B := (principalExecution principalInput).B
+        U := (principalExecution principalInput).U
+        Uinv := (principalExecution principalInput).Uinv }
+      (principalExecution principalInput).transitions
+      (principalExecution principalInput).charges :=
+  principalExecution_transitionAdequate principalInput
+
+example :
+    (principalExecution principalInput).charges =
+      (principalExecution principalInput).transitions.flatMap
+        PrincipalTransitionExecution.charges :=
+  principalExecution_chargeComplete principalInput
+
+example :
+    ∀ transition ∈ (principalExecution principalInput).transitions,
+      transition.BezoutRunShared :=
+  principalExecution_bezoutRun_shared principalInput
+
+example :
+    (boundedColumnExecution principalInput).value =
+      boundedColumnHermiteNormalForm principalInput :=
+  boundedColumnExecution_value principalInput
+
+example :
+    let run := boundedColumnExecution principalInput
+    run.value.U_cert.inverse * run.value.U = 1 ∧
+      run.value.U * run.value.U_cert.inverse = 1 :=
+  ⟨(boundedColumnExecution principalInput).value.U_cert.left_inv,
+    (boundedColumnExecution principalInput).value.U_cert.right_inv⟩
+
+example :
+    (boundedColumnExecution principalInput).charges =
+      (boundedColumnExecution principalInput).transitions.flatMap
+        PrincipalTransitionExecution.charges :=
+  boundedColumnExecution_chargeComplete principalInput
+
+example :
+    ∀ transition ∈ (boundedColumnExecution principalInput).transitions,
+      transition.BezoutRunShared :=
+  (boundedColumnExecution principalInput).coverage.transitions_shared
+
+example :
     (smithExecution smithInjectionInput (by decide)).value =
       smith smithInjectionInput (by decide) :=
   smithExecution_value smithInjectionInput (by decide)
@@ -832,6 +912,11 @@ example :
     ArithmeticChargeListWellFormed
       (smithExecution smithInjectionInput (by decide)).charges :=
   smithExecution_trace_wellFormed smithInjectionInput (by decide)
+
+example :
+    SmithExecutionCoverage
+      (smithExecution smithInjectionInput (by decide)) :=
+  smithExecution_chargeComplete smithInjectionInput (by decide)
 
 example :
     NormalForms.Research.KannanBachem.smithOperationCount

@@ -5,6 +5,7 @@ Authors: Junye Ji
 -/
 module
 
+public import NormalForms.Research.BitCost.Comparison
 public import NormalForms.Research.BitCost.EuclideanIterations
 
 /-!
@@ -28,34 +29,104 @@ namespace NormalForms.Research.BitCost
 
 namespace Internal
 
-/-- One costed Appendix reduction of an already valid Bezout result. -/
-@[expose] public def reduceBezoutWithCost
-    (left right : SignMagnitude) (raw : XGCDResult) :
-    WithCost XGCDResult :=
+/-- The Appendix reduction value, separated from its costed control flow. -/
+@[expose] public def reduceBezoutValue
+    (left right : SignMagnitude) (raw : XGCDResult) : XGCDResult :=
   if _main : left ≠ 0 ∧ right.value.natAbs ≤ left.value.natAbs then
     let division := divModWithCost raw.rightCoeff left
     let product := mulWithCost division.value.quotient right
     let adjusted := addWithCost raw.leftCoeff product.value
-    { value :=
-        { gcd := raw.gcd
-          leftCoeff := adjusted.value
-          rightCoeff := division.value.remainder }
-      cost := 1 + division.cost + product.cost + adjusted.cost }
+    { gcd := raw.gcd
+      leftCoeff := adjusted.value
+      rightCoeff := division.value.remainder }
   else if _rightNonzero : right ≠ 0 then
     let division := divModWithCost raw.leftCoeff right
     let product := mulWithCost division.value.quotient left
     let adjusted := addWithCost raw.rightCoeff product.value
-    { value :=
-        { gcd := raw.gcd
-          leftCoeff := division.value.remainder
-          rightCoeff := adjusted.value }
-      cost := 1 + division.cost + product.cost + adjusted.cost }
+    { gcd := raw.gcd
+      leftCoeff := division.value.remainder
+      rightCoeff := adjusted.value }
   else
-    { value :=
-        { gcd := raw.gcd
-          leftCoeff := 1
-          rightCoeff := 0 }
-      cost := 1 }
+    { gcd := raw.gcd
+      leftCoeff := 1
+      rightCoeff := 0 }
+
+/-- One costed Appendix reduction of an already valid Bezout result. -/
+@[expose] public def reduceBezoutWithCost
+    (left right : SignMagnitude) (raw : XGCDResult) :
+    WithCost XGCDResult :=
+  let leftZero := isZeroWithCost left
+  if leftZero.value then
+    let rightZero := isZeroWithCost right
+    if rightZero.value then
+      { value :=
+          { gcd := raw.gcd
+            leftCoeff := 1
+            rightCoeff := 0 }
+        cost := leftZero.cost + rightZero.cost }
+    else
+      let division := divModWithCost raw.leftCoeff right
+      let product := mulWithCost division.value.quotient left
+      let adjusted := addWithCost raw.rightCoeff product.value
+      { value :=
+          { gcd := raw.gcd
+            leftCoeff := division.value.remainder
+            rightCoeff := adjusted.value }
+        cost := leftZero.cost + rightZero.cost +
+          division.cost + product.cost + adjusted.cost }
+  else
+    let comparison := magnitudeLeWithCost right left
+    if comparison.value then
+      let division := divModWithCost raw.rightCoeff left
+      let product := mulWithCost division.value.quotient right
+      let adjusted := addWithCost raw.leftCoeff product.value
+      { value :=
+          { gcd := raw.gcd
+            leftCoeff := adjusted.value
+            rightCoeff := division.value.remainder }
+        cost := leftZero.cost + comparison.cost +
+          division.cost + product.cost + adjusted.cost }
+    else
+      let division := divModWithCost raw.leftCoeff right
+      let product := mulWithCost division.value.quotient left
+      let adjusted := addWithCost raw.rightCoeff product.value
+      { value :=
+          { gcd := raw.gcd
+            leftCoeff := division.value.remainder
+            rightCoeff := adjusted.value }
+        cost := leftZero.cost + comparison.cost +
+          division.cost + product.cost + adjusted.cost }
+
+@[simp] public theorem reduceBezoutWithCost_value
+    (left right : SignMagnitude) (raw : XGCDResult) :
+    (reduceBezoutWithCost left right raw).value =
+      reduceBezoutValue left right raw := by
+  by_cases leftZero : left = 0
+  · subst left
+    by_cases rightZero : right = 0
+    · subst right
+      simp [reduceBezoutWithCost, reduceBezoutValue]
+    · have rightValueNonzero : right.value ≠ 0 := by
+        intro valueZero
+        apply rightZero
+        rw [← SignMagnitude.ofInt_value right, valueZero]
+        rfl
+      simp [reduceBezoutWithCost, reduceBezoutValue, rightZero,
+        rightValueNonzero]
+  · have leftValueNonzero : left.value ≠ 0 := by
+      intro valueZero
+      apply leftZero
+      rw [← SignMagnitude.ofInt_value left, valueZero]
+      rfl
+    by_cases magnitudeLe : right.value.natAbs ≤ left.value.natAbs
+    · simp [reduceBezoutWithCost, reduceBezoutValue, leftZero,
+        leftValueNonzero, magnitudeLe]
+    · have rightNonzero : right ≠ 0 := by
+        intro equality
+        subst right
+        simp at magnitudeLe
+      simp [reduceBezoutWithCost, reduceBezoutValue, leftZero,
+        leftValueNonzero, magnitudeLe, rightNonzero]
 
 /-- Appendix reduction preserves both gcd and the Bezout equation. -/
 public theorem reduceBezoutWithCost_spec
@@ -64,7 +135,8 @@ public theorem reduceBezoutWithCost_spec
     XGCDSpecification left right
       (reduceBezoutWithCost left right raw).value := by
   constructor
-  · simp only [reduceBezoutWithCost]
+  · rw [reduceBezoutWithCost_value]
+    simp only [reduceBezoutValue]
     split
     · exact rawSpec.gcd_value
     · split <;> exact rawSpec.gcd_value
@@ -76,7 +148,7 @@ public theorem reduceBezoutWithCost_spec
         rw [divModWithCost_quotient_value,
           divModWithCost_remainder_value]
         exact Int.ediv_mul_add_emod raw.rightCoeff.value left.value
-      simp only [reduceBezoutWithCost, dif_pos main,
+      simp only [reduceBezoutWithCost_value, reduceBezoutValue, dif_pos main,
         addWithCost_value, mulWithCost_value]
       change
         (raw.leftCoeff.value +
@@ -100,7 +172,7 @@ public theorem reduceBezoutWithCost_spec
           rw [divModWithCost_quotient_value,
             divModWithCost_remainder_value]
           exact Int.ediv_mul_add_emod raw.leftCoeff.value right.value
-        simp only [reduceBezoutWithCost, dif_neg main,
+        simp only [reduceBezoutWithCost_value, reduceBezoutValue, dif_neg main,
           dif_pos rightNonzero, addWithCost_value, mulWithCost_value]
         change
           division.value.remainder.value * left.value +
@@ -125,7 +197,7 @@ public theorem reduceBezoutWithCost_spec
         subst right
         have gcdZero : raw.gcd.value = 0 := by
           simpa using rawSpec.gcd_value
-        simp [reduceBezoutWithCost, gcdZero]
+        simp [reduceBezoutWithCost_value, reduceBezoutValue, gcdZero]
 
 theorem natAbs_le_natAbs_mul_of_ne_zero
     (left right : Int) (leftNonzero : left ≠ 0) :
@@ -156,7 +228,8 @@ public theorem reduceBezoutWithCost_coefficient_natAbs_le
       rfl
     have rightEquation :
         newRight = raw.rightCoeff.value % left.value := by
-      simp [newRight, reduced, reduceBezoutWithCost, main,
+      simp [newRight, reduced, reduceBezoutWithCost_value,
+        reduceBezoutValue, main,
         divModWithCost_remainder_value]
     have rightLt : newRight.natAbs < left.value.natAbs := by
       rw [rightEquation]
@@ -167,7 +240,7 @@ public theorem reduceBezoutWithCost_coefficient_natAbs_le
     have reducedBezout :
         newLeft * left.value + newRight * right.value = raw.gcd.value := by
       have gcdEquation : reduced.value.gcd.value = raw.gcd.value := by
-        simp [reduced, reduceBezoutWithCost, main]
+        simp [reduced, reduceBezoutWithCost_value, reduceBezoutValue, main]
       rw [gcdEquation] at bezout
       simpa [reduced, newLeft, newRight] using bezout
     have productEquation :
@@ -206,7 +279,8 @@ public theorem reduceBezoutWithCost_coefficient_natAbs_le
         rfl
       have leftEquation :
           newLeft = raw.leftCoeff.value % right.value := by
-        simp [newLeft, reduced, reduceBezoutWithCost, main, rightNonzero,
+        simp [newLeft, reduced, reduceBezoutWithCost_value,
+          reduceBezoutValue, main, rightNonzero,
           divModWithCost_remainder_value]
       have leftLt : newLeft.natAbs < right.value.natAbs := by
         rw [leftEquation]
@@ -217,7 +291,8 @@ public theorem reduceBezoutWithCost_coefficient_natAbs_le
       have reducedBezout :
           newLeft * left.value + newRight * right.value = raw.gcd.value := by
         have gcdEquation : reduced.value.gcd.value = raw.gcd.value := by
-          simp [reduced, reduceBezoutWithCost, main, rightNonzero]
+          simp [reduced, reduceBezoutWithCost_value,
+            reduceBezoutValue, main, rightNonzero]
         rw [gcdEquation] at bezout
         simpa [reduced, newLeft, newRight] using bezout
       have productEquation :
@@ -251,7 +326,8 @@ public theorem reduceBezoutWithCost_coefficient_natAbs_le
         exact main ⟨leftNonzero, by simp [rightZero]⟩
       subst left
       subst right
-      norm_num [reduceBezoutWithCost, boundedXGCDCoefficientHeight,
+      norm_num [reduceBezoutWithCost_value, reduceBezoutValue,
+        boundedXGCDCoefficientHeight,
         SignMagnitude.value]
 
 end Internal

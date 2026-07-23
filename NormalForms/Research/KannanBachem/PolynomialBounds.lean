@@ -475,8 +475,12 @@ public def boundedXGCDReduction :
       (PolyEnvelope.add boundedXGCDRawCoefficient
         (PolyEnvelope.constant 1))
       PolyEnvelope.inputBits
+  let comparison :=
+    PolyEnvelope.add
+      (PolyEnvelope.mul (PolyEnvelope.constant 2) PolyEnvelope.inputBits)
+      (PolyEnvelope.constant 2)
   change PolyEnvelope (fun _ inputBits ↦
-    1 +
+    (2 * inputBits + 2) +
       divisionCostForBitLengths
         (boundedXGCDRawCoefficientBitLengthBound inputBits) inputBits +
       multiplicationCostForBitLengths
@@ -487,7 +491,7 @@ public def boundedXGCDReduction :
   exact PolyEnvelope.add
     (PolyEnvelope.add
       (PolyEnvelope.add
-        (PolyEnvelope.constant 1)
+        comparison
         (divisionCost boundedXGCDRawCoefficient
           PolyEnvelope.inputBits))
       (multiplicationCost rawPlusOne PolyEnvelope.inputBits))

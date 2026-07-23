@@ -41,7 +41,8 @@ public theorem smithExecution_cost_le_work {n workBits : Nat}
       smithExecutionBitOperationWorkBound n workBits := by
   induction n with
   | zero =>
-      simp [smithExecution, smithExecutionBitOperationWorkBound,
+      simp [smithExecution, emptySmithExecution,
+        smithExecutionBitOperationWorkBound,
         traceBitCost]
   | succ n ih =>
       let stabilized := stabilizeExecution A hdet
@@ -65,8 +66,7 @@ public theorem smithExecution_cost_le_work {n workBits : Nat}
       let lifted : CertificateExecution transformed :=
         { value := liftedValue
           charges := lower.charges
-          trace_wellFormed := lower.trace_wellFormed
-          chargeOwnership := lower.chargeOwnership }
+          trace_wellFormed := lower.trace_wellFormed }
       have stabilizationCost :
           traceBitCost stabilized.charges ≤
             stabilizationExecutionBitOperationBound (n + 1) workBits :=

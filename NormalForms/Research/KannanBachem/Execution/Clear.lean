@@ -142,8 +142,7 @@ public theorem clearDivisionCharges_wellFormed {n : Nat}
   exact
     { value
       charges
-      trace_wellFormed := chargesWellFormed
-      chargeOwnership := List.forall_iff_forall_mem.mp chargesWellFormed }
+      trace_wellFormed := chargesWellFormed }
 
 public theorem clearExecution_value {n : Nat}
     (A : Matrix (Fin (n + 1)) (Fin (n + 1)) Int)
@@ -186,9 +185,7 @@ public theorem clearExecution_value {n : Nat}
   exact
     { value
       charges := product.charges
-      trace_wellFormed := product.trace_wellFormed
-      chargeOwnership := List.forall_iff_forall_mem.mp
-        product.trace_wellFormed }
+      trace_wellFormed := product.trace_wellFormed }
 
 public theorem injectExecution_value {n : Nat}
     (A : Matrix (Fin (n + 1)) (Fin (n + 1)) Int)

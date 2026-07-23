@@ -30,8 +30,6 @@ open NormalForms.Research.KannanBachem.Smith
   { value := execution.value
     charges := chargesBefore ++ execution.charges
     trace_wellFormed :=
-      chargesBeforeWellFormed.append execution.trace_wellFormed
-    chargeOwnership := List.forall_iff_forall_mem.mp <|
       chargesBeforeWellFormed.append execution.trace_wellFormed }
 
 /-- Add control-flow arithmetic after an existing certificate execution. -/
@@ -43,9 +41,7 @@ open NormalForms.Research.KannanBachem.Smith
     CertificateExecution A :=
   { value := execution.value
     charges := execution.charges ++ suffix
-    trace_wellFormed := execution.trace_wellFormed.append suffixWellFormed
-    chargeOwnership := List.forall_iff_forall_mem.mp <|
-      execution.trace_wellFormed.append suffixWellFormed }
+    trace_wellFormed := execution.trace_wellFormed.append suffixWellFormed }
 
 @[simp] public theorem CertificateExecution.prependCharges_value {n : Nat}
     {A : Matrix (Fin n) (Fin n) Int}
@@ -93,12 +89,6 @@ public theorem trace_wellFormed {n : Nat}
     (execution : StabilizationExecution A) :
     ArithmeticChargeListWellFormed execution.charges :=
   execution.certificate.trace_wellFormed
-
-public theorem chargeOwnership {n : Nat}
-    {A : Matrix (Fin (n + 1)) (Fin (n + 1)) Int}
-    (execution : StabilizationExecution A) :
-    ∀ charge ∈ execution.charges, charge.WellFormed :=
-  execution.certificate.chargeOwnership
 
 end StabilizationExecution
 

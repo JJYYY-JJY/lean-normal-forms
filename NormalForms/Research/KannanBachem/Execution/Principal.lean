@@ -5,7 +5,7 @@ Authors: Junye Ji
 -/
 module
 
-public import NormalForms.Research.KannanBachem.Execution.Dense
+public import NormalForms.Research.KannanBachem.Execution.Transition
 public import NormalForms.Research.KannanBachem.Hermite.PrincipalCorrectness
 public import NormalForms.Research.KannanBachem.Hermite.PrincipalBitComplexity
 public import NormalForms.Research.KannanBachem.Hermite.PrincipalMultiplierBound
@@ -28,139 +28,6 @@ open NormalForms.Matrix.Certificates
 open NormalForms.Research.BitCost
 open NormalForms.Research.KannanBachem.Hermite
 open NormalForms.Research.KannanBachem.Smith
-
-/-- A small container for an already checked list of arithmetic leaves. -/
-public structure ArithmeticLeafExecution where
-  charges : List KannanBachemArithmeticCharge
-  trace_wellFormed : ArithmeticChargeListWellFormed charges
-
-/-- Charge the scalar primitives owned by one principal transition. -/
-@[expose] public def principalEventChargeExecution
-    (dimension : Nat) (event : PrincipalArithmeticEvent)
-    (valid : event.Valid dimension) : ArithmeticLeafExecution := by
-  cases event with
-  | xgcd pivot target left right =>
-      let location := ArithmeticChargeLocation.ofIndices .bezoutBlock
-        dimension [pivot, target] (by
-          intro index member
-          simp only [List.mem_cons, List.not_mem_nil, or_false] at member
-          rcases member with rfl | rfl
-          · exact valid.1.trans valid.2
-          · exact valid.2)
-      let encodedLeft := SignMagnitude.ofInt left
-      let encodedRight := SignMagnitude.ofInt right
-      let xgcdRun := boundedXGCDWithCost encodedLeft encodedRight
-      let zeroRun := isZeroWithCost xgcdRun.value.gcd
-      let xgcdCharge :=
-        KannanBachemArithmeticCharge.boundedXGCDOfRun
-          location encodedLeft encodedRight xgcdRun rfl
-      let zeroCharge :=
-        KannanBachemArithmeticCharge.zeroTestOfRun
-          location xgcdRun.value.gcd zeroRun rfl
-      if zero : zeroRun.value then
-        exact
-          { charges := [xgcdCharge, zeroCharge]
-            trace_wellFormed := by
-              simp only [ArithmeticChargeListWellFormed,
-                List.forall_cons]
-              exact
-                ⟨KannanBachemArithmeticCharge.boundedXGCDOfRun_wellFormed
-                    location encodedLeft encodedRight xgcdRun rfl,
-                  KannanBachemArithmeticCharge.zeroTestOfRun_wellFormed
-                    location xgcdRun.value.gcd zeroRun rfl,
-                  by simp⟩ }
-      else
-        let leftDivision := divModWithCost encodedLeft xgcdRun.value.gcd
-        let rightDivision := divModWithCost encodedRight xgcdRun.value.gcd
-        let leftDivisionCharge :=
-          KannanBachemArithmeticCharge.divModOfRun location
-            .bezoutLeftExact encodedLeft xgcdRun.value.gcd
-            leftDivision rfl trivial
-        let rightDivisionCharge :=
-          KannanBachemArithmeticCharge.divModOfRun location
-            .bezoutRightExact encodedRight xgcdRun.value.gcd
-            rightDivision rfl trivial
-        exact
-          { charges :=
-              [xgcdCharge, zeroCharge, leftDivisionCharge, rightDivisionCharge]
-            trace_wellFormed := by
-              simp only [ArithmeticChargeListWellFormed,
-                List.forall_cons]
-              exact
-                ⟨KannanBachemArithmeticCharge.boundedXGCDOfRun_wellFormed
-                    location encodedLeft encodedRight xgcdRun rfl,
-                  KannanBachemArithmeticCharge.zeroTestOfRun_wellFormed
-                    location xgcdRun.value.gcd zeroRun rfl,
-                  KannanBachemArithmeticCharge.divModOfRun_wellFormed location
-                    .bezoutLeftExact encodedLeft xgcdRun.value.gcd
-                    leftDivision rfl trivial,
-                  KannanBachemArithmeticCharge.divModOfRun_wellFormed location
-                    .bezoutRightExact encodedRight xgcdRun.value.gcd
-                    rightDivision rfl trivial,
-                  by simp⟩ }
-  | divMod source destination numerator divisor =>
-      let location := ArithmeticChargeLocation.ofIndices .hnfReduceAbove
-        dimension [source, destination] (by
-          intro index member
-          simp only [List.mem_cons, List.not_mem_nil, or_false] at member
-          rcases member with rfl | rfl
-          · exact valid.1.trans valid.2
-          · exact valid.2)
-      let encodedNumerator := SignMagnitude.ofInt numerator
-      let encodedDivisor := SignMagnitude.ofInt divisor
-      let run := divModWithCost encodedNumerator encodedDivisor
-      let charge := KannanBachemArithmeticCharge.divModOfRun
-        location .hnfReduceAbove encodedNumerator encodedDivisor run rfl trivial
-      exact
-        { charges := [charge]
-          trace_wellFormed := by
-            simp only [ArithmeticChargeListWellFormed,
-              List.forall_cons]
-            exact
-              ⟨KannanBachemArithmeticCharge.divModOfRun_wellFormed location
-                  .hnfReduceAbove encodedNumerator encodedDivisor run rfl trivial,
-                by simp⟩ }
-  | normalize row value =>
-      let location := ArithmeticChargeLocation.ofIndices .scalar
-        dimension [row] (by
-          intro index member
-          simp only [List.mem_cons, List.not_mem_nil, or_false] at member
-          subst index
-          exact valid)
-      let encoded := SignMagnitude.ofInt value
-      let run := normalizeWithCost encoded
-      let charge := KannanBachemArithmeticCharge.normalizationOfRun
-        location encoded run rfl
-      exact
-        { charges := [charge]
-          trace_wellFormed := by
-            simp only [ArithmeticChargeListWellFormed,
-              List.forall_cons]
-            exact
-              ⟨KannanBachemArithmeticCharge.normalizationOfRun_wellFormed
-                  location encoded run rfl,
-                by simp⟩ }
-
-/-- Charge an execution-ordered list of principal scalar events. -/
-@[expose] public def principalEventListChargeExecution
-    (dimension : Nat) :
-    (events : List PrincipalArithmeticEvent) →
-      events.Forall (PrincipalArithmeticEvent.Valid dimension) →
-        ArithmeticLeafExecution
-  | [], _ =>
-      { charges := []
-        trace_wellFormed := by simp [ArithmeticChargeListWellFormed] }
-  | event :: tail, valid => by
-      have valid' := valid
-      rw [List.forall_cons] at valid'
-      let head := principalEventChargeExecution dimension event
-        valid'.1
-      let rest := principalEventListChargeExecution dimension tail
-        valid'.2
-      exact
-        { charges := head.charges ++ rest.charges
-          trace_wellFormed :=
-            head.trace_wellFormed.append rest.trace_wellFormed }
 
 /-- Uniform scalar-leaf budget for one principal transition. -/
 @[expose] public def principalScalarTransitionBitOperationBound
@@ -185,141 +52,114 @@ private theorem boundedXGCD_gcd_bitLength_le_max
   · exact (Int.gcd_le_natAbs_left right.value leftZero).trans
       (le_max_left _ _)
 
-private theorem principalEventChargeExecution_cost_le
-    (dimension operandBits : Nat) (event : PrincipalArithmeticEvent)
-    (valid : event.Valid dimension)
-    (operandBound : event.operandBitLength ≤ operandBits) :
-    traceBitCost
-        (principalEventChargeExecution dimension event valid).charges ≤
+private theorem principalTransition_scalarCost_le {n operandBits : Nat}
+    (transition : PrincipalTransitionExecution n)
+    (operandBound :
+      transition.event.operandBitLength ≤ operandBits) :
+    transition.scalarCharge.bitCost ≤
       principalScalarTransitionBitOperationBound operandBits := by
-  cases event with
-  | xgcd pivot target left right =>
-      let encodedLeft := SignMagnitude.ofInt left
-      let encodedRight := SignMagnitude.ofInt right
-      let xgcdRun := boundedXGCDWithCost encodedLeft encodedRight
-      have leftIntWidth : Nat.size left.natAbs ≤ operandBits :=
-        (Nat.size_le_size (le_max_left left.natAbs right.natAbs)).trans
-          operandBound
-      have rightIntWidth : Nat.size right.natAbs ≤ operandBits :=
-        (Nat.size_le_size (le_max_right left.natAbs right.natAbs)).trans
-          operandBound
-      have leftWidth : encodedLeft.bitLength ≤ operandBits := by
-        simpa only [encodedLeft,
-          SignMagnitude.bitLength_eq_natSize_natAbs,
-          SignMagnitude.value_ofInt] using leftIntWidth
-      have rightWidth : encodedRight.bitLength ≤ operandBits := by
-        simpa only [encodedRight,
-          SignMagnitude.bitLength_eq_natSize_natAbs,
-          SignMagnitude.value_ofInt] using rightIntWidth
-      have gcdWidth : xgcdRun.value.gcd.bitLength ≤ operandBits :=
-        (boundedXGCD_gcd_bitLength_le_max encodedLeft encodedRight).trans <|
-          max_le leftWidth rightWidth
-      have xgcdCost :
-          xgcdRun.cost ≤
-            Principal.boundedIntXGCDUniformBitOperationBound operandBits := by
-        simpa only [xgcdRun, encodedLeft, encodedRight,
-          Principal.boundedIntXGCDBitOperationCost] using
-          Principal.boundedIntXGCDBitOperationCost_le_uniform
-            left right operandBits leftIntWidth rightIntWidth
-      have leftDivision :
-          (divModWithCost encodedLeft xgcdRun.value.gcd).cost ≤
-            Principal.integerDivModBitOperationBound operandBits := by
-        exact (divModWithCost_cost_le _ _).trans <|
-          Internal.divModBitOperationBound_le_lengths _ _
-            operandBits operandBits leftWidth gcdWidth
-      have rightDivision :
-          (divModWithCost encodedRight xgcdRun.value.gcd).cost ≤
-            Principal.integerDivModBitOperationBound operandBits := by
-        exact (divModWithCost_cost_le _ _).trans <|
-          Internal.divModBitOperationBound_le_lengths _ _
-            operandBits operandBits rightWidth gcdWidth
-      have xgcdCost' :
-          (boundedXGCDWithCost
-              (SignMagnitude.ofInt left) (SignMagnitude.ofInt right)).cost ≤
-            Principal.boundedIntXGCDUniformBitOperationBound operandBits := by
-        simpa only [xgcdRun, encodedLeft, encodedRight] using xgcdCost
-      have leftDivision' :
-          (divModWithCost (SignMagnitude.ofInt left)
-              (boundedXGCDWithCost
-                (SignMagnitude.ofInt left)
-                (SignMagnitude.ofInt right)).value.gcd).cost ≤
-            Principal.integerDivModBitOperationBound operandBits := by
-        simpa only [xgcdRun, encodedLeft, encodedRight] using leftDivision
-      have rightDivision' :
-          (divModWithCost (SignMagnitude.ofInt right)
-              (boundedXGCDWithCost
-                (SignMagnitude.ofInt left)
-                (SignMagnitude.ofInt right)).value.gcd).cost ≤
-            Principal.integerDivModBitOperationBound operandBits := by
-        simpa only [xgcdRun, encodedLeft, encodedRight] using rightDivision
-      simp only [principalEventChargeExecution]
-      split <;>
-        simp [traceBitCost,
-          KannanBachemArithmeticCharge.boundedXGCDOfRun,
-          KannanBachemArithmeticCharge.zeroTestOfRun,
-          KannanBachemArithmeticCharge.divModOfRun,
-          KannanBachemArithmeticCharge.bitCost,
-          principalScalarTransitionBitOperationBound] <;>
-        omega
-  | divMod source destination numerator divisor =>
-      have numeratorWidth : Nat.size numerator.natAbs ≤ operandBits :=
-        (Nat.size_le_size
-          (le_max_left numerator.natAbs divisor.natAbs)).trans operandBound
-      have divisorWidth : Nat.size divisor.natAbs ≤ operandBits :=
-        (Nat.size_le_size
-          (le_max_right numerator.natAbs divisor.natAbs)).trans operandBound
-      have divisionCost := Principal.integerDivModBitOperationCost_le
-        numerator divisor operandBits numeratorWidth divisorWidth
-      simpa [principalEventChargeExecution, traceBitCost,
-        KannanBachemArithmeticCharge.divModOfRun,
-        KannanBachemArithmeticCharge.bitCost,
-        principalScalarTransitionBitOperationBound,
-        Principal.integerDivModBitOperationCost] using
-        (show Principal.integerDivModBitOperationCost numerator divisor ≤
-          principalScalarTransitionBitOperationBound operandBits by
-            unfold principalScalarTransitionBitOperationBound
-            omega)
-  | normalize row value =>
-      simp [principalEventChargeExecution, traceBitCost,
-        KannanBachemArithmeticCharge.normalizationOfRun,
-        KannanBachemArithmeticCharge.bitCost, normalizeWithCost,
-        principalScalarTransitionBitOperationBound]
-
-public theorem principalEventListChargeExecution_cost_le
-    (dimension operandBits : Nat) (events : List PrincipalArithmeticEvent)
-    (valid : events.Forall (PrincipalArithmeticEvent.Valid dimension))
-    (allWidths : ∀ event ∈ events,
-      event.operandBitLength ≤ operandBits) :
-    traceBitCost
-        (principalEventListChargeExecution dimension events valid).charges ≤
-      events.length * principalScalarTransitionBitOperationBound operandBits := by
-  induction events with
-  | nil =>
-      simp [principalEventListChargeExecution, traceBitCost]
-  | cons head tail ih =>
-      rw [List.forall_cons] at valid
-      simp only [principalEventListChargeExecution, traceBitCost_append]
-      have headCost := principalEventChargeExecution_cost_le
-        dimension operandBits head valid.1 (allWidths head (by simp))
-      have tailCost := ih valid.2 fun event member =>
-        allWidths event (by simp [member])
-      rw [List.length_cons, Nat.add_mul, one_mul]
-      omega
-
-/-- Dense replay of a primitive row trace, carrying both inverse identities. -/
-public structure RowTraceExecution {n : Nat}
-    (A : Matrix (Fin n) (Fin n) Int)
-    (steps : RowTrace Int n) where
-  B : Matrix (Fin n) (Fin n) Int
-  U : Matrix (Fin n) (Fin n) Int
-  Uinv : Matrix (Fin n) (Fin n) Int
-  charges : List KannanBachemArithmeticCharge
-  B_eq_replay : B = steps.replay A
-  U_eq_accumulator : U = steps.accumulator
-  Uinv_eq_inverseAccumulator : Uinv = steps.inverseAccumulator
-  inverse_identities : Uinv * U = 1 ∧ U * Uinv = 1
-  equation : U * A = B
-  trace_wellFormed : ArithmeticChargeListWellFormed charges
+  cases transition with
+  | mk data =>
+      cases data with
+      | bezout before pivot target hlt run run_eq =>
+          subst run
+          let left := SignMagnitude.ofInt (before.B pivot pivot)
+          let right := SignMagnitude.ofInt (before.B target pivot)
+          let xgcdRun := boundedXGCDWithCost left right
+          have leftWidth : left.bitLength ≤ operandBits := by
+            simpa [PrincipalTransitionExecution.event,
+              PrincipalArithmeticEvent.operandBitLength,
+              PrincipalArithmeticEvent.operandHeight, left,
+              SignMagnitude.bitLength_eq_natSize_natAbs,
+              SignMagnitude.value_ofInt] using
+              (Nat.size_le_size
+                (le_max_left
+                  (before.B pivot pivot).natAbs
+                  (before.B target pivot).natAbs)).trans operandBound
+          have rightWidth : right.bitLength ≤ operandBits := by
+            simpa [PrincipalTransitionExecution.event,
+              PrincipalArithmeticEvent.operandBitLength,
+              PrincipalArithmeticEvent.operandHeight, right,
+              SignMagnitude.bitLength_eq_natSize_natAbs,
+              SignMagnitude.value_ofInt] using
+              (Nat.size_le_size
+                (le_max_right
+                  (before.B pivot pivot).natAbs
+                  (before.B target pivot).natAbs)).trans operandBound
+          have gcdWidth : xgcdRun.value.gcd.bitLength ≤ operandBits :=
+            (boundedXGCD_gcd_bitLength_le_max left right).trans
+              (max_le leftWidth rightWidth)
+          have xgcdCost :
+              xgcdRun.cost ≤
+                Principal.boundedIntXGCDUniformBitOperationBound
+                  operandBits := by
+            simpa [xgcdRun, left, right,
+              Principal.boundedIntXGCDBitOperationCost] using
+              Principal.boundedIntXGCDBitOperationCost_le_uniform
+                (before.B pivot pivot) (before.B target pivot)
+                operandBits
+                (by simpa [left,
+                    SignMagnitude.bitLength_eq_natSize_natAbs] using
+                    leftWidth)
+                (by simpa [right,
+                    SignMagnitude.bitLength_eq_natSize_natAbs] using
+                    rightWidth)
+          have leftDivision :
+              (divModWithCost left xgcdRun.value.gcd).cost ≤
+                Principal.integerDivModBitOperationBound operandBits :=
+            (divModWithCost_cost_le _ _).trans <|
+              Internal.divModBitOperationBound_le_lengths _ _
+                operandBits operandBits leftWidth gcdWidth
+          have rightDivision :
+              (divModWithCost right xgcdRun.value.gcd).cost ≤
+                Principal.integerDivModBitOperationBound operandBits :=
+            (divModWithCost_cost_le _ _).trans <|
+              Internal.divModBitOperationBound_le_lengths _ _
+                operandBits operandBits rightWidth gcdWidth
+          have blockCost :=
+            boundedBezoutBlockWithCost_cost_le left right
+          change (boundedBezoutBlockWithCost left right).cost ≤ _
+          unfold boundedBezoutBlockBitOperationBound at blockCost
+          unfold principalScalarTransitionBitOperationBound
+          dsimp only at blockCost
+          dsimp [xgcdRun] at xgcdCost leftDivision rightDivision
+          omega
+      | reduceAbove before source destination hlt run run_eq =>
+          subst run
+          have numeratorWidth :
+              Nat.size (before.B source destination).natAbs ≤ operandBits :=
+            (Nat.size_le_size
+              (le_max_left
+                (before.B source destination).natAbs
+                (before.B destination destination).natAbs)).trans
+              operandBound
+          have divisorWidth :
+              Nat.size
+                  (before.B destination destination).natAbs ≤ operandBits :=
+            (Nat.size_le_size
+              (le_max_right
+                (before.B source destination).natAbs
+                (before.B destination destination).natAbs)).trans
+              operandBound
+          have divisionCost :=
+            Principal.integerDivModBitOperationCost_le
+              (before.B source destination)
+              (before.B destination destination)
+              operandBits numeratorWidth divisorWidth
+          simpa [PrincipalTransitionExecution.scalarCharge,
+            KannanBachemArithmeticCharge.divModOfRun,
+            KannanBachemArithmeticCharge.bitCost,
+            Principal.integerDivModBitOperationCost] using
+            (divisionCost.trans (by
+              unfold principalScalarTransitionBitOperationBound
+              omega))
+      | normalize before row run run_eq =>
+          subst run
+          simp [PrincipalTransitionExecution.scalarCharge,
+            KannanBachemArithmeticCharge.normalizationOfRun,
+            KannanBachemArithmeticCharge.bitCost,
+            normalizationUnitWithCost,
+            principalScalarTransitionBitOperationBound]
 
 private theorem inverseIntermediatesHeight_le_appendFrom {n : Nat}
     (current : Matrix (Fin n) (Fin n) Int)
@@ -375,63 +215,6 @@ private theorem prefixReplay_bitLength_le {n : Nat}
   exact Nat.size_le_size <|
     RowTrace.intermediateMatrixHeight_le_append A first second
 
-/-- Replay each row step through three dense products for `B`, `U`, and `U⁻¹`. -/
-@[expose] public def rowTraceExecution {n : Nat}
-    (A : Matrix (Fin n) (Fin n) Int) :
-    (steps : RowTrace Int n) → RowTraceExecution A steps
-  | [] =>
-      { B := A
-        U := 1
-        Uinv := 1
-        charges := []
-        B_eq_replay := by rfl
-        U_eq_accumulator := by rfl
-        Uinv_eq_inverseAccumulator := by rfl
-        inverse_identities := by constructor <;> simp
-        equation := NormalForms.Matrix.Constructive.one_mul A
-        trace_wellFormed := by simp [ArithmeticChargeListWellFormed] }
-  | step :: tail => by
-      let matrixRun := matrixProductExecution step.forward A
-      let rest := rowTraceExecution matrixRun.value tail
-      let forwardRun := matrixProductExecution rest.U step.forward
-      let inverseRun := matrixProductExecution step.backward rest.Uinv
-      have matrixValue : matrixRun.value = step.forward * A :=
-        matrixProductExecution_value _ _
-      have forwardValue : forwardRun.value = rest.U * step.forward :=
-        matrixProductExecution_value _ _
-      have inverseValue : inverseRun.value = step.backward * rest.Uinv :=
-        matrixProductExecution_value _ _
-      let charges := matrixRun.charges ++
-        (rest.charges ++ (forwardRun.charges ++ inverseRun.charges))
-      exact
-        { B := rest.B
-          U := forwardRun.value
-          Uinv := inverseRun.value
-          charges
-          B_eq_replay := by
-            rw [rest.B_eq_replay, RowTrace.replay, matrixValue]
-            rfl
-          U_eq_accumulator := by
-            rw [forwardValue, rest.U_eq_accumulator]
-            rfl
-          Uinv_eq_inverseAccumulator := by
-            rw [inverseValue, rest.Uinv_eq_inverseAccumulator]
-            rfl
-          inverse_identities := by
-            rw [inverseValue, forwardValue, rest.U_eq_accumulator,
-              rest.Uinv_eq_inverseAccumulator]
-            exact ⟨RowTrace.inverse_mul_accumulator (step :: tail),
-              RowTrace.accumulator_mul_inverse (step :: tail)⟩
-          equation := by
-            rw [forwardValue, rest.U_eq_accumulator, rest.B_eq_replay,
-              RowTrace.replay_eq_accumulator_mul, matrixValue]
-            simp only [Matrix.mul_assoc]
-          trace_wellFormed := by
-            apply matrixRun.trace_wellFormed.append
-            apply rest.trace_wellFormed.append
-            exact forwardRun.trace_wellFormed.append
-              inverseRun.trace_wellFormed }
-
 /-- Common width for a row step and every relative suffix transform. -/
 @[expose] public def rowTraceTransformBitLengthBound
     (dimension forwardBits inverseBits : Nat) : Nat :=
@@ -446,207 +229,6 @@ private theorem prefixReplay_bitLength_le {n : Nat}
     (matrixMultiplicationBitOperationBound dimension transformBits matrixBits +
       2 * matrixMultiplicationBitOperationBound
         dimension transformBits transformBits)
-
-private theorem fullAccumulator_bitLength_le {n : Nat}
-    (steps : RowTrace Int n) :
-    matrixBitLength steps.accumulator ≤
-      steps.intermediateMultiplierBitLength := by
-  exact Nat.size_le_size
-    steps.accumulator_height_le_intermediateMultiplierHeight
-
-private theorem fullInverse_bitLength_le {n : Nat}
-    (steps : RowTrace Int n) :
-    matrixBitLength steps.inverseAccumulator ≤
-      steps.intermediateInverseMultiplierBitLength := by
-  exact Nat.size_le_size
-    steps.inverseAccumulator_height_le_intermediateInverseMultiplierHeight
-
-private theorem rowTraceExecution_cost_le_suffix {n : Nat}
-    (A : Matrix (Fin n) (Fin n) Int)
-    (before suffix : RowTrace Int n) :
-    let steps := before ++ suffix
-    traceBitCost (rowTraceExecution (before.replay A) suffix).charges ≤
-      suffix.length *
-        (matrixMultiplicationBitOperationBound n
-            (rowTraceTransformBitLengthBound n
-              steps.intermediateMultiplierBitLength
-              steps.intermediateInverseMultiplierBitLength)
-            (steps.intermediateMatrixBitLength A) +
-          2 * matrixMultiplicationBitOperationBound n
-            (rowTraceTransformBitLengthBound n
-              steps.intermediateMultiplierBitLength
-              steps.intermediateInverseMultiplierBitLength)
-            (rowTraceTransformBitLengthBound n
-              steps.intermediateMultiplierBitLength
-              steps.intermediateInverseMultiplierBitLength)) := by
-  induction suffix generalizing before with
-  | nil =>
-      simp [rowTraceExecution, traceBitCost]
-  | cons step tail ih =>
-      let steps := before ++ step :: tail
-      let nextBefore := before ++ [step]
-      let forwardBits := steps.intermediateMultiplierBitLength
-      let inverseBits := steps.intermediateInverseMultiplierBitLength
-      let matrixBits := steps.intermediateMatrixBitLength A
-      let transformBits :=
-        rowTraceTransformBitLengthBound n forwardBits inverseBits
-      have nextSplit : nextBefore ++ tail = steps := by
-        simp [nextBefore, steps, List.append_assoc]
-      have beforeForward :
-          matrixBitLength before.accumulator ≤ forwardBits := by
-        simpa only [steps, forwardBits] using
-          prefixAccumulator_bitLength_le before (step :: tail)
-      have beforeInverse :
-          matrixBitLength before.inverseAccumulator ≤ inverseBits := by
-        simpa only [steps, inverseBits] using
-          prefixInverse_bitLength_le before (step :: tail)
-      have nextForward :
-          matrixBitLength nextBefore.accumulator ≤ forwardBits := by
-        have bound := prefixAccumulator_bitLength_le nextBefore tail
-        simpa only [nextSplit, forwardBits] using bound
-      have nextInverse :
-          matrixBitLength nextBefore.inverseAccumulator ≤ inverseBits := by
-        have bound := prefixInverse_bitLength_le nextBefore tail
-        simpa only [nextSplit, inverseBits] using bound
-      have stepForwardIdentity :
-          step.forward =
-            nextBefore.accumulator * before.inverseAccumulator := by
-        simp [nextBefore, RowTrace.accumulator_append,
-          RowTrace.accumulator, Matrix.mul_assoc,
-          RowTrace.accumulator_mul_inverse]
-      have stepBackwardIdentity :
-          step.backward =
-            before.accumulator * nextBefore.inverseAccumulator := by
-        rw [show nextBefore.inverseAccumulator =
-            before.inverseAccumulator * step.backward by
-          simp [nextBefore, RowTrace.inverseAccumulator_append,
-            RowTrace.inverseAccumulator]]
-        rw [← Matrix.mul_assoc,
-          RowTrace.accumulator_mul_inverse,
-          NormalForms.Matrix.Constructive.one_mul]
-      have stepForward :
-          matrixBitLength step.forward ≤ transformBits := by
-        rw [stepForwardIdentity]
-        exact (matrix_mul_bitLength_le _ _).trans (by
-          unfold transformBits rowTraceTransformBitLengthBound
-          omega)
-      have stepBackward :
-          matrixBitLength step.backward ≤ transformBits := by
-        rw [stepBackwardIdentity]
-        exact (matrix_mul_bitLength_le _ _).trans (by
-          unfold transformBits rowTraceTransformBitLengthBound
-          omega)
-      have currentMatrix :
-          matrixBitLength (before.replay A) ≤ matrixBits := by
-        simpa only [steps, matrixBits] using
-          prefixReplay_bitLength_le A before (step :: tail)
-      have fullForward :
-          matrixBitLength steps.accumulator ≤ forwardBits := by
-        simpa only [forwardBits] using fullAccumulator_bitLength_le steps
-      have fullInverse :
-          matrixBitLength steps.inverseAccumulator ≤ inverseBits := by
-        simpa only [inverseBits] using fullInverse_bitLength_le steps
-      have tailForwardIdentity :
-          RowTrace.accumulator tail =
-            steps.accumulator * nextBefore.inverseAccumulator := by
-        rw [← nextSplit, RowTrace.accumulator_append]
-        simp only [Matrix.mul_assoc]
-        rw [RowTrace.accumulator_mul_inverse, Matrix.mul_one]
-      have tailInverseIdentity :
-          RowTrace.inverseAccumulator tail =
-            nextBefore.accumulator * steps.inverseAccumulator := by
-        rw [← nextSplit, RowTrace.inverseAccumulator_append]
-        rw [← Matrix.mul_assoc,
-          RowTrace.accumulator_mul_inverse,
-          NormalForms.Matrix.Constructive.one_mul]
-      have tailForward :
-          matrixBitLength (RowTrace.accumulator tail) ≤ transformBits := by
-        rw [tailForwardIdentity]
-        exact (matrix_mul_bitLength_le _ _).trans (by
-          unfold transformBits rowTraceTransformBitLengthBound
-          omega)
-      have tailInverse :
-          matrixBitLength (RowTrace.inverseAccumulator tail) ≤ transformBits := by
-        rw [tailInverseIdentity]
-        exact (matrix_mul_bitLength_le _ _).trans (by
-          unfold transformBits rowTraceTransformBitLengthBound
-          omega)
-      let matrixRun :=
-        matrixProductExecution step.forward (before.replay A)
-      have matrixValue :
-          matrixRun.value = nextBefore.replay A := by
-        rw [matrixProductExecution_value]
-        simp [nextBefore, RowTrace.replay]
-      have restCost := ih nextBefore
-      rw [nextSplit] at restCost
-      have restCost' :
-          traceBitCost
-              (rowTraceExecution (nextBefore.replay A) tail).charges ≤
-            tail.length *
-              (matrixMultiplicationBitOperationBound
-                  n transformBits matrixBits +
-                2 * matrixMultiplicationBitOperationBound
-                  n transformBits transformBits) := by
-        simpa only [transformBits, matrixBits, forwardBits,
-          inverseBits] using restCost
-      have matrixCost :
-          matrixMultiplicationBitOperationCost
-              step.forward (before.replay A) ≤
-            matrixMultiplicationBitOperationBound
-              n transformBits matrixBits :=
-        matrixMultiplicationBitOperationCost_le _ _
-          stepForward currentMatrix
-      have forwardCost :
-          matrixMultiplicationBitOperationCost
-              (rowTraceExecution matrixRun.value tail).U step.forward ≤
-            matrixMultiplicationBitOperationBound
-              n transformBits transformBits := by
-        apply matrixMultiplicationBitOperationCost_le
-        · rw [(rowTraceExecution matrixRun.value tail).U_eq_accumulator]
-          exact tailForward
-        · exact stepForward
-      have inverseCost :
-          matrixMultiplicationBitOperationCost step.backward
-              (rowTraceExecution matrixRun.value tail).Uinv ≤
-            matrixMultiplicationBitOperationBound
-              n transformBits transformBits := by
-        apply matrixMultiplicationBitOperationCost_le
-        · exact stepBackward
-        · rw [(rowTraceExecution matrixRun.value tail).Uinv_eq_inverseAccumulator]
-          exact tailInverse
-      rw [rowTraceExecution]
-      dsimp only
-      simp only [traceBitCost_append, matrixProductExecution_cost_eq]
-      rw [matrixValue]
-      rw [matrixValue] at forwardCost inverseCost
-      change
-        matrixMultiplicationBitOperationCost
-              step.forward (before.replay A) +
-            (traceBitCost
-                (rowTraceExecution (nextBefore.replay A) tail).charges +
-              (matrixMultiplicationBitOperationCost
-                  (rowTraceExecution (nextBefore.replay A) tail).U
-                    step.forward +
-                matrixMultiplicationBitOperationCost step.backward
-                  (rowTraceExecution
-                    (nextBefore.replay A) tail).Uinv)) ≤
-          (step :: tail).length *
-            (matrixMultiplicationBitOperationBound
-                n transformBits matrixBits +
-              2 * matrixMultiplicationBitOperationBound
-                n transformBits transformBits)
-      rw [List.length_cons, Nat.add_mul, one_mul]
-      omega
-
-public theorem rowTraceExecution_cost_le {n : Nat}
-    (A : Matrix (Fin n) (Fin n) Int) (steps : RowTrace Int n) :
-    traceBitCost (rowTraceExecution A steps).charges ≤
-      rowTraceDenseBitOperationBound n steps.length
-        (steps.intermediateMatrixBitLength A)
-        steps.intermediateMultiplierBitLength
-        steps.intermediateInverseMultiplierBitLength := by
-  simpa [rowTraceDenseBitOperationBound, RowTrace.replay] using
-    rowTraceExecution_cost_le_suffix A [] steps
 
 public theorem rowTraceDenseBitOperationBound_mono
     (dimension : Nat)
@@ -673,6 +255,244 @@ public theorem rowTraceDenseBitOperationBound_mono
     (Nat.mul_le_mul_left 2 <|
       matrixMultiplicationBitOperationBound_mono
         dimension transformLe transformLe)
+
+private theorem traceBitCost_flatMap {α : Type*} (values : List α)
+    (f : α → List KannanBachemArithmeticCharge) :
+    traceBitCost (values.flatMap f) =
+      (values.map fun value ↦ traceBitCost (f value)).sum := by
+  induction values with
+  | nil => rfl
+  | cons head tail ih => simp [traceBitCost_append, ih]
+
+public theorem principalTransition_cost_le {n operandBits matrixBits
+    forwardBits inverseBits : Nat}
+    {A : Matrix (Fin n) (Fin n) Int}
+    (sequence : PrincipalTransitionSequence A)
+    (transition : PrincipalTransitionExecution n)
+    (member : transition ∈ sequence.transitions)
+    (allWidths : ∀ event ∈ sequence.events,
+      event.operandBitLength ≤ operandBits)
+    (matrixWidth :
+      sequence.steps.intermediateMatrixBitLength A ≤ matrixBits)
+    (forwardWidth :
+      sequence.steps.intermediateMultiplierBitLength ≤ forwardBits)
+    (inverseWidth :
+      sequence.steps.intermediateInverseMultiplierBitLength ≤ inverseBits) :
+    traceBitCost transition.charges ≤
+      principalScalarTransitionBitOperationBound operandBits +
+        (matrixMultiplicationBitOperationBound n
+            (rowTraceTransformBitLengthBound n forwardBits inverseBits)
+            matrixBits +
+          2 * matrixMultiplicationBitOperationBound n
+            (rowTraceTransformBitLengthBound n forwardBits inverseBits)
+            (rowTraceTransformBitLengthBound
+              n forwardBits inverseBits)) := by
+  obtain ⟨before, after, stepsEq, beforeB, beforeU, beforeUinv⟩ :=
+    sequence.transition_prefix transition member
+  let nextBefore := before ++ [transition.step]
+  let transformBits :=
+    rowTraceTransformBitLengthBound n forwardBits inverseBits
+  have split : nextBefore ++ after = sequence.steps := by
+    rw [stepsEq]
+    simp [nextBefore, List.append_assoc]
+  have eventMember : transition.event ∈ sequence.events := by
+    rw [sequence.events_eq_transitions]
+    exact List.mem_map.mpr ⟨transition, member, rfl⟩
+  have scalarCost :=
+    principalTransition_scalarCost_le transition
+      (allWidths transition.event eventMember)
+  have beforeMatrixBits :
+      matrixBitLength transition.before.B ≤ matrixBits := by
+    rw [beforeB]
+    exact (prefixReplay_bitLength_le A before
+      (transition.step :: after)).trans (by
+        simpa only [stepsEq] using matrixWidth)
+  have beforeForwardBits :
+      matrixBitLength transition.before.U ≤ forwardBits := by
+    rw [beforeU]
+    exact (prefixAccumulator_bitLength_le before
+      (transition.step :: after)).trans (by
+        simpa only [stepsEq] using forwardWidth)
+  have beforeInverseBits :
+      matrixBitLength transition.before.Uinv ≤ inverseBits := by
+    rw [beforeUinv]
+    exact (prefixInverse_bitLength_le before
+      (transition.step :: after)).trans (by
+        simpa only [stepsEq] using inverseWidth)
+  have nextForwardBits :
+      matrixBitLength nextBefore.accumulator ≤ forwardBits := by
+    exact (prefixAccumulator_bitLength_le nextBefore after).trans (by
+      rw [split]
+      exact forwardWidth)
+  have nextInverseBits :
+      matrixBitLength nextBefore.inverseAccumulator ≤ inverseBits := by
+    exact (prefixInverse_bitLength_le nextBefore after).trans (by
+      rw [split]
+      exact inverseWidth)
+  have beforeAccumulatorBits :
+      matrixBitLength before.accumulator ≤ forwardBits := by
+    rw [← beforeU]
+    exact beforeForwardBits
+  have beforeInverseAccumulatorBits :
+      matrixBitLength before.inverseAccumulator ≤ inverseBits := by
+    rw [← beforeUinv]
+    exact beforeInverseBits
+  have stepForwardIdentity :
+      transition.step.forward =
+        nextBefore.accumulator * before.inverseAccumulator := by
+    simp [nextBefore, RowTrace.accumulator_append,
+      RowTrace.accumulator, Matrix.mul_assoc,
+      RowTrace.accumulator_mul_inverse]
+  have stepBackwardIdentity :
+      transition.step.backward =
+        before.accumulator * nextBefore.inverseAccumulator := by
+    rw [show nextBefore.inverseAccumulator =
+        before.inverseAccumulator * transition.step.backward by
+      simp [nextBefore, RowTrace.inverseAccumulator_append,
+        RowTrace.inverseAccumulator]]
+    rw [← Matrix.mul_assoc, RowTrace.accumulator_mul_inverse,
+      NormalForms.Matrix.Constructive.one_mul]
+  have stepForwardBits :
+      matrixBitLength transition.step.forward ≤ transformBits := by
+    rw [stepForwardIdentity]
+    exact (matrix_mul_bitLength_le _ _).trans (by
+      unfold transformBits rowTraceTransformBitLengthBound
+      omega)
+  have stepBackwardBits :
+      matrixBitLength transition.step.backward ≤ transformBits := by
+    rw [stepBackwardIdentity]
+    exact (matrix_mul_bitLength_le _ _).trans (by
+      unfold transformBits rowTraceTransformBitLengthBound
+      omega)
+  have matrixCost :
+      matrixMultiplicationBitOperationCost
+          transition.step.forward transition.before.B ≤
+        matrixMultiplicationBitOperationBound
+          n transformBits matrixBits :=
+    matrixMultiplicationBitOperationCost_le _ _
+      stepForwardBits beforeMatrixBits
+  have forwardCost :
+      matrixMultiplicationBitOperationCost
+          transition.step.forward transition.before.U ≤
+        matrixMultiplicationBitOperationBound
+          n transformBits transformBits :=
+    matrixMultiplicationBitOperationCost_le _ _ stepForwardBits
+      (beforeForwardBits.trans (by
+        unfold transformBits rowTraceTransformBitLengthBound
+        omega))
+  have inverseCost :
+      matrixMultiplicationBitOperationCost
+          transition.before.Uinv transition.step.backward ≤
+        matrixMultiplicationBitOperationBound
+          n transformBits transformBits :=
+    matrixMultiplicationBitOperationCost_le _ _
+      (beforeInverseBits.trans (by
+        unfold transformBits rowTraceTransformBitLengthBound
+        omega))
+      stepBackwardBits
+  rw [PrincipalTransitionExecution.charges,
+    traceBitCost_append, traceBitCost_append, traceBitCost_append,
+    PrincipalTransitionExecution.matrixRun,
+    PrincipalTransitionExecution.forwardRun,
+    PrincipalTransitionExecution.inverseRun,
+    matrixProductExecution_cost_eq, matrixProductExecution_cost_eq,
+    matrixProductExecution_cost_eq]
+  simp only [traceBitCost, List.map_cons, List.map_nil,
+    List.sum_cons, List.sum_nil, add_zero]
+  dsimp [transformBits] at matrixCost forwardCost inverseCost
+  omega
+
+public theorem principalTransitionSequence_cost_le {n operandBits matrixBits
+    forwardBits inverseBits : Nat}
+    {A : Matrix (Fin n) (Fin n) Int}
+    (sequence : PrincipalTransitionSequence A)
+    (allWidths : ∀ event ∈ sequence.events,
+      event.operandBitLength ≤ operandBits)
+    (matrixWidth :
+      sequence.steps.intermediateMatrixBitLength A ≤ matrixBits)
+    (forwardWidth :
+      sequence.steps.intermediateMultiplierBitLength ≤ forwardBits)
+    (inverseWidth :
+      sequence.steps.intermediateInverseMultiplierBitLength ≤ inverseBits) :
+    traceBitCost sequence.charges ≤
+      sequence.steps.length *
+          principalScalarTransitionBitOperationBound operandBits +
+        rowTraceDenseBitOperationBound n sequence.steps.length
+          matrixBits forwardBits inverseBits := by
+  rw [sequence.coverage.charges_eq_flatten, traceBitCost_flatMap]
+  have eachTransition :
+      ∀ transition ∈ sequence.transitions,
+        traceBitCost transition.charges ≤
+          principalScalarTransitionBitOperationBound operandBits +
+            (matrixMultiplicationBitOperationBound n
+                (rowTraceTransformBitLengthBound
+                  n forwardBits inverseBits)
+                matrixBits +
+              2 * matrixMultiplicationBitOperationBound n
+                (rowTraceTransformBitLengthBound
+                  n forwardBits inverseBits)
+                (rowTraceTransformBitLengthBound
+                  n forwardBits inverseBits)) :=
+    fun transition member =>
+      principalTransition_cost_le sequence transition member
+        allWidths matrixWidth forwardWidth inverseWidth
+  have sumBoundAux :
+      ∀ transitions : List (PrincipalTransitionExecution n),
+        (∀ transition ∈ transitions,
+          traceBitCost transition.charges ≤
+            principalScalarTransitionBitOperationBound operandBits +
+              (matrixMultiplicationBitOperationBound n
+                  (rowTraceTransformBitLengthBound
+                    n forwardBits inverseBits)
+                  matrixBits +
+                2 * matrixMultiplicationBitOperationBound n
+                  (rowTraceTransformBitLengthBound
+                    n forwardBits inverseBits)
+                  (rowTraceTransformBitLengthBound
+                    n forwardBits inverseBits))) →
+        (transitions.map
+          fun transition ↦ traceBitCost transition.charges).sum ≤
+            transitions.length *
+              (principalScalarTransitionBitOperationBound operandBits +
+                (matrixMultiplicationBitOperationBound n
+                    (rowTraceTransformBitLengthBound
+                      n forwardBits inverseBits)
+                    matrixBits +
+                  2 * matrixMultiplicationBitOperationBound n
+                    (rowTraceTransformBitLengthBound
+                      n forwardBits inverseBits)
+                    (rowTraceTransformBitLengthBound
+                      n forwardBits inverseBits))) := by
+    intro transitions bounds
+    induction transitions with
+    | nil => simp
+    | cons head tail ih =>
+        simp only [List.map_cons, List.sum_cons, List.length_cons]
+        have headBound := bounds head (by simp)
+        have tailBound := ih fun transition member =>
+          bounds transition (by simp [member])
+        rw [Nat.add_mul, one_mul]
+        omega
+  have sumBound :
+      (sequence.transitions.map
+        fun transition ↦ traceBitCost transition.charges).sum ≤
+          sequence.transitions.length *
+            (principalScalarTransitionBitOperationBound operandBits +
+              (matrixMultiplicationBitOperationBound n
+                  (rowTraceTransformBitLengthBound
+                    n forwardBits inverseBits)
+                  matrixBits +
+                2 * matrixMultiplicationBitOperationBound n
+                  (rowTraceTransformBitLengthBound
+                    n forwardBits inverseBits)
+                  (rowTraceTransformBitLengthBound
+                    n forwardBits inverseBits))) :=
+    sumBoundAux sequence.transitions eachTransition
+  rw [sequence.steps_eq_transitions, List.length_map]
+  unfold rowTraceDenseBitOperationBound
+  dsimp only
+  rw [Nat.mul_add] at sumBound
+  exact sumBound
 
 public theorem principalMultiplierPrefixPolynomialBitLengthBound_mono
     (dimension : Nat) {smaller larger : Nat} (hle : smaller ≤ larger) :
@@ -759,6 +579,7 @@ public structure PrincipalExecution {n : Nat}
   B : Matrix (Fin n) (Fin n) Int
   U : Matrix (Fin n) (Fin n) Int
   Uinv : Matrix (Fin n) (Fin n) Int
+  transitions : List (PrincipalTransitionExecution n)
   charges : List KannanBachemArithmeticCharge
   replay :
     B = (principalRun A).steps.replay A
@@ -769,134 +590,104 @@ public structure PrincipalExecution {n : Nat}
   equation : U * A = B
   inverse_identities : Uinv * U = 1 ∧ U * Uinv = 1
   trace_wellFormed : ArithmeticChargeListWellFormed charges
-  chargeOwnership : ∀ charge ∈ charges, charge.WellFormed
+  coverage :
+    PrincipalExecutionCoverage { B := A, U := 1, Uinv := 1 }
+      { B, U, Uinv } transitions charges
 
 /--
-Run the principal transition schedule.  `Principal.compute` supplies only the
-primitive control trace and operands; the three output matrices come from the
-dense replay execution above.
+Run the stateful principal transition schedule.  `Principal.compute` appears
+only in the refinement proof.
 -/
 @[expose] public def principalExecution {n : Nat}
     (A : Matrix (Fin n) (Fin n) Int) : PrincipalExecution A := by
-  let schedule :=
-    NormalForms.Research.KannanBachem.Hermite.principalSchedule A
-  let scalar := principalEventListChargeExecution n schedule.arithmeticEvents
-    schedule.validArithmeticEvents
-  let replay := rowTraceExecution A schedule.steps
-  let charges := scalar.charges ++ replay.charges
-  have chargesWellFormed : ArithmeticChargeListWellFormed charges :=
-    scalar.trace_wellFormed.append replay.trace_wellFormed
+  let sequence := principalTransitionSequence A
+  have refinement := principalTransitionSequence_value A
   exact
-    { B := replay.B
-      U := replay.U
-      Uinv := replay.Uinv
-      charges
+    { B := sequence.state.B
+      U := sequence.state.U
+      Uinv := sequence.state.Uinv
+      transitions := sequence.transitions
+      charges := sequence.charges
       replay := by
-        simpa only [principalRun, principalSchedule, schedule] using
-          replay.B_eq_replay
+        rw [sequence.B_eq_replay, refinement.2.1]
       value_refinement := by
-        have matrixEquality :
-            replay.B = (principalRun A).matrix := by
-          rw [replay.B_eq_replay]
-          have scheduleSteps :
-              schedule.steps = (principalRun A).steps := by
-            rfl
-          rw [scheduleSteps, principalRun_replay]
         exact
-          ⟨matrixEquality,
-            by simpa only [principalRun, principalSchedule, schedule] using
-              replay.U_eq_accumulator,
-            by simpa only [principalRun, principalSchedule, schedule] using
-              replay.Uinv_eq_inverseAccumulator⟩
-      equation := replay.equation
-      inverse_identities := replay.inverse_identities
-      trace_wellFormed := chargesWellFormed
-      chargeOwnership :=
-        List.forall_iff_forall_mem.mp chargesWellFormed }
+          ⟨refinement.1,
+            by rw [sequence.U_eq_accumulator, refinement.2.1],
+            by rw [sequence.Uinv_eq_inverseAccumulator,
+              refinement.2.1]⟩
+      equation := sequence.equation
+      inverse_identities := sequence.inverse_identities
+      trace_wellFormed := sequence.trace_wellFormed
+      coverage := sequence.coverage }
 
 public theorem principalExecution_cost_le_of_ready {n : Nat}
     (A : Matrix (Fin n) (Fin n) Int)
     (ready : Principal.PrincipalReady A) :
     traceBitCost (principalExecution A).charges ≤
       principalExecutionBitOperationBound n (matrixBitLength A) := by
-  let schedule :=
-    NormalForms.Research.KannanBachem.Hermite.principalSchedule A
+  let sequence := principalTransitionSequence A
   let operandBits :=
     Principal.principalPolynomialBitLengthBound n (matrixBitLength A)
-  have scheduleEvents :
-      schedule.arithmeticEvents = (principalRun A).arithmeticEvents := rfl
-  have scheduleSteps :
-      schedule.steps = (principalRun A).steps := rfl
-  have allWidths : ∀ event ∈ schedule.arithmeticEvents,
+  let forwardBits :=
+    Principal.principalMultiplierPrefixPolynomialBitLengthBound
+      n (matrixBitLength A)
+  let inverseBits :=
+    Principal.principalInversePrefixPolynomialBitLengthBound
+      n (matrixBitLength A)
+  have refinement := principalTransitionSequence_value A
+  have allWidths : ∀ event ∈ sequence.events,
       event.operandBitLength ≤ operandBits := by
     intro event member
-    rw [scheduleEvents] at member
+    rw [refinement.2.2] at member
     exact
       (event.operandBitLength_le_list_of_mem
         (principalRun A).arithmeticEvents member).trans
         (principalArithmeticOperandBitLength_le_polynomial_of_ready A ready)
-  have scalarCost :=
-    principalEventListChargeExecution_cost_le n operandBits
-      schedule.arithmeticEvents schedule.validArithmeticEvents allWidths
-  have scalarLength :
-      schedule.arithmeticEvents.length ≤ n ^ 3 := by
-    rw [scheduleEvents]
-    exact principalRun_arithmeticEvents_length_le A
-  have scalarClosed :
-      traceBitCost
-          (principalEventListChargeExecution n schedule.arithmeticEvents
-            schedule.validArithmeticEvents).charges ≤
-        n ^ 3 * principalScalarTransitionBitOperationBound operandBits :=
-    scalarCost.trans <| Nat.mul_le_mul_right _ scalarLength
-  have replayCost := rowTraceExecution_cost_le A schedule.steps
-  have replayLength : schedule.steps.length ≤ n ^ 3 := by
-    rw [scheduleSteps]
-    exact principalRun_steps_length_le A
-  have replayMatrix :
-      schedule.steps.intermediateMatrixBitLength A ≤ operandBits := by
-    rw [scheduleSteps]
+  have matrixWidth :
+      sequence.steps.intermediateMatrixBitLength A ≤ operandBits := by
+    rw [refinement.2.1]
     simpa only [operandBits, principalIntermediateMatrixBitLength,
       principalIntermediateMatrixHeight,
       RowTrace.intermediateMatrixBitLength] using
       principalIntermediateMatrixBitLength_le_polynomial_of_ready A ready
-  have replayForward :
-      schedule.steps.intermediateMultiplierBitLength ≤
-        Principal.principalMultiplierPrefixPolynomialBitLengthBound
-          n (matrixBitLength A) := by
-    rw [scheduleSteps]
-    simpa only [principalIntermediateMultiplierBitLength,
+  have forwardWidth :
+      sequence.steps.intermediateMultiplierBitLength ≤ forwardBits := by
+    rw [refinement.2.1]
+    simpa only [forwardBits, principalIntermediateMultiplierBitLength,
       principalIntermediateMultiplierHeight,
       RowTrace.intermediateMultiplierBitLength] using
       principalIntermediateMultiplierBitLength_le_polynomial_of_ready A ready
-  have replayInverse :
-      schedule.steps.intermediateInverseMultiplierBitLength ≤
-        Principal.principalInversePrefixPolynomialBitLengthBound
-          n (matrixBitLength A) := by
-    rw [scheduleSteps]
-    simpa only [principalIntermediateInverseBitLength,
+  have inverseWidth :
+      sequence.steps.intermediateInverseMultiplierBitLength ≤ inverseBits := by
+    rw [refinement.2.1]
+    simpa only [inverseBits, principalIntermediateInverseBitLength,
       principalIntermediateInverseHeight,
       RowTrace.intermediateInverseMultiplierBitLength] using
       principalIntermediateInverseBitLength_le_polynomial_of_ready A ready
-  have replayClosed :
-      traceBitCost (rowTraceExecution A schedule.steps).charges ≤
-        rowTraceDenseBitOperationBound n (n ^ 3) operandBits
-          (Principal.principalMultiplierPrefixPolynomialBitLengthBound
-            n (matrixBitLength A))
-          (Principal.principalInversePrefixPolynomialBitLengthBound
-            n (matrixBitLength A)) :=
-    replayCost.trans <|
-      rowTraceDenseBitOperationBound_mono n replayLength replayMatrix
-        replayForward replayInverse
-  change
-    traceBitCost
-        ((principalEventListChargeExecution n schedule.arithmeticEvents
-          schedule.validArithmeticEvents).charges ++
-          (rowTraceExecution A schedule.steps).charges) ≤
-      principalExecutionBitOperationBound n (matrixBitLength A)
-  rw [traceBitCost_append]
-  unfold principalExecutionBitOperationBound
-  dsimp only
-  exact Nat.add_le_add scalarClosed replayClosed
+  have actualCost :=
+    principalTransitionSequence_cost_le sequence
+      allWidths matrixWidth forwardWidth inverseWidth
+  have lengthBound : sequence.steps.length ≤ n ^ 3 := by
+    rw [refinement.2.1]
+    exact principalRun_steps_length_le A
+  have closed :
+      sequence.steps.length *
+            principalScalarTransitionBitOperationBound operandBits +
+          rowTraceDenseBitOperationBound n sequence.steps.length
+            operandBits forwardBits inverseBits ≤
+        n ^ 3 * principalScalarTransitionBitOperationBound operandBits +
+          rowTraceDenseBitOperationBound n (n ^ 3)
+            operandBits forwardBits inverseBits :=
+    Nat.add_le_add
+      (Nat.mul_le_mul_right _ lengthBound)
+      (rowTraceDenseBitOperationBound_mono n lengthBound
+        le_rfl le_rfl le_rfl)
+  change traceBitCost sequence.charges ≤
+    principalExecutionBitOperationBound n (matrixBitLength A)
+  exact actualCost.trans (by
+    unfold principalExecutionBitOperationBound
+    simpa only [operandBits, forwardBits, inverseBits] using closed)
 
 public theorem principalExecution_replay {n : Nat}
     (A : Matrix (Fin n) (Fin n) Int) :
@@ -918,10 +709,41 @@ public theorem principalExecution_trace_wellFormed {n : Nat}
     ArithmeticChargeListWellFormed (principalExecution A).charges :=
   (principalExecution A).trace_wellFormed
 
-public theorem principalExecution_chargeOwnership {n : Nat}
+public theorem principalExecution_transitionAdequate {n : Nat}
     (A : Matrix (Fin n) (Fin n) Int) :
-    ∀ charge ∈ (principalExecution A).charges, charge.WellFormed :=
-  (principalExecution A).chargeOwnership
+    PrincipalExecutionCoverage { B := A, U := 1, Uinv := 1 }
+      { B := (principalExecution A).B
+        U := (principalExecution A).U
+        Uinv := (principalExecution A).Uinv }
+      (principalExecution A).transitions
+      (principalExecution A).charges :=
+  (principalExecution A).coverage
+
+public theorem principalExecution_chargeComplete {n : Nat}
+    (A : Matrix (Fin n) (Fin n) Int) :
+    (principalExecution A).charges =
+      (principalExecution A).transitions.flatMap
+        PrincipalTransitionExecution.charges :=
+  (principalExecution A).coverage.charges_eq_flatten
+
+public theorem principalExecution_singleOwner {n : Nat}
+    (A : Matrix (Fin n) (Fin n) Int) :
+    ∃ transitions : List (PrincipalTransitionExecution n),
+      transitions.map PrincipalTransitionExecution.step =
+          (principalRun A).steps ∧
+        (principalExecution A).charges =
+          transitions.flatMap PrincipalTransitionExecution.charges := by
+  let sequence := principalTransitionSequence A
+  refine ⟨sequence.transitions, ?_, ?_⟩
+  · rw [← sequence.steps_eq_transitions,
+      (principalTransitionSequence_value A).2.1]
+  · exact sequence.coverage.charges_eq_flatten
+
+public theorem principalExecution_bezoutRun_shared {n : Nat}
+    (A : Matrix (Fin n) (Fin n) Int) :
+    ∀ transition ∈ (principalExecution A).transitions,
+      transition.BezoutRunShared :=
+  (principalExecution A).coverage.transitions_shared
 
 /-- Macro count is always the fold of the execution's single charge list. -/
 @[expose] public def principalArithmeticOperationCount {n : Nat}

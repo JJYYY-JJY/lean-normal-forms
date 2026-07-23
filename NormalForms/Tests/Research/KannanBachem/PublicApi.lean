@@ -599,6 +599,7 @@ open NormalForms.Research.KannanBachem
 #check magnitudeLeWithCost
 #check magnitudeLeWithCost_value
 #check magnitudeLeWithCost_cost_le
+#check Internal.reduceBezoutWithCost_uses_costed_comparison
 #check quotientWithCost
 #check quotientWithCost_value
 #check exactDivWithCost
@@ -610,6 +611,7 @@ open NormalForms.Research.KannanBachem
 #check boundedBezoutBlockWithCost_value
 #check boundedBezoutBlockWithCost_forward_inverse
 #check boundedBezoutBlockWithCost_cost_le
+#check normalizationUnitWithCost
 #check StandaloneDivModRole
 #check KannanBachemArithmeticCharge
 #check KannanBachemArithmeticCharge.WellFormed
@@ -623,7 +625,12 @@ open NormalForms.Research.KannanBachem
 #check principalExecution_replay
 #check principalExecution_value
 #check principalExecution_trace_wellFormed
-#check principalExecution_chargeOwnership
+#check PrincipalExecutionCoverage
+#check principalExecution_transitionAdequate
+#check principalExecution_chargeComplete
+#check principalExecution_singleOwner
+#check principalExecution_bezoutRun_shared
+#check boundedColumnExecution_chargeComplete
 #check principalArithmeticOperationCount_eq_trace
 #check principalStandaloneDivModCalls_eq_trace
 #check composeExecution
@@ -647,7 +654,8 @@ open NormalForms.Research.KannanBachem
 #check smithExecution_replay
 #check smithExecution_value
 #check smithExecution_trace_wellFormed
-#check smithExecution_chargeOwnership
+#check SmithExecutionCoverage
+#check smithExecution_chargeComplete
 #check stabilizeFromExecution_cost_le
 #check stabilizeExecution_cost_le
 #check smithExecutionBitOperationWorkBound

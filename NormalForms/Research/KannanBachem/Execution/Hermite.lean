@@ -29,7 +29,6 @@ public structure HNFExecution {m n : Nat}
   value : HNFResultFin A
   charges : List KannanBachemArithmeticCharge
   trace_wellFormed : ArithmeticChargeListWellFormed charges
-  chargeOwnership : ∀ charge ∈ charges, charge.WellFormed
 
 public theorem hnfResult_ext_data {m n : Nat}
     {A : Matrix (Fin m) (Fin n) Int}
@@ -102,9 +101,7 @@ public theorem hnfResult_ext_data {m n : Nat}
   exact
     { value
       charges
-      trace_wellFormed := chargesWellFormed
-      chargeOwnership :=
-        List.forall_iff_forall_mem.mp chargesWellFormed }
+      trace_wellFormed := chargesWellFormed }
 
 public theorem preparedPrincipalExecution_value {n : Nat}
     (A : Matrix (Fin n) (Fin n) Int) (hdet : A.det ≠ 0) :
@@ -152,69 +149,70 @@ public structure BoundedColumnExecution {n : Nat}
   value : HNFResultFin (firstColumn A)
   matrix : Matrix (Fin (n + 1)) (Fin (n + 1)) Int
   fullEquation : value.U * A = matrix
+  transitions : List (PrincipalTransitionExecution (n + 1))
   charges : List KannanBachemArithmeticCharge
   trace_wellFormed : ArithmeticChargeListWellFormed charges
-  chargeOwnership : ∀ charge ∈ charges, charge.WellFormed
+  coverage :
+    PrincipalExecutionCoverage { B := A, U := 1, Uinv := 1 }
+      { B := matrix, U := value.U, Uinv := value.U_cert.inverse }
+      transitions charges
 
 /-- Execute the one-column schedule from its public primitive trace. -/
 @[expose] public def boundedColumnExecution {n : Nat}
     (A : Matrix (Fin (n + 1)) (Fin (n + 1)) Int) :
     BoundedColumnExecution A := by
-  let scalar := principalEventListChargeExecution (n + 1)
-    (boundedColumnArithmeticEvents A)
-    (boundedColumnArithmeticEvents_valid A)
-  let replay := rowTraceExecution A (boundedColumnTrace A)
+  let sequence := boundedColumnTransitionSequence A
+  have refinement := boundedColumnTransitionSequence_value A
   let reference := boundedColumnHermiteNormalForm A
-  have uValue : replay.U = reference.U := by
-    rw [replay.U_eq_accumulator, boundedColumnTrace_accumulator_eq]
-  have uinvValue : replay.Uinv = reference.U_cert.inverse := by
-    rw [replay.Uinv_eq_inverseAccumulator,
+  have uValue : sequence.state.U = reference.U := by
+    rw [sequence.U_eq_accumulator, refinement.1,
+      boundedColumnTrace_accumulator_eq]
+  have uinvValue : sequence.state.Uinv = reference.U_cert.inverse := by
+    rw [sequence.Uinv_eq_inverseAccumulator, refinement.1,
       boundedColumnTrace_inverseAccumulator_eq]
-  let certificate : MatrixInverseCertificate replay.U :=
-    { inverse := replay.Uinv
-      left_inv := replay.inverse_identities.1
-      right_inv := replay.inverse_identities.2 }
+  let certificate : MatrixInverseCertificate sequence.state.U :=
+    { inverse := sequence.state.Uinv
+      left_inv := sequence.inverse_identities.1
+      right_inv := sequence.inverse_identities.2 }
   let result : Matrix (Fin (n + 1)) (Fin 1) Int :=
-    fun row _ => replay.B row 0
+    fun row _ => sequence.state.B row 0
   have resultValue : result = reference.H := by
     ext row column
     fin_cases column
-    have replayEntry := congrFun (congrFun replay.equation row) 0
+    have replayEntry := congrFun (congrFun sequence.equation row) 0
     have referenceEntry := congrFun (congrFun reference.equation row) 0
     rw [uValue] at replayEntry
-    change replay.B row 0 = reference.H row 0
+    change sequence.state.B row 0 = reference.H row 0
     calc
-      replay.B row 0 = (reference.U * A) row 0 := replayEntry.symm
+      sequence.state.B row 0 = (reference.U * A) row 0 := replayEntry.symm
       _ = (reference.U * firstColumn A) row 0 := by
         simp [firstColumn, Matrix.mul_apply]
       _ = reference.H row 0 := referenceEntry
   let value : HNFResultFin (firstColumn A) :=
-    { U := replay.U
+    { U := sequence.state.U
       U_cert := certificate
       H := result
       equation := by
         ext row column
         fin_cases column
         calc
-          (replay.U * firstColumn A) row 0 =
-              (replay.U * A) row 0 := by
+          (sequence.state.U * firstColumn A) row 0 =
+              (sequence.state.U * A) row 0 := by
             simp [firstColumn, Matrix.mul_apply]
-          _ = replay.B row 0 :=
-            congrFun (congrFun replay.equation row) 0
+          _ = sequence.state.B row 0 :=
+            congrFun (congrFun sequence.equation row) 0
       isHermite := by
         rw [resultValue]
         exact reference.isHermite }
-  let charges := scalar.charges ++ replay.charges
-  have chargesWellFormed : ArithmeticChargeListWellFormed charges :=
-    scalar.trace_wellFormed.append replay.trace_wellFormed
   exact
     { value
-      matrix := replay.B
-      fullEquation := replay.equation
-      charges
-      trace_wellFormed := chargesWellFormed
-      chargeOwnership :=
-        List.forall_iff_forall_mem.mp chargesWellFormed }
+      matrix := sequence.state.B
+      fullEquation := sequence.equation
+      transitions := sequence.transitions
+      charges := sequence.charges
+      trace_wellFormed := sequence.trace_wellFormed
+      coverage := by
+        simpa [value, certificate] using sequence.coverage }
 
 public theorem boundedColumnExecution_value {n : Nat}
     (A : Matrix (Fin (n + 1)) (Fin (n + 1)) Int) :
@@ -222,38 +220,48 @@ public theorem boundedColumnExecution_value {n : Nat}
       boundedColumnHermiteNormalForm A := by
   apply hnfResult_ext_data
   · change
-      (rowTraceExecution A (boundedColumnTrace A)).U =
+      (boundedColumnTransitionSequence A).state.U =
         (boundedColumnHermiteNormalForm A).U
-    rw [(rowTraceExecution A _).U_eq_accumulator,
+    rw [(boundedColumnTransitionSequence A).U_eq_accumulator,
+      (boundedColumnTransitionSequence_value A).1,
       boundedColumnTrace_accumulator_eq]
   · change
-      (rowTraceExecution A (boundedColumnTrace A)).Uinv =
+      (boundedColumnTransitionSequence A).state.Uinv =
         (boundedColumnHermiteNormalForm A).U_cert.inverse
-    rw [(rowTraceExecution A _).Uinv_eq_inverseAccumulator,
+    rw [(boundedColumnTransitionSequence A).Uinv_eq_inverseAccumulator,
+      (boundedColumnTransitionSequence_value A).1,
       boundedColumnTrace_inverseAccumulator_eq]
   · change
       (fun row (_ : Fin 1) =>
-        (rowTraceExecution A (boundedColumnTrace A)).B row 0) =
+        (boundedColumnTransitionSequence A).state.B row 0) =
           (boundedColumnHermiteNormalForm A).H
     ext row column
     fin_cases column
     have replayEntry := congrFun
-      (congrFun (rowTraceExecution A (boundedColumnTrace A)).equation row) 0
+      (congrFun (boundedColumnTransitionSequence A).equation row) 0
     have referenceEntry := congrFun
       (congrFun (boundedColumnHermiteNormalForm A).equation row) 0
-    rw [(rowTraceExecution A _).U_eq_accumulator,
+    rw [(boundedColumnTransitionSequence A).U_eq_accumulator,
+      (boundedColumnTransitionSequence_value A).1,
       boundedColumnTrace_accumulator_eq] at replayEntry
     change
-      (rowTraceExecution A (boundedColumnTrace A)).B row 0 =
+      (boundedColumnTransitionSequence A).state.B row 0 =
         (boundedColumnHermiteNormalForm A).H row 0
     calc
-      (rowTraceExecution A (boundedColumnTrace A)).B row 0 =
+      (boundedColumnTransitionSequence A).state.B row 0 =
           ((boundedColumnHermiteNormalForm A).U * A) row 0 :=
         replayEntry.symm
       _ = ((boundedColumnHermiteNormalForm A).U * firstColumn A) row 0 := by
         simp [firstColumn, Matrix.mul_apply]
       _ = (boundedColumnHermiteNormalForm A).H row 0 :=
         referenceEntry
+
+public theorem boundedColumnExecution_chargeComplete {n : Nat}
+    (A : Matrix (Fin (n + 1)) (Fin (n + 1)) Int) :
+    (boundedColumnExecution A).charges =
+      (boundedColumnExecution A).transitions.flatMap
+        PrincipalTransitionExecution.charges :=
+  (boundedColumnExecution A).coverage.charges_eq_flatten
 
 private theorem permMatrix_bitLength_le_one {n : Nat}
     (permutation : Equiv.Perm (Fin n)) :
@@ -443,46 +451,42 @@ public theorem boundedColumnExecution_cost_le {n : Nat}
     traceBitCost (boundedColumnExecution A).charges ≤
       boundedColumnExecutionBitOperationBound
         (n + 1) (matrixBitLength A) := by
-  let events := boundedColumnArithmeticEvents A
-  have allWidths : ∀ event ∈ events,
+  let sequence := boundedColumnTransitionSequence A
+  have refinement := boundedColumnTransitionSequence_value A
+  have allWidths : ∀ event ∈ sequence.events,
       event.operandBitLength ≤ matrixBitLength A := by
     intro event member
+    rw [refinement.2] at member
     exact
-      (event.operandBitLength_le_list_of_mem events member).trans
+      (event.operandBitLength_le_list_of_mem
+        (boundedColumnArithmeticEvents A) member).trans
         (boundedColumnArithmeticOperandBitLength_le_input A)
-  have scalarCost :=
-    principalEventListChargeExecution_cost_le (n + 1)
-      (matrixBitLength A) events
-      (boundedColumnArithmeticEvents_valid A) allWidths
-  have scalarClosed :
-      traceBitCost
-          (principalEventListChargeExecution (n + 1) events
-            (boundedColumnArithmeticEvents_valid A)).charges ≤
-        (n + 1) *
-          principalScalarTransitionBitOperationBound (matrixBitLength A) := by
-    simpa only [events, boundedColumnArithmeticEvents_length] using scalarCost
-  have replayCost := rowTraceExecution_cost_le A (boundedColumnTrace A)
-  have replayClosed :
-      traceBitCost
-          (rowTraceExecution A (boundedColumnTrace A)).charges ≤
-        rowTraceDenseBitOperationBound (n + 1) (n + 1)
-          (boundedColumnIntermediatePolynomialBitLengthBound
-            (n + 1) (matrixBitLength A))
-          (boundedColumnMultiplierPolynomialBitLengthBound
-            (n + 1) (matrixBitLength A))
-          (boundedColumnInversePolynomialBitLengthBound
-            (n + 1) (matrixBitLength A)) :=
-    replayCost.trans <|
-      rowTraceDenseBitOperationBound_mono (n + 1)
-        (by rw [boundedColumnTrace_length])
-        (boundedColumnIntermediateMatrixBitLength_le_polynomial A)
-        (boundedColumnIntermediateMultiplierBitLength_le_polynomial A hdet)
-        (boundedColumnIntermediateInverseBitLength_le_polynomial A hdet)
-  change traceBitCost
-      ((principalEventListChargeExecution (n + 1) events
-        (boundedColumnArithmeticEvents_valid A)).charges ++
-        (rowTraceExecution A (boundedColumnTrace A)).charges) ≤ _
-  rw [traceBitCost_append]
-  exact Nat.add_le_add scalarClosed replayClosed
+  have matrixWidth :
+      sequence.steps.intermediateMatrixBitLength A ≤
+        boundedColumnIntermediatePolynomialBitLengthBound
+          (n + 1) (matrixBitLength A) := by
+    rw [refinement.1]
+    exact boundedColumnIntermediateMatrixBitLength_le_polynomial A
+  have forwardWidth :
+      sequence.steps.intermediateMultiplierBitLength ≤
+        boundedColumnMultiplierPolynomialBitLengthBound
+          (n + 1) (matrixBitLength A) := by
+    rw [refinement.1]
+    exact boundedColumnIntermediateMultiplierBitLength_le_polynomial A hdet
+  have inverseWidth :
+      sequence.steps.intermediateInverseMultiplierBitLength ≤
+        boundedColumnInversePolynomialBitLengthBound
+          (n + 1) (matrixBitLength A) := by
+    rw [refinement.1]
+    exact boundedColumnIntermediateInverseBitLength_le_polynomial A hdet
+  have actualCost :=
+    principalTransitionSequence_cost_le sequence
+      allWidths matrixWidth forwardWidth inverseWidth
+  have length : sequence.steps.length = n + 1 := by
+    rw [refinement.1, boundedColumnTrace_length]
+  rw [length] at actualCost
+  change traceBitCost sequence.charges ≤ _
+  unfold boundedColumnExecutionBitOperationBound
+  exact actualCost
 
 end NormalForms.Research.KannanBachem

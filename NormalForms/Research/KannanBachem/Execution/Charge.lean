@@ -110,18 +110,18 @@ public structure DivModCharge where
   run_eq : run = divModWithCost numerator divisor
   role_valid : roleMatchesSite role location.site
 
-public structure BoundedXGCDCharge where
+public structure BoundedBezoutBlockCharge where
   location : ArithmeticChargeLocation
   left : SignMagnitude
   right : SignMagnitude
-  run : WithCost XGCDResult
-  run_eq : run = boundedXGCDWithCost left right
+  run : WithCost BoundedBezoutBlock
+  run_eq : run = boundedBezoutBlockWithCost left right
 
 public structure NormalizationCharge where
   location : ArithmeticChargeLocation
   operand : SignMagnitude
-  run : WithCost SignMagnitude
-  run_eq : run = normalizeWithCost operand
+  run : WithCost Intˣ
+  run_eq : run = normalizationUnitWithCost operand
 
 public inductive ArithmeticChargeData where
   | zeroTest (charge : ZeroTestCharge)
@@ -129,7 +129,7 @@ public inductive ArithmeticChargeData where
   | addition (charge : AdditionCharge)
   | multiplication (charge : MultiplicationCharge)
   | divMod (charge : DivModCharge)
-  | boundedXGCD (charge : BoundedXGCDCharge)
+  | boundedBezoutBlock (charge : BoundedBezoutBlockCharge)
   | normalization (charge : NormalizationCharge)
 
 end Internal
@@ -186,19 +186,19 @@ namespace KannanBachemArithmeticCharge
       run_eq := by simpa using run_eq
       role_valid }⟩
 
-/-- Record one opaque bounded-XGCD macro leaf. -/
-@[expose] public def boundedXGCDOfRun
+/-- Record one opaque bounded-Bézout block run. -/
+@[expose] public def boundedBezoutBlockOfRun
     (location : ArithmeticChargeLocation) (left right : SignMagnitude)
-    (run : WithCost XGCDResult)
-    (run_eq : run = boundedXGCDWithCost left right) :
+    (run : WithCost BoundedBezoutBlock)
+    (run_eq : run = boundedBezoutBlockWithCost left right) :
     KannanBachemArithmeticCharge :=
-  ⟨.boundedXGCD ⟨location, left, right, run, run_eq⟩⟩
+  ⟨.boundedBezoutBlock ⟨location, left, right, run, run_eq⟩⟩
 
 /-- Record one canonical sign-normalization run. -/
 @[expose] public def normalizationOfRun
     (location : ArithmeticChargeLocation) (operand : SignMagnitude)
-    (run : WithCost SignMagnitude)
-    (run_eq : run = normalizeWithCost operand) :
+    (run : WithCost Intˣ)
+    (run_eq : run = normalizationUnitWithCost operand) :
     KannanBachemArithmeticCharge :=
   ⟨.normalization ⟨location, operand, run, run_eq⟩⟩
 
@@ -209,7 +209,7 @@ namespace KannanBachemArithmeticCharge
   | ⟨.addition charge⟩ => charge.run.cost
   | ⟨.multiplication charge⟩ => charge.run.cost
   | ⟨.divMod charge⟩ => charge.run.cost
-  | ⟨.boundedXGCD charge⟩ => charge.run.cost
+  | ⟨.boundedBezoutBlock charge⟩ => charge.run.cost
   | ⟨.normalization charge⟩ => charge.run.cost
 
 @[simp] public theorem bitCost_zeroTestOfRun
@@ -239,6 +239,14 @@ namespace KannanBachemArithmeticCharge
       run.cost :=
   rfl
 
+@[simp] public theorem bitCost_boundedBezoutBlockOfRun
+    (location : ArithmeticChargeLocation) (left right : SignMagnitude)
+    (run : WithCost BoundedBezoutBlock)
+    (run_eq : run = boundedBezoutBlockWithCost left right) :
+    (boundedBezoutBlockOfRun location left right run run_eq).bitCost =
+      run.cost :=
+  rfl
+
 /-- The matrix location stored by a leaf. -/
 @[expose] public def location :
     KannanBachemArithmeticCharge → ArithmeticChargeLocation
@@ -247,14 +255,19 @@ namespace KannanBachemArithmeticCharge
   | ⟨.addition charge⟩ => charge.location
   | ⟨.multiplication charge⟩ => charge.location
   | ⟨.divMod charge⟩ => charge.location
-  | ⟨.boundedXGCD charge⟩ => charge.location
+  | ⟨.boundedBezoutBlock charge⟩ => charge.location
   | ⟨.normalization charge⟩ => charge.location
 
-/-- Standalone division role, if this leaf is a division. -/
-@[expose] public def standaloneDivModRole? :
-    KannanBachemArithmeticCharge → Option StandaloneDivModRole
-  | ⟨.divMod charge⟩ => some charge.role
-  | _ => none
+/-- Standalone division roles owned by one leaf. -/
+@[expose] public def standaloneDivModRoles :
+    KannanBachemArithmeticCharge → List StandaloneDivModRole
+  | ⟨.divMod charge⟩ => [charge.role]
+  | ⟨.boundedBezoutBlock charge⟩ =>
+      if charge.run.value.gcd = 0 then
+        []
+      else
+        [.bezoutLeftExact, .bezoutRightExact]
+  | _ => []
 
 /--
 Public integrity predicate.  It checks primitive identity, role ownership, and
@@ -283,12 +296,12 @@ leaf and therefore has no arithmetic descendants.
         Internal.roleMatchesSite charge.role charge.location.site ∧
         ∀ index ∈ charge.location.indices,
           index < charge.location.dimension
-  | ⟨.boundedXGCD charge⟩ =>
-      charge.run = boundedXGCDWithCost charge.left charge.right ∧
+  | ⟨.boundedBezoutBlock charge⟩ =>
+      charge.run = boundedBezoutBlockWithCost charge.left charge.right ∧
         ∀ index ∈ charge.location.indices,
           index < charge.location.dimension
   | ⟨.normalization charge⟩ =>
-      charge.run = normalizeWithCost charge.operand ∧
+      charge.run = normalizationUnitWithCost charge.operand ∧
         ∀ index ∈ charge.location.indices,
           index < charge.location.dimension
 
@@ -325,17 +338,17 @@ public theorem divModOfRun_wellFormed
     (divModOfRun location role numerator divisor run run_eq role_valid).WellFormed :=
   ⟨run_eq, role_valid, location.indices_valid⟩
 
-public theorem boundedXGCDOfRun_wellFormed
+public theorem boundedBezoutBlockOfRun_wellFormed
     (location : ArithmeticChargeLocation) (left right : SignMagnitude)
-    (run : WithCost XGCDResult)
-    (run_eq : run = boundedXGCDWithCost left right) :
-    (boundedXGCDOfRun location left right run run_eq).WellFormed :=
+    (run : WithCost BoundedBezoutBlock)
+    (run_eq : run = boundedBezoutBlockWithCost left right) :
+    (boundedBezoutBlockOfRun location left right run run_eq).WellFormed :=
   ⟨run_eq, location.indices_valid⟩
 
 public theorem normalizationOfRun_wellFormed
     (location : ArithmeticChargeLocation) (operand : SignMagnitude)
-    (run : WithCost SignMagnitude)
-    (run_eq : run = normalizeWithCost operand) :
+    (run : WithCost Intˣ)
+    (run_eq : run = normalizationUnitWithCost operand) :
     (normalizationOfRun location operand run run_eq).WellFormed :=
   ⟨run_eq, location.indices_valid⟩
 
@@ -462,9 +475,11 @@ namespace KannanBachemArithmeticCharge
   | ⟨.multiplication _⟩ =>
       { additions := 0, multiplications := 1, xgcdCalls := 0,
         normalizations := 0, standaloneDivModCalls := 0 }
-  | ⟨.boundedXGCD _⟩ =>
+  | ⟨.boundedBezoutBlock charge⟩ =>
       { additions := 0, multiplications := 0, xgcdCalls := 1,
-        normalizations := 0, standaloneDivModCalls := 0 }
+        normalizations := 0
+        standaloneDivModCalls :=
+          if charge.run.value.gcd = 0 then 0 else 2 }
   | ⟨.normalization _⟩ =>
       { additions := 0, multiplications := 0, xgcdCalls := 0,
         normalizations := 1, standaloneDivModCalls := 0 }
@@ -532,7 +547,7 @@ public theorem traceOperationCount_append
 @[expose] public def traceStandaloneDivModEvents
     (charges : List KannanBachemArithmeticCharge) :
     List StandaloneDivModRole :=
-  charges.filterMap KannanBachemArithmeticCharge.standaloneDivModRole?
+  charges.flatMap KannanBachemArithmeticCharge.standaloneDivModRoles
 
 public theorem trace_standaloneDivModCalls_eq_events
     (charges : List KannanBachemArithmeticCharge) :
@@ -549,8 +564,9 @@ public theorem trace_standaloneDivModCalls_eq_events
           cases data <;> simp [traceOperationCount,
             traceStandaloneDivModEvents,
             KannanBachemArithmeticCharge.operationDelta,
-            KannanBachemArithmeticCharge.standaloneDivModRole?]
-          all_goals omega
+            KannanBachemArithmeticCharge.standaloneDivModRoles]
+          all_goals try omega
+          split <;> simp_all
 
 /-- Number of standalone divisions carrying one designated closed role. -/
 @[expose] public def traceRoleEventCount

@@ -177,27 +177,31 @@ public structure ReadyRowPermutationExecution {n : Nat}
             some (Hermite.Principal.lastColumnPivot A hdet) := by
         rw [lastColumnScanExecution_value]
         exact (Option.some_get _).symm
-      let pivot := scan.value.getD
-        (Hermite.Principal.lastColumnPivot A hdet)
-      have pivotEq :
-          pivot = Hermite.Principal.lastColumnPivot A hdet := by
-        simp [pivot, scanValue]
-      let minor := Hermite.Principal.lastColumnMinor A pivot
-      have minorNonzero : minor.det ≠ 0 := by
-        change (Hermite.Principal.lastColumnMinor A pivot).det ≠ 0
-        rw [pivotEq]
-        exact Hermite.Principal.lastColumnPivot_spec A hdet
-      let tail := readyRowPermutationExecution minor minorNonzero
-      exact
-        { value := Hermite.Principal.appendRowPermutation pivot tail.value
-          charges := scan.charges ++ tail.charges
-          value_eq := by
-            simp only [Hermite.Principal.readyRowPermutation]
+      exact match scanResult : scan.value with
+      | none => by
+          rw [scanValue] at scanResult
+          contradiction
+      | some pivot => by
+          have pivotEq :
+              pivot = Hermite.Principal.lastColumnPivot A hdet := by
+            rw [scanValue] at scanResult
+            exact Option.some.inj scanResult.symm
+          let minor := Hermite.Principal.lastColumnMinor A pivot
+          have minorNonzero : minor.det ≠ 0 := by
+            change (Hermite.Principal.lastColumnMinor A pivot).det ≠ 0
             rw [pivotEq]
-            congr 1
-            simpa only [minor, pivotEq] using tail.value_eq
-          trace_wellFormed :=
-            scan.trace_wellFormed.append tail.trace_wellFormed }
+            exact Hermite.Principal.lastColumnPivot_spec A hdet
+          let tail := readyRowPermutationExecution minor minorNonzero
+          exact
+            { value := Hermite.Principal.appendRowPermutation pivot tail.value
+              charges := scan.charges ++ tail.charges
+              value_eq := by
+                simp only [Hermite.Principal.readyRowPermutation]
+                rw [pivotEq]
+                congr 1
+                simpa only [minor, pivotEq] using tail.value_eq
+              trace_wellFormed :=
+                scan.trace_wellFormed.append tail.trace_wellFormed }
 
 /-- Closed cost recurrence for all determinant scans in preparation. -/
 @[expose] public def preparationExecutionBitOperationBound :
@@ -236,34 +240,39 @@ public theorem readyRowPermutationExecution_cost_le :
             some (Hermite.Principal.lastColumnPivot A hdet) := by
         rw [lastColumnScanExecution_value]
         exact (Option.some_get _).symm
-      let pivot := scan.value.getD
-        (Hermite.Principal.lastColumnPivot A hdet)
-      have pivotEq :
-          pivot = Hermite.Principal.lastColumnPivot A hdet := by
-        simp [pivot, scanValue]
-      let minor := Hermite.Principal.lastColumnMinor A pivot
-      have minorNonzero : minor.det ≠ 0 := by
-        change (Hermite.Principal.lastColumnMinor A pivot).det ≠ 0
-        rw [pivotEq]
-        exact Hermite.Principal.lastColumnPivot_spec A hdet
-      let tail := readyRowPermutationExecution minor minorNonzero
-      have scanCost := lastColumnScanExecution_cost_le A
-      have tailCost :=
-        readyRowPermutationExecution_cost_le minor minorNonzero
-      have minorWidth :
-          matrixBitLength minor ≤ matrixBitLength A := by
-        exact submatrix_bitLength_le A pivot.succAbove
-          (Fin.last n).succAbove
-      have tailCost' :
-          traceBitCost tail.charges ≤
-            preparationExecutionBitOperationBound n
-              (matrixBitLength A) :=
-        tailCost.trans
-          (preparationExecutionBitOperationBound_mono_right n minorWidth)
-      rw [readyRowPermutationExecution, traceBitCost_append]
-      change traceBitCost scan.charges + traceBitCost tail.charges ≤ _
-      simp only [preparationExecutionBitOperationBound]
-      exact Nat.add_le_add scanCost tailCost'
+      rw [readyRowPermutationExecution]
+      split
+      · rename_i scanResult
+        rw [scanValue] at scanResult
+        contradiction
+      · rename_i pivot scanResult
+        have pivotEq :
+            pivot = Hermite.Principal.lastColumnPivot A hdet := by
+          rw [scanValue] at scanResult
+          exact Option.some.inj scanResult.symm
+        let minor := Hermite.Principal.lastColumnMinor A pivot
+        have minorNonzero : minor.det ≠ 0 := by
+          change (Hermite.Principal.lastColumnMinor A pivot).det ≠ 0
+          rw [pivotEq]
+          exact Hermite.Principal.lastColumnPivot_spec A hdet
+        let tail := readyRowPermutationExecution minor minorNonzero
+        have scanCost := lastColumnScanExecution_cost_le A
+        have tailCost :=
+          readyRowPermutationExecution_cost_le minor minorNonzero
+        have minorWidth :
+            matrixBitLength minor ≤ matrixBitLength A := by
+          exact submatrix_bitLength_le A pivot.succAbove
+            (Fin.last n).succAbove
+        have tailCost' :
+            traceBitCost tail.charges ≤
+              preparationExecutionBitOperationBound n
+                (matrixBitLength A) :=
+          tailCost.trans
+            (preparationExecutionBitOperationBound_mono_right n minorWidth)
+        rw [traceBitCost_append]
+        change traceBitCost scan.charges + traceBitCost tail.charges ≤ _
+        simp only [preparationExecutionBitOperationBound]
+        exact Nat.add_le_add scanCost tailCost'
 
 /-- Value-producing principal preparation and its determinant trace. -/
 public structure PreparationExecution {n : Nat}

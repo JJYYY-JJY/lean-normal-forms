@@ -36,8 +36,7 @@ open NormalForms.Research.KannanBachem.Smith
   exact
     { value
       charges := hnf.charges
-      trace_wellFormed := hnf.trace_wellFormed
-      chargeOwnership := hnf.chargeOwnership }
+      trace_wellFormed := hnf.trace_wellFormed }
 
 public theorem leftHermitePhaseExecution_value {n : Nat}
     (A : Matrix (Fin (n + 1)) (Fin (n + 1)) Int) :
@@ -73,8 +72,7 @@ public theorem leftHermitePhaseExecution_value {n : Nat}
   exact
     { value
       charges := hnf.charges
-      trace_wellFormed := hnf.trace_wellFormed
-      chargeOwnership := hnf.chargeOwnership }
+      trace_wellFormed := hnf.trace_wellFormed }
 
 public theorem rightHermitePhaseExecution_value {n : Nat}
     (A : Matrix (Fin (n + 1)) (Fin (n + 1)) Int)

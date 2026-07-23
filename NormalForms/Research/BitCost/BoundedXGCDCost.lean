@@ -107,7 +107,8 @@ public theorem boundedEuclideanXGCDWithCost_coefficient_bitLength_le
 @[expose] public def boundedXGCDReductionCostBound
     (operandBits : Nat) : Nat :=
   let rawBits := boundedXGCDRawCoefficientBitLengthBound operandBits
-  1 + divisionCostForBitLengths rawBits operandBits +
+  (2 * operandBits + 2) +
+    divisionCostForBitLengths rawBits operandBits +
     multiplicationCostForBitLengths (rawBits + 1) operandBits +
     additionCostForBitLengths rawBits (rawBits + 1 + operandBits)
 
@@ -121,7 +122,8 @@ public theorem reduceBezoutWithCost_cost_le
     (rawLeftWidth : raw.leftCoeff.bitLength ≤ rawBits)
     (rawRightWidth : raw.rightCoeff.bitLength ≤ rawBits) :
     (reduceBezoutWithCost left right raw).cost ≤
-      1 + divisionCostForBitLengths rawBits operandBits +
+      (2 * operandBits + 2) +
+        divisionCostForBitLengths rawBits operandBits +
         multiplicationCostForBitLengths (rawBits + 1) operandBits +
         additionCostForBitLengths rawBits (rawBits + 1 + operandBits) := by
   by_cases main : left ≠ 0 ∧ right.value.natAbs ≤ left.value.natAbs
@@ -155,8 +157,27 @@ public theorem reduceBezoutWithCost_cost_le
           additionCostForBitLengths rawBits (rawBits + 1 + operandBits) := by
       simpa only [adjusted] using adjustedPrimitiveCost.trans
         (addBitOperationBound_le_lengths _ _ _ _ rawLeftWidth productWidth)
-    simp only [reduceBezoutWithCost, dif_pos main]
-    change 1 + division.cost + product.cost + adjusted.cost ≤ _
+    have leftValueNonzero : left.value ≠ 0 := by
+      intro valueZero
+      apply main.1
+      rw [← SignMagnitude.ofInt_value left, valueZero]
+      rfl
+    have comparisonCost :
+        (isZeroWithCost left).cost +
+            (magnitudeLeWithCost right left).cost ≤
+          2 * operandBits + 2 := by
+      have comparisonPrimitive := magnitudeLeWithCost_cost_le right left
+      unfold magnitudeCompareBitOperationBound at comparisonPrimitive
+      simp only [isZeroWithCost_cost]
+      omega
+    simp only [isZeroWithCost_cost] at comparisonCost
+    simp only [reduceBezoutWithCost, isZeroWithCost_value,
+      leftValueNonzero, magnitudeLeWithCost_value, main.2,
+      decide_false, decide_true, Bool.false_eq_true, if_false, if_true,
+      isZeroWithCost_cost]
+    change
+      1 + (magnitudeLeWithCost right left).cost +
+        division.cost + product.cost + adjusted.cost ≤ _
     omega
   · by_cases rightNonzero : right ≠ 0
     · let division := divModWithCost raw.leftCoeff right
@@ -189,11 +210,73 @@ public theorem reduceBezoutWithCost_cost_le
             additionCostForBitLengths rawBits (rawBits + 1 + operandBits) := by
         simpa only [adjusted] using adjustedPrimitiveCost.trans
           (addBitOperationBound_le_lengths _ _ _ _ rawRightWidth productWidth)
-      simp only [reduceBezoutWithCost, dif_neg main, dif_pos rightNonzero]
-      change 1 + division.cost + product.cost + adjusted.cost ≤ _
+      by_cases leftZero : left = 0
+      · subst left
+        have rightValueNonzero : right.value ≠ 0 := by
+          intro valueZero
+          apply rightNonzero
+          rw [← SignMagnitude.ofInt_value right, valueZero]
+          rfl
+        simp only [reduceBezoutWithCost, isZeroWithCost_value,
+          SignMagnitude.value_zero, decide_true, if_true,
+          rightValueNonzero, decide_false, Bool.false_eq_true, if_false,
+          isZeroWithCost_cost]
+        change 2 + division.cost + product.cost + adjusted.cost ≤ _
+        omega
+      · have leftValueNonzero : left.value ≠ 0 := by
+          intro valueZero
+          apply leftZero
+          rw [← SignMagnitude.ofInt_value left, valueZero]
+          rfl
+        have magnitudeNotLe :
+            ¬right.value.natAbs ≤ left.value.natAbs := by
+          intro magnitudeLe
+          exact main ⟨leftZero, magnitudeLe⟩
+        have comparisonCost :
+            (isZeroWithCost left).cost +
+                (magnitudeLeWithCost right left).cost ≤
+              2 * operandBits + 2 := by
+          have comparisonPrimitive := magnitudeLeWithCost_cost_le right left
+          unfold magnitudeCompareBitOperationBound at comparisonPrimitive
+          simp only [isZeroWithCost_cost]
+          omega
+        simp only [isZeroWithCost_cost] at comparisonCost
+        simp only [reduceBezoutWithCost, isZeroWithCost_value,
+          leftValueNonzero, magnitudeLeWithCost_value, magnitudeNotLe,
+          decide_false, Bool.false_eq_true, if_false,
+          isZeroWithCost_cost]
+        change
+          1 + (magnitudeLeWithCost right left).cost +
+            division.cost + product.cost + adjusted.cost ≤ _
+        omega
+    · have rightZero : right = 0 := not_ne_iff.mp rightNonzero
+      have leftZero : left = 0 := by
+        by_contra leftNonzero
+        exact main ⟨leftNonzero, by simp [rightZero]⟩
+      subst left
+      subst right
+      simp [reduceBezoutWithCost]
       omega
-    · simp only [reduceBezoutWithCost, dif_neg main, dif_neg rightNonzero]
-      omega
+
+/--
+On every nonzero-left reduction, the stored cost contains the zero inspection
+and the magnitude comparison that selects the branch.
+-/
+public theorem reduceBezoutWithCost_uses_costed_comparison
+    (left right : SignMagnitude) (raw : XGCDResult)
+    (leftNonzero : left ≠ 0) :
+    (isZeroWithCost left).cost + (magnitudeLeWithCost right left).cost ≤
+      (reduceBezoutWithCost left right raw).cost := by
+  have leftValueNonzero : left.value ≠ 0 := by
+    intro valueZero
+    apply leftNonzero
+    rw [← SignMagnitude.ofInt_value left, valueZero]
+    rfl
+  by_cases magnitudeLe : right.value.natAbs ≤ left.value.natAbs
+  · simp [reduceBezoutWithCost, leftValueNonzero, magnitudeLe]
+    omega
+  · simp [reduceBezoutWithCost, leftValueNonzero, magnitudeLe]
+    omega
 
 end Internal
 

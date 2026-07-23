@@ -234,17 +234,12 @@ public theorem matrixProductExecution_cost_eq {n : Nat}
   intro row _member
   exact finRange_nat_sum_eq_univ _
 
-/--
-Value-producing two-sided certificate execution.  Replay and ownership facts
-remain in `Prop`; only the certificate and its flat leaf trace are runtime
-data.
--/
+/-- Value-producing two-sided certificate execution with one flat leaf trace. -/
 public structure CertificateExecution {n : Nat}
     (A : Matrix (Fin n) (Fin n) Int) where
   value : TwoSidedCertificate A
   charges : List KannanBachemArithmeticCharge
   trace_wellFormed : ArithmeticChargeListWellFormed charges
-  chargeOwnership : ∀ charge ∈ charges, charge.WellFormed
 
 public theorem twoSidedCertificate_ext_data {n : Nat}
     {A : Matrix (Fin n) (Fin n) Int}
@@ -280,8 +275,7 @@ public theorem twoSidedCertificate_ext_data {n : Nat}
     {A : Matrix (Fin n) (Fin n) Int}
     (value : TwoSidedCertificate A) : CertificateExecution A :=
   { value, charges := []
-    trace_wellFormed := by simp [ArithmeticChargeListWellFormed]
-    chargeOwnership := by simp }
+    trace_wellFormed := by simp [ArithmeticChargeListWellFormed] }
 
 /--
 Compose two executions using exactly four dense products for the two forward
@@ -358,10 +352,7 @@ and two inverse transforms.
   exact
     { value
       charges
-      trace_wellFormed := chargesWellFormed
-      chargeOwnership := by
-        intro charge member
-        exact (List.forall_iff_forall_mem.mp chargesWellFormed) charge member }
+      trace_wellFormed := chargesWellFormed }
 
 public theorem composeExecution_value {n : Nat}
     {A : Matrix (Fin n) (Fin n) Int}

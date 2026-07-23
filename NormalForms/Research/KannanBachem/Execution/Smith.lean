@@ -34,7 +34,20 @@ public structure SmithExecution {n : Nat}
   charges : List KannanBachemArithmeticCharge
   controlTrace : SmithControlTrace
   trace_wellFormed : ArithmeticChargeListWellFormed charges
-  chargeOwnership : ∀ charge ∈ charges, charge.WellFormed
+
+@[expose] public def emptySmithExecution
+    (A : Matrix (Fin 0) (Fin 0) Int) : SmithExecution A :=
+  { value :=
+      { U := 1
+        U_cert := MatrixInverseCertificate.one
+        S := A
+        V := 1
+        V_cert := MatrixInverseCertificate.one
+        equation := NormalForms.Matrix.Constructive.one_mul_mul_one A
+        isSmith := IsSmithNormalFormFin.emptyRows A }
+    charges := []
+    controlTrace := { passes := 0, injections := 0 }
+    trace_wellFormed := by simp [ArithmeticChargeListWellFormed] }
 
 private theorem snfResultFin_ext_data {n : Nat}
     {A : Matrix (Fin n) (Fin n) Int}
@@ -85,8 +98,7 @@ private theorem snfResultFin_ext_data {n : Nat}
   let lifted : CertificateExecution stabilized.certificate.value.result :=
     { value := liftedValue
       charges := lower.charges
-      trace_wellFormed := lower.trace_wellFormed
-      chargeOwnership := lower.chargeOwnership }
+      trace_wellFormed := lower.trace_wellFormed }
   let final := composeExecution stabilized.certificate lifted
   let value : SNFResultFin A :=
     { U := final.value.U
@@ -118,8 +130,24 @@ private theorem snfResultFin_ext_data {n : Nat}
       controlTrace :=
         { passes := stabilized.passes + lower.controlTrace.passes
           injections := stabilized.injections + lower.controlTrace.injections }
-      trace_wellFormed := final.trace_wellFormed
-      chargeOwnership := final.chargeOwnership }
+      trace_wellFormed := final.trace_wellFormed }
+
+/--
+Coverage is generated only by the exact empty execution or by assembling an
+actual stabilization with a covered lower-right execution.
+-/
+public inductive SmithExecutionCoverage :
+    {n : Nat} → {A : Matrix (Fin n) (Fin n) Int} →
+      SmithExecution A → Prop
+  | empty (A : Matrix (Fin 0) (Fin 0) Int) :
+      SmithExecutionCoverage (emptySmithExecution A)
+  | assemble {n : Nat}
+      {A : Matrix (Fin (n + 1)) (Fin (n + 1)) Int}
+      (stabilized : StabilizationExecution A)
+      (lower : SmithExecution
+        (lowerRight stabilized.certificate.value.result))
+      (lowerCoverage : SmithExecutionCoverage lower) :
+      SmithExecutionCoverage (assembleExecution stabilized lower)
 
 public theorem assembleExecution_value {n : Nat}
     {A : Matrix (Fin (n + 1)) (Fin (n + 1)) Int}
@@ -194,19 +222,7 @@ lower-right input is the preceding stabilization execution's result.
 -/
 @[expose] public def smithExecution : {n : Nat} →
     (A : Matrix (Fin n) (Fin n) Int) → A.det ≠ 0 → SmithExecution A
-  | 0, A, _hdet =>
-      { value :=
-          { U := 1
-            U_cert := MatrixInverseCertificate.one
-            S := A
-            V := 1
-            V_cert := MatrixInverseCertificate.one
-            equation := NormalForms.Matrix.Constructive.one_mul_mul_one A
-            isSmith := IsSmithNormalFormFin.emptyRows A }
-        charges := []
-        controlTrace := { passes := 0, injections := 0 }
-        trace_wellFormed := by simp [ArithmeticChargeListWellFormed]
-        chargeOwnership := by simp }
+  | 0, A, _hdet => emptySmithExecution A
   | _n + 1, A, hdet =>
       let stabilized := stabilizeExecution A hdet
       let transformed := stabilized.certificate.value.result
@@ -217,6 +233,24 @@ lower-right input is the preceding stabilization execution's result.
           transformedDet
       assembleExecution stabilized
         (smithExecution (lowerRight transformed) lowerDet)
+
+/-- Every Smith charge trace is assembled from its actual recursive executions. -/
+public theorem smithExecution_chargeComplete :
+    {n : Nat} → (A : Matrix (Fin n) (Fin n) Int) →
+      (hdet : A.det ≠ 0) →
+      SmithExecutionCoverage (smithExecution A hdet)
+  | 0, A, _hdet => .empty A
+  | _n + 1, A, hdet => by
+      let stabilized := stabilizeExecution A hdet
+      let transformed := stabilized.certificate.value.result
+      let transformedDet : transformed.det ≠ 0 :=
+        result_det_ne_zero stabilized.certificate.value hdet
+      let lowerDet : (lowerRight transformed).det ≠ 0 :=
+        stable_lowerRight_det_ne_zero transformed stabilized.stable
+          transformedDet
+      exact .assemble stabilized
+        (smithExecution (lowerRight transformed) lowerDet)
+        (smithExecution_chargeComplete (lowerRight transformed) lowerDet)
 
 /-- Every runtime Smith result replays both explicit certificate directions. -/
 public theorem smithExecution_replay {n : Nat}
@@ -347,11 +381,6 @@ public theorem smithExecution_trace_wellFormed {n : Nat}
     (A : Matrix (Fin n) (Fin n) Int) (hdet : A.det ≠ 0) :
     ArithmeticChargeListWellFormed (smithExecution A hdet).charges :=
   (smithExecution A hdet).trace_wellFormed
-
-public theorem smithExecution_chargeOwnership {n : Nat}
-    (A : Matrix (Fin n) (Fin n) Int) (hdet : A.det ≠ 0) :
-    ∀ charge ∈ (smithExecution A hdet).charges, charge.WellFormed :=
-  (smithExecution A hdet).chargeOwnership
 
 /-- Cost endpoint: the exact fold of the execution's primitive leaves. -/
 @[expose] public def smithWithCost {n : Nat}

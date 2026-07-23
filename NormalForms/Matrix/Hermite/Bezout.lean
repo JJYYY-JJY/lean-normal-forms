@@ -6,7 +6,7 @@ Authors: Junye Ji
 module
 
 import all NormalForms.Matrix.Hermite.Transform
-import all NormalForms.Matrix.Constructive
+public import NormalForms.Matrix.Constructive
 
 /-!
 # Hermite Bezout Infrastructure
@@ -548,7 +548,8 @@ def topBezoutMatrixInverseCertificate {m : Nat} {R : Type _}
 
 
 /-- Lift a two-by-two row transform to any distinct pair of rows. -/
-def twoRowLiftMatrix {ι R : Type _} [Fintype ι] [DecidableEq ι] [CommRing R]
+public def twoRowLiftMatrix {ι R : Type _}
+    [Fintype ι] [DecidableEq ι] [CommRing R]
     (pivot target : ι) (pair : _root_.Matrix (Fin 2) (Fin 2) R) :
     _root_.Matrix ι ι R :=
   let one : _root_.Matrix ι ι R := 1
@@ -626,7 +627,7 @@ theorem twoRowLiftMatrix_mul_apply_other {ι κ R : Type _}
     (NormalForms.Matrix.Constructive.one_mul A)
 
 
-@[simp] theorem twoRowLiftMatrix_one {ι R : Type _}
+@[simp] public theorem twoRowLiftMatrix_one {ι R : Type _}
     [Fintype ι] [DecidableEq ι] [CommRing R]
     (pivot target : ι) (hne : pivot ≠ target) :
     twoRowLiftMatrix pivot target
@@ -641,7 +642,7 @@ theorem twoRowLiftMatrix_mul_apply_other {ι κ R : Type _}
     · exact twoRowLiftMatrix_apply_other pivot target row hp ht 1 column
 
 
-@[simp] theorem twoRowLiftMatrix_mul {ι R : Type _}
+@[simp] public theorem twoRowLiftMatrix_mul {ι R : Type _}
     [Fintype ι] [DecidableEq ι] [CommRing R]
     (pivot target : ι) (hne : pivot ≠ target)
     (left right : _root_.Matrix (Fin 2) (Fin 2) R) :
