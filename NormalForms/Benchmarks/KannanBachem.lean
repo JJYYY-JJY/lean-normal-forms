@@ -21,6 +21,7 @@ namespace NormalForms.Benchmarks.KannanBachem
 
 open scoped Matrix
 open NormalForms.Matrix.Hermite
+open NormalForms.Research.KannanBachem
 open NormalForms.Research.KannanBachem.Hermite
 open NormalForms.Research.KannanBachem.Smith
 
@@ -59,21 +60,20 @@ private theorem smithInjectionInput_det_ne_zero :
     smithInjectionInput.det ≠ 0 := by decide
 
 private def printCommon
-    (caseName : String)
-    (dimension inputBits determinantBits : Nat) : IO Unit := do
+    (caseName : String) (dimension inputBits determinantBits
+      inputEncodingBits : Nat) : IO Unit := do
   IO.println s!"case={caseName}"
   IO.println s!"dimension={dimension}"
   IO.println s!"input_bits={inputBits}"
   IO.println s!"determinant_bits={determinantBits}"
+  IO.println s!"input_encoding_bits={inputEncodingBits}"
 
 private def runHNF : IO Bool := do
-  let preparation := Principal.prepare hnfInput hnfInput_det_ne_zero
-  let result := Principal.preparedPrincipalHermiteNormalForm
-    hnfInput hnfInput_det_ne_zero
-  let operations := principalRingOperations preparation.matrix
-  let cost := preparedPrincipalHNFBitOperationCost
-    hnfInput hnfInput_det_ne_zero
-  let bound := preparedPrincipalHNFBitOperationBound 3
+  let run := preparedPrincipalExecution hnfInput hnfInput_det_ne_zero
+  let result := run.value
+  let operations := traceOperationCount run.charges
+  let cost := traceBitCost run.charges
+  let bound := preparedPrincipalExecutionBitOperationBound 3
     (matrixBitLength hnfInput)
   let valid :=
     result.H == hnfExpected &&
@@ -81,13 +81,14 @@ private def runHNF : IO Bool := do
       result.U_cert.inverse * result.H == hnfInput &&
       cost ≤ bound
   printCommon "hnf-prepared-3x3" 3 (matrixBitLength hnfInput)
-    (integerBitLength hnfInput.det)
-  IO.println s!"ring_additions={operations.additions}"
-  IO.println s!"ring_multiplications={operations.multiplications}"
+    (Hermite.integerBitLength hnfInput.det)
+    (matrixEncodingLength ⟨3, hnfInput⟩)
+  IO.println s!"additions={operations.additions}"
+  IO.println s!"multiplications={operations.multiplications}"
   IO.println s!"xgcd_calls={operations.xgcdCalls}"
   IO.println s!"normalizations={operations.normalizations}"
-  IO.println "divmod_calls=0"
-  IO.println s!"ring_total={operations.total}"
+  IO.println s!"standalone_divmod_calls={operations.standaloneDivModCalls}"
+  IO.println s!"arithmetic_operation_total={operations.total}"
   IO.println s!"result_bits={matrixBitLength result.H}"
   IO.println s!"left_bits={matrixBitLength result.U}"
   IO.println s!"left_inverse_bits={matrixBitLength result.U_cert.inverse}"
@@ -106,34 +107,38 @@ private def runSmith
     (diagonal : String)
     (input expected : Matrix (Fin 2) (Fin 2) Int)
     (hdet : input.det ≠ 0) : IO Bool := do
-  let stabilized := stabilize input hdet
-  let result := smith input hdet
-  let operations := smithOperationCount input hdet
+  let run := smithExecution input hdet
+  let result := run.value
+  let operations := traceOperationCount run.charges
   let profile := smithCoefficientProfile result
-  let cost := smithBitOperationCost input hdet
-  let bound := smithPolynomialBitOperationBound 2 (matrixBitLength input)
+  let cost := traceBitCost run.charges
+  let bound := smithExecutionPolynomialBitOperationBound 2
+    (matrixBitLength input)
+  let outputEncodingBits := smithOutputEncodingLength result
   let valid :=
     result.S == expected &&
       result.U * input * result.V == result.S &&
       result.U_cert.inverse * result.S * result.V_cert.inverse == input &&
       cost ≤ bound
   printCommon caseName 2 (matrixBitLength input)
-    (integerBitLength input.det)
-  IO.println s!"ring_additions={operations.additions}"
-  IO.println s!"ring_multiplications={operations.multiplications}"
+    (Hermite.integerBitLength input.det)
+    (matrixEncodingLength ⟨2, input⟩)
+  IO.println s!"additions={operations.additions}"
+  IO.println s!"multiplications={operations.multiplications}"
   IO.println s!"xgcd_calls={operations.xgcdCalls}"
   IO.println s!"normalizations={operations.normalizations}"
-  IO.println s!"divmod_calls={operations.divModCalls}"
-  IO.println s!"ring_total={operations.total}"
+  IO.println s!"standalone_divmod_calls={operations.standaloneDivModCalls}"
+  IO.println s!"arithmetic_operation_total={operations.total}"
   IO.println s!"result_bits={profile.resultBitLength}"
   IO.println s!"left_bits={profile.leftBitLength}"
   IO.println s!"left_inverse_bits={profile.leftInverseBitLength}"
   IO.println s!"right_bits={profile.rightBitLength}"
   IO.println s!"right_inverse_bits={profile.rightInverseBitLength}"
-  IO.println s!"passes={stabilized.passes}"
-  IO.println s!"injections={stabilized.injections}"
+  IO.println s!"passes={run.controlTrace.passes}"
+  IO.println s!"injections={run.controlTrace.injections}"
   IO.println s!"bit_cost={cost}"
   IO.println s!"bit_bound={bound}"
+  IO.println s!"output_encoding_bits={outputEncodingBits}"
   IO.println s!"diagonal={diagonal}"
   IO.println s!"valid={valid}"
   return valid

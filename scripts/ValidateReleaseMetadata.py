@@ -127,6 +127,7 @@ def validate(version: str, require_release_materials: bool) -> None:
             "normalforms.module-profile/v1",
             "normalforms.bit-cost-benchmark/v1",
             "normalforms.kannan-bachem-benchmark/v1",
+            "normalforms.kannan-bachem-benchmark/v2",
             "normalforms.modular-hnf-benchmark/v1",
             "normalforms.lll-benchmark/v1",
         }:
@@ -217,6 +218,31 @@ def validate(version: str, require_release_materials: bool) -> None:
                 )
                 if not isinstance(observations, list) or len(observations) != 7:
                     fail(f"{path.relative_to(ROOT)} has invalid observations")
+        if schema == "normalforms.kannan-bachem-benchmark/v2":
+            if (
+                benchmark.get("profile")
+                != "research-kannan-bachem-v0.2.0-dev"
+                or benchmark.get("research_version") != "0.2.0-dev"
+            ):
+                fail(f"{path.relative_to(ROOT)} has the wrong v2 profile")
+            cases = benchmark.get("cases")
+            if not isinstance(cases, list) or len(cases) != 3:
+                fail(f"{path.relative_to(ROOT)} has the wrong v2 corpus")
+            for case in cases:
+                if (
+                    not isinstance(case, dict)
+                    or case.get("valid") is not True
+                    or case.get("bit_cost", 1) > case.get("bit_bound", 0)
+                ):
+                    fail(f"{path.relative_to(ROOT)} has an invalid v2 case")
+            source = benchmark.get("source")
+            if (
+                not isinstance(source, dict)
+                or source.get("working_tree_clean") is not True
+                or not isinstance(source.get("profile_source_sha256"), str)
+                or not isinstance(source.get("profile_source_file_count"), int)
+            ):
+                fail(f"{path.relative_to(ROOT)} has invalid v2 source identity")
         if schema == "normalforms.modular-hnf-benchmark/v1":
             if benchmark.get("profile") != "research-modular-hnf-v0.1.0":
                 fail(f"{path.relative_to(ROOT)} has the wrong research profile")
@@ -338,9 +364,9 @@ def validate(version: str, require_release_materials: bool) -> None:
         fail("bit-cost benchmark CSV has the wrong shape")
 
     kannan_version = read("artifact/kannan-bachem/VERSION").strip()
-    if kannan_version != "0.1.0":
+    if kannan_version != "0.2.0-dev":
         fail("Kannan--Bachem artifact version is inconsistent")
-    require_contains("docs/KANNAN_BACHEM_API.md", "Research version: 0.1.0")
+    require_contains("docs/KANNAN_BACHEM_API.md", "Research version: 0.2.0-dev")
     kannan_metadata = load_json(
         ROOT / "release/research-kannan-bachem-v0.1.0/zenodo.json"
     )
@@ -372,6 +398,24 @@ def validate(version: str, require_release_materials: bool) -> None:
         "end_to_end": 21,
     }:
         fail("Kannan--Bachem benchmark CSV has the wrong shape")
+    kannan_v2_json = (
+        ROOT
+        / "benchmarks/baselines/research-kannan-bachem-v0.2.0-dev.json"
+    )
+    kannan_v2_csv = (
+        ROOT
+        / "benchmarks/baselines/research-kannan-bachem-v0.2.0-dev.csv"
+    )
+    kannan_v2_checksum = (
+        ROOT
+        / "benchmarks/baselines/research-kannan-bachem-v0.2.0-dev.sha256"
+    )
+    if not (
+        kannan_v2_json.is_file()
+        and kannan_v2_csv.is_file()
+        and kannan_v2_checksum.is_file()
+    ):
+        fail("Kannan--Bachem v2 baseline or checksum is missing")
     if not (ROOT / "artifact/kannan-bachem/Dockerfile").is_file():
         fail("Kannan--Bachem artifact Dockerfile is missing")
 

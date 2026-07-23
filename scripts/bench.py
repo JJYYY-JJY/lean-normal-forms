@@ -166,6 +166,38 @@ def source_fingerprint() -> dict[str, object]:
     }
 
 
+KANNAN_BACHEM_SOURCE_MANIFEST = (
+    ROOT / "artifact" / "kannan-bachem" / "source-manifest.txt"
+)
+
+
+def profile_source_fingerprint(manifest: Path) -> dict[str, object]:
+    patterns = [
+        line.strip()
+        for line in manifest.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    files: set[Path] = set()
+    for pattern in patterns:
+        matches = [path for path in ROOT.glob(pattern) if path.is_file()]
+        if not matches:
+            raise RuntimeError(f"source-manifest pattern matched no files: {pattern}")
+        files.update(matches)
+    ordered = sorted(files, key=lambda path: path.relative_to(ROOT).as_posix())
+    digest = hashlib.sha256()
+    for path in ordered:
+        relative_bytes = path.relative_to(ROOT).as_posix().encode("utf-8")
+        content = path.read_bytes()
+        digest.update(len(relative_bytes).to_bytes(8, "big"))
+        digest.update(relative_bytes)
+        digest.update(len(content).to_bytes(8, "big"))
+        digest.update(content)
+    return {
+        "profile_source_sha256": digest.hexdigest(),
+        "profile_source_file_count": len(ordered),
+    }
+
+
 def source_commit() -> str:
     fingerprint = source_fingerprint()
     return str(fingerprint["git_revision"]) + (
@@ -319,12 +351,13 @@ def parse_kannan_bachem_cases(output: str) -> list[dict[str, object]]:
         "dimension",
         "input_bits",
         "determinant_bits",
-        "ring_additions",
-        "ring_multiplications",
+        "input_encoding_bits",
+        "additions",
+        "multiplications",
         "xgcd_calls",
         "normalizations",
-        "divmod_calls",
-        "ring_total",
+        "standalone_divmod_calls",
+        "arithmetic_operation_total",
         "result_bits",
         "left_bits",
         "left_inverse_bits",
@@ -340,6 +373,10 @@ def parse_kannan_bachem_cases(output: str) -> list[dict[str, object]]:
     for case in cases:
         if not required.issubset(case):
             raise RuntimeError(f"benchmark case lacks metrics: {case}")
+        if str(case["case"]).startswith("smith-") and (
+            "output_encoding_bits" not in case
+        ):
+            raise RuntimeError(f"Smith case lacks output encoding length: {case}")
         if int(case["bit_cost"]) > int(case["bit_bound"]):
             raise RuntimeError(f"modeled cost exceeds bound: {case}")
     return cases
@@ -431,6 +468,7 @@ class StructuredProfile:
     binary_name: str
     profile: str
     schema: str
+    research_version: str
     expected_cases: tuple[str, ...]
     stages: tuple[Stage, ...]
     parser: Callable[[str], list[dict[str, object]]]
@@ -441,8 +479,9 @@ class StructuredProfile:
 KANNAN_BACHEM = StructuredProfile(
     build_target="normalforms-kannan-bachem-benchmark",
     binary_name="normalforms-kannan-bachem-benchmark",
-    profile="research-kannan-bachem-v0.1.0",
-    schema="normalforms.kannan-bachem-benchmark/v1",
+    profile="research-kannan-bachem-v0.2.0-dev",
+    schema="normalforms.kannan-bachem-benchmark/v2",
+    research_version="0.2.0-dev",
     expected_cases=(
         "hnf-prepared-3x3",
         "smith-repeat-2x2",
@@ -490,8 +529,13 @@ KANNAN_BACHEM = StructuredProfile(
         "dimension",
         "input_bits",
         "determinant_bits",
-        "ring_total",
+        "input_encoding_bits",
+        "arithmetic_operation_total",
+        "additions",
+        "multiplications",
         "xgcd_calls",
+        "normalizations",
+        "standalone_divmod_calls",
         "passes",
         "injections",
         "result_bits",
@@ -501,11 +545,14 @@ KANNAN_BACHEM = StructuredProfile(
         "right_inverse_bits",
         "bit_cost",
         "bit_bound",
+        "output_encoding_bits",
     ),
     trust_boundary=(
         "Native time and RSS are observational regression evidence. "
-        "Kernel-checked theorems establish normal-form correctness, operation "
-        "bounds, coefficient bounds, and modeled bit cost."
+        "Kernel-checked theorems establish normal-form correctness, concrete "
+        "encoding-length bounds, and the leaf-trace binary arithmetic cost. "
+        "Decoding, serialization, storage, traversal, allocation, and native "
+        "runtime costs are excluded."
     ),
 )
 
@@ -515,6 +562,7 @@ MODULAR_HNF = StructuredProfile(
     binary_name="normalforms-modular-hnf-benchmark",
     profile="research-modular-hnf-v0.1.0",
     schema="normalforms.modular-hnf-benchmark/v1",
+    research_version="0.1.0",
     expected_cases=("scalar-1x1", "tall-2x1", "square-2x2"),
     stages=(
         Stage(
@@ -578,6 +626,7 @@ LLL = StructuredProfile(
     binary_name="normalforms-lll-smoke",
     profile="research-lll-v0.1.0",
     schema="normalforms.lll-benchmark/v1",
+    research_version="0.1.0",
     expected_cases=(
         "gauss-2x2",
         "dense-3x3",
@@ -711,15 +760,18 @@ def run_structured_profile(
                 }
             )
 
+    source = source_fingerprint()
+    if profile.profile == KANNAN_BACHEM.profile:
+        source.update(profile_source_fingerprint(KANNAN_BACHEM_SOURCE_MANIFEST))
     report: dict[str, object] = {
         "schema": profile.schema,
         "profile": profile.profile,
-        "research_version": "0.1.0",
+        "research_version": profile.research_version,
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "policy": policy(arguments.warmups, arguments.measurements),
         "cases": fixed_cases,
         "hardware": hardware_fingerprint(),
-        "source": source_fingerprint(),
+        "source": source,
         "binary_sha256": sha256(binary),
         "stages": stages,
         "trust_boundary": profile.trust_boundary,

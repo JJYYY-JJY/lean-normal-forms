@@ -104,7 +104,7 @@ theorem liftLowerCertificate_transformBitLength_le {n : Nat}
       · exact liftBound lower.V lowerV
       · exact liftBound lower.V_cert.inverse lowerVInv
 
-def snfCertificate {n : Nat} {A : Matrix (Fin n) (Fin n) Int}
+@[expose] def snfCertificate {n : Nat} {A : Matrix (Fin n) (Fin n) Int}
     (result : SNFResultFin A) : TwoSidedCertificate A :=
   { U := result.U
     U_cert := result.U_cert
@@ -113,11 +113,11 @@ def snfCertificate {n : Nat} {A : Matrix (Fin n) (Fin n) Int}
     V_cert := result.V_cert
     equation := result.equation }
 
-def smithTransformBitLength {n : Nat}
+@[expose] def smithTransformBitLength {n : Nat}
     {A : Matrix (Fin n) (Fin n) Int} (result : SNFResultFin A) : Nat :=
   certificateTransformBitLength (snfCertificate result)
 
-def stabilizationTransformWorkBound (dimension workBits : Nat) : Nat :=
+@[expose] def stabilizationTransformWorkBound (dimension workBits : Nat) : Nat :=
   (3 * workBits + 2) *
     stabilizationCompositionBitLength (dimension - 1) workBits
 
@@ -180,14 +180,14 @@ theorem stabilize_transformBitLength_le_work {n workBits : Nat}
       apply Nat.mul_le_mul_right
       omega
 
-def smithTransformWorkBound : Nat → Nat → Nat
+@[expose] def smithTransformWorkBound : Nat → Nat → Nat
   | 0, _workBits => 0
   | dimension + 1, workBits =>
       Nat.size (dimension + 1) +
         stabilizationTransformWorkBound (dimension + 1) workBits +
         max 1 (smithTransformWorkBound dimension workBits)
 
-def smithMatrixWorkBound (_dimension workBits : Nat) : Nat := workBits
+@[expose] def smithMatrixWorkBound (_dimension workBits : Nat) : Nat := workBits
 
 theorem smith_transformBitLength_le_work {n workBits : Nat}
     (A : Matrix (Fin n) (Fin n) Int) (hdet : A.det ≠ 0)
@@ -244,10 +244,10 @@ theorem smith_transformBitLength_le_work {n workBits : Nat}
           (Nat.add_le_add_left stabilizedBound _)
           liftedBound
 
-def smithCoefficientWorkBitLength (dimension inputBits : Nat) : Nat :=
+@[expose] def smithCoefficientWorkBitLength (dimension inputBits : Nat) : Nat :=
   max inputBits (determinantBitLengthBound dimension inputBits)
 
-def smithCertificatePolynomialBitLengthBound
+@[expose] def smithCertificatePolynomialBitLengthBound
     (dimension inputBits : Nat) : Nat :=
   smithTransformWorkBound dimension
     (smithCoefficientWorkBitLength dimension inputBits)
@@ -328,7 +328,7 @@ structure SmithCoefficientProfile {n : Nat}
   rightBitLength : Nat
   rightInverseBitLength : Nat
 
-def smithCoefficientProfile {n : Nat}
+@[expose] def smithCoefficientProfile {n : Nat}
     {A : Matrix (Fin n) (Fin n) Int} (result : SNFResultFin A) :
     SmithCoefficientProfile result :=
   { resultBitLength := matrixBitLength result.S

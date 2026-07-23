@@ -66,4 +66,14 @@ public structure PrincipalRun {n : Nat}
   validArithmeticEvents :
     arithmeticEvents.Forall (PrincipalArithmeticEvent.Valid n)
 
+/--
+Control-only principal schedule used by value-producing executions.  It
+contains no candidate matrix or multiplier value.
+-/
+public structure PrincipalSchedule (n : Nat) where
+  steps : RowTrace Int n
+  arithmeticEvents : List PrincipalArithmeticEvent
+  validArithmeticEvents :
+    arithmeticEvents.Forall (PrincipalArithmeticEvent.Valid n)
+
 end NormalForms.Research.KannanBachem.Hermite

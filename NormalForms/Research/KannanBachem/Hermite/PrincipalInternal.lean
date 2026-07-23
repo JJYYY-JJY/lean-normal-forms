@@ -500,6 +500,18 @@ def compute {n : Nat}
     (A : _root_.Matrix (Fin n) (Fin n) Int) : State A :=
   stageLoop n le_rfl (State.refl A)
 
+/--
+Expose only the primitive control schedule and scalar operands.  Matrix values
+remain the responsibility of the value-producing execution layer.
+-/
+public def _root_.NormalForms.Research.KannanBachem.Hermite.principalSchedule
+    {n : Nat} (A : _root_.Matrix (Fin n) (Fin n) Int) :
+    PrincipalSchedule n :=
+  let final := compute A
+  { steps := final.transform.steps
+    arithmeticEvents := final.arithmeticEvents
+    validArithmeticEvents := final.validArithmeticEvents }
+
 /-- Execute the transposed principal-minor schedule on a square matrix. -/
 public def _root_.NormalForms.Research.KannanBachem.Hermite.principalRun
     {n : Nat} (A : _root_.Matrix (Fin n) (Fin n) Int) : PrincipalRun A := by

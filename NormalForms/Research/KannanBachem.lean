@@ -29,6 +29,7 @@ public import NormalForms.Research.KannanBachem.Hermite.DivisionFreeDeterminantC
 public import NormalForms.Research.KannanBachem.Hermite.DivisionFreeDeterminantCost
 public import NormalForms.Research.KannanBachem.Hermite.DeterminantScan
 public import NormalForms.Research.KannanBachem.Smith.BitComplexity
+public import NormalForms.Research.KannanBachem.Bounds
 
 /-!
 # Kannan--Bachem Research Facade

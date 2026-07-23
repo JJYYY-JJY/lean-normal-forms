@@ -1,0 +1,19 @@
+# Kannan--Bachem 0.2.0-dev profile source identity.
+NormalForms/Research/BitCost/**
+NormalForms/Research/KannanBachem/**
+NormalForms/Research/KannanBachem.lean
+NormalForms/Tests/Research/KannanBachem/**
+NormalForms/Benchmarks/KannanBachem.lean
+lakefile.toml
+lake-manifest.json
+lean-toolchain
+scripts/bench.py
+scripts/verify.sh
+scripts/VerifyCode.py
+scripts/ValidateReleaseMetadata.py
+scripts/KannanBachemAxiomAudit.lean
+artifact/kannan-bachem/Dockerfile
+artifact/kannan-bachem/VERSION
+artifact/kannan-bachem/README.md
+artifact/kannan-bachem/source-manifest.txt
+docs/KANNAN_BACHEM_API.md

@@ -613,4 +613,284 @@ example {result : NormalForms.Matrix.Smith.SNFResultFin smithInjectionInput}
       (NormalForms.Matrix.Smith.smithNormalFormFin smithInjectionInput).S :=
   smith?_eq_reference smithInjectionInput (by decide) success
 
+section InstrumentedExecution
+
+open NormalForms.Research.BitCost
+open NormalForms.Research.KannanBachem
+open NormalForms.Matrix.Certificates
+
+private def zeroSM : SignMagnitude := SignMagnitude.ofInt 0
+private def sixSM : SignMagnitude := SignMagnitude.ofInt 6
+private def negTwelveSM : SignMagnitude := SignMagnitude.ofInt (-12)
+
+#guard (magnitudeCompareWithCost zeroSM sixSM).value = .lt
+#guard (magnitudeCompareWithCost sixSM zeroSM).value = .gt
+#guard (magnitudeCompareWithCost sixSM sixSM).value = .eq
+#guard
+  (magnitudeCompareWithCost (SignMagnitude.ofInt (-6)) sixSM).value = .eq
+#guard
+  (magnitudeCompareWithCost (SignMagnitude.ofInt 3)
+    (SignMagnitude.ofInt 16)).value = .lt
+#guard (magnitudeLeWithCost zeroSM sixSM).value
+
+#guard
+  (exactDivWithCost negTwelveSM (SignMagnitude.ofInt 3)
+    (by decide) (by decide)).value.value = -4
+#guard
+  (exactDivWithCost (SignMagnitude.ofInt 12) (SignMagnitude.ofInt (-3))
+    (by decide) (by decide)).value.value = -4
+
+#guard (boundedBezoutBlockWithCost zeroSM zeroSM).value.gcd.value = 0
+#guard (boundedBezoutBlockWithCost zeroSM sixSM).value.gcd.value = 6
+#guard (boundedBezoutBlockWithCost sixSM zeroSM).value.gcd.value = 6
+#guard
+  (boundedBezoutBlockWithCost (SignMagnitude.ofInt 6)
+    (SignMagnitude.ofInt 15)).value.gcd.value = 3
+
+example :
+    let block :=
+      (boundedBezoutBlockWithCost (SignMagnitude.ofInt 6)
+        (SignMagnitude.ofInt 15)).value
+    block.inverse * block.forward = 1 ∧ block.forward * block.inverse = 1 :=
+  boundedBezoutBlockWithCost_forward_inverse _ _
+
+private def searchLocation : ArithmeticChargeLocation :=
+  ArithmeticChargeLocation.scalar
+
+#guard
+  (dvdExecution searchLocation zeroSM sixSM).charges.length = 2
+#guard
+  traceStandaloneDivModEvents
+    (dvdExecution searchLocation zeroSM sixSM).charges = []
+#guard
+  (dvdExecution searchLocation (SignMagnitude.ofInt 3)
+    (SignMagnitude.ofInt 12)).charges.length = 3
+#guard
+  traceStandaloneDivModEvents
+    (dvdExecution searchLocation (SignMagnitude.ofInt 3)
+      (SignMagnitude.ofInt 12)).charges = [.smithSearch]
+
+private def bezoutLeafExecution : ArithmeticLeafExecution :=
+  principalEventChargeExecution 2
+    (.xgcd 0 1 6 15) (by
+      exact ⟨by omega, by omega⟩)
+
+#guard bezoutLeafExecution.charges.length = 4
+#guard
+  traceStandaloneDivModEvents bezoutLeafExecution.charges =
+    [.bezoutLeftExact, .bezoutRightExact]
+#guard
+  (traceOperationCount bezoutLeafExecution.charges).xgcdCalls = 1
+#guard
+  (principalEventChargeExecution 2 (.xgcd 0 1 0 6) (by
+    exact ⟨by omega, by omega⟩)).charges.length = 4
+#guard
+  (principalEventChargeExecution 2 (.xgcd 0 1 6 0) (by
+    exact ⟨by omega, by omega⟩)).charges.length = 4
+#guard composeExecutionDenseProductCount = 4
+
+#guard decodeFramedPrefix [true, false] = none
+#guard decodeFramedPrefix [false, false] = none
+#guard decodeIntegerAtomPrefix (framePayload [true]) = none
+#guard
+  decodePackedMatrixPrefix
+    (framePayload (framePayload (encodeNat 1))) = none
+
+private def emptyPackedMatrix : PackedMatrix :=
+  ⟨0, (0 : Matrix (Fin 0) (Fin 0) Int)⟩
+
+#guard
+  decodePackedSmithOutputPrefix
+    (framePayload (encodeMatrix emptyPackedMatrix)) = none
+
+example (suffix : List Bool) :
+    decodePackedMatrixPrefix
+        (encodeMatrix emptyPackedMatrix ++ suffix) =
+      some (emptyPackedMatrix, suffix) :=
+  decodePackedMatrixPrefix_encode_append emptyPackedMatrix suffix
+
+example (suffix : List Bool) :
+    decodePackedSmithOutputPrefix
+        (encodeSmithOutput
+          (smithExecution smithInjectionInput (by decide)).value ++ suffix) =
+      some
+        ((smithExecution smithInjectionInput (by decide)).value.toPackedOutput,
+          suffix) :=
+  decodePackedSmithOutputPrefix_encode_append _ suffix
+
+private def codecShear (coefficient : Int) :
+    Matrix (Fin 2) (Fin 2) Int :=
+  !![1, coefficient; 0, 1]
+
+private def codecShearCertificate (coefficient : Int) :
+    MatrixInverseCertificate (codecShear coefficient) :=
+  { inverse := codecShear (-coefficient)
+    left_inv := by
+      ext i j
+      fin_cases i <;> fin_cases j <;>
+        simp [codecShear, Matrix.mul_apply]
+    right_inv := by
+      ext i j
+      fin_cases i <;> fin_cases j <;>
+        simp [codecShear, Matrix.mul_apply] }
+
+private theorem identityTwo_isSmith :
+    NormalForms.Matrix.Smith.IsSmithNormalFormFin
+      (1 : Matrix (Fin 2) (Fin 2) Int) := by
+  apply NormalForms.Matrix.Smith.IsSmithNormalFormFin.pivot
+  · simp
+  · simp
+  · intro column
+    fin_cases column
+    simp
+  · intro row
+    fin_cases row
+    simp
+  · have lowerOne :
+        lowerRight (1 : Matrix (Fin 2) (Fin 2) Int) =
+          (1 : Matrix (Fin 1) (Fin 1) Int) := by
+      ext i j
+      fin_cases i
+      fin_cases j
+      simp [lowerRight]
+    rw [lowerOne]
+    apply NormalForms.Matrix.Smith.IsSmithNormalFormFin.pivot
+    · simp
+    · simp
+    · intro column
+      exact Fin.elim0 column
+    · intro row
+      exact Fin.elim0 row
+    · exact NormalForms.Matrix.Smith.IsSmithNormalFormFin.emptyRows _
+    · intro row
+      exact Fin.elim0 row
+  · intro row column
+    fin_cases row
+    fin_cases column
+    simp
+
+private def identityShearResult (coefficient : Int) :
+    NormalForms.Matrix.Smith.SNFResultFin
+      (1 : Matrix (Fin 2) (Fin 2) Int) :=
+  { U := codecShear coefficient
+    U_cert := codecShearCertificate coefficient
+    S := 1
+    V := codecShear (-coefficient)
+    V_cert := codecShearCertificate (-coefficient)
+    equation := by
+      rw [Matrix.mul_one]
+      exact (codecShearCertificate coefficient).right_inv
+    isSmith := identityTwo_isSmith }
+
+#guard
+  smithOutputEncodingLength (identityShearResult 1) ≠
+    smithOutputEncodingLength (identityShearResult 1024)
+
+private def searchPrefixInput : Matrix (Fin 3) (Fin 3) Int :=
+  !![2, 0, 0;
+     4, 1, 0;
+     3, 0, 1]
+
+private def searchAllDivisibleInput : Matrix (Fin 3) (Fin 3) Int :=
+  !![2, 0, 0;
+     4, 1, 0;
+     6, 0, 1]
+
+#guard (firstUndivisibleBelowWithCost searchPrefixInput).value = some 1
+#guard
+  traceRoleEventCount .smithSearch
+    (firstUndivisibleBelowWithCost searchPrefixInput).charges = 2
+#guard (firstUndivisibleBelowWithCost searchAllDivisibleInput).value = none
+#guard
+  traceRoleEventCount .smithSearch
+    (firstUndivisibleBelowWithCost searchAllDivisibleInput).charges = 2
+
+#guard
+  let run := principalExecution principalInput
+  traceRoleEventCount .hnfReduceAbove run.charges = 4 ∧
+    traceRoleEventCount .bezoutLeftExact run.charges =
+      (traceOperationCount run.charges).xgcdCalls ∧
+    traceRoleEventCount .bezoutRightExact run.charges =
+      (traceOperationCount run.charges).xgcdCalls
+
+example :
+    let run := principalExecution principalInput
+    run.U * principalInput = run.B ∧
+      run.Uinv * run.B = principalInput ∧
+      run.Uinv * run.U = 1 ∧ run.U * run.Uinv = 1 := by
+  let run := principalExecution principalInput
+  refine ⟨run.equation, ?_, run.inverse_identities⟩
+  rw [← run.equation, ← Matrix.mul_assoc, run.inverse_identities.1,
+    one_mul]
+
+example :
+    (smithExecution smithInjectionInput (by decide)).value =
+      smith smithInjectionInput (by decide) :=
+  smithExecution_value smithInjectionInput (by decide)
+
+example :
+    ArithmeticChargeListWellFormed
+      (smithExecution smithInjectionInput (by decide)).charges :=
+  smithExecution_trace_wellFormed smithInjectionInput (by decide)
+
+example :
+    NormalForms.Research.KannanBachem.smithOperationCount
+        smithInjectionInput (by decide) =
+      traceOperationCount
+        (smithExecution smithInjectionInput (by decide)).charges :=
+  smithOperationCount_eq_traceOperationCount
+    smithInjectionInput (by decide)
+
+example :
+    traceBitCost (smithExecution smithInjectionInput (by decide)).charges ≤
+      smithExecutionPolynomialBitOperationBound 2
+        (matrixBitLength smithInjectionInput) :=
+  smithExecution_cost_le_polynomial smithInjectionInput (by decide)
+
+example :
+    (determinantExecution birdInputThree).value.value =
+      birdInputThree.det :=
+  (determinantExecution birdInputThree).value_eq
+
+example :
+    ArithmeticChargeListWellFormed
+      (determinantExecution birdInputThree).charges :=
+  (determinantExecution birdInputThree).trace_wellFormed
+
+example :
+    traceBitCost (determinantExecution birdInputThree).charges ≤
+      determinantExecutionBitOperationBound 3
+        (matrixBitLength birdInputThree) :=
+  determinantExecution_cost_le birdInputThree
+
+example :
+    (preparationExecution principalZeroLeading (by decide)).value =
+      Principal.prepare principalZeroLeading (by decide) :=
+  preparationExecution_value principalZeroLeading (by decide)
+
+example :
+    traceBitCost
+        (preparationExecution principalZeroLeading (by decide)).charges ≤
+      preparationExecutionBitOperationBound 2
+        (matrixBitLength principalZeroLeading) :=
+  preparationExecution_cost_le principalZeroLeading (by decide)
+
+example :
+    (smithWithCost smithInjectionInput (by decide)).cost ≤
+      smithCostPolynomialCoefficient *
+        (matrixEncodingLength ⟨2, smithInjectionInput⟩ + 1) ^
+          smithCostPolynomialDegree :=
+  smithCost_le_encodingLengthPolynomial smithInjectionInput (by decide)
+
+example :
+    smithOutputEncodingLength
+        (smithExecution smithInjectionInput (by decide)).value ≤
+      smithOutputPolynomialCoefficient *
+        (matrixEncodingLength ⟨2, smithInjectionInput⟩ + 1) ^
+          smithOutputPolynomialDegree :=
+  smithOutputEncodingLength_le_encodingLengthPolynomial
+    smithInjectionInput (by decide)
+
+end InstrumentedExecution
+
 end NormalForms.Tests.Research.KannanBachem

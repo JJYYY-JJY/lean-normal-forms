@@ -198,6 +198,22 @@ def arithmeticEvents {n : Nat}
   arithmeticLoop n le_rfl (Transform.refl A) ++
     [.normalize 0 (reduced.B 0 0)]
 
+theorem arithmeticLoop_valid {n : Nat}
+    {A : _root_.Matrix (Fin (n + 1)) (Fin (n + 1)) Int} :
+    (k : Nat) → (hk : k ≤ n) → (state : Transform A) →
+      (arithmeticLoop k hk state).Forall
+        (PrincipalArithmeticEvent.Valid (n + 1))
+  | 0, _hk, _state => by simp [arithmeticLoop]
+  | k + 1, hk, state => by
+      rw [arithmeticLoop, List.forall_append]
+      constructor
+      · exact arithmeticLoop_valid k (by omega) state
+      · rw [List.forall_cons]
+        constructor
+        · change 0 < k + 1 ∧ k + 1 < n + 1
+          omega
+        · simp
+
 theorem arithmeticLoop_length {n : Nat}
     {A : _root_.Matrix (Fin (n + 1)) (Fin (n + 1)) Int} :
     (k : Nat) → (hk : k ≤ n) → (state : Transform A) →
@@ -245,6 +261,22 @@ public def _root_.NormalForms.Research.KannanBachem.Smith.boundedColumnArithmeti
     List PrincipalArithmeticEvent :=
   arithmeticEvents A
 
+public theorem
+    _root_.NormalForms.Research.KannanBachem.Smith.boundedColumnArithmeticEvents_valid
+    {n : Nat}
+    (A : _root_.Matrix (Fin (n + 1)) (Fin (n + 1)) Int) :
+    (boundedColumnArithmeticEvents A).Forall
+      (PrincipalArithmeticEvent.Valid (n + 1)) := by
+  let reduced := loop n le_rfl (Transform.refl A)
+  rw [boundedColumnArithmeticEvents, arithmeticEvents, List.forall_append]
+  constructor
+  · exact arithmeticLoop_valid n le_rfl (Transform.refl A)
+  · rw [List.forall_cons]
+    constructor
+    · change (0 : Nat) < n + 1
+      omega
+    · simp
+
 @[simp] public theorem _root_.NormalForms.Research.KannanBachem.Smith.boundedColumnTrace_length
     {n : Nat}
     (A : _root_.Matrix (Fin (n + 1)) (Fin (n + 1)) Int) :
@@ -273,6 +305,22 @@ public def _root_.NormalForms.Research.KannanBachem.Smith.boundedColumnHermiteNo
       simpa [firstColumn, _root_.Matrix.mul_apply] using
         congrFun (congrFun result.equation row) 0
     isHermite := compute_firstColumn_isHermite A }
+
+public theorem
+    _root_.NormalForms.Research.KannanBachem.Smith.boundedColumnTrace_accumulator_eq
+    {n : Nat}
+    (A : _root_.Matrix (Fin (n + 1)) (Fin (n + 1)) Int) :
+    (boundedColumnTrace A).accumulator =
+      (boundedColumnHermiteNormalForm A).U :=
+  (compute A).accumulator_eq
+
+public theorem
+    _root_.NormalForms.Research.KannanBachem.Smith.boundedColumnTrace_inverseAccumulator_eq
+    {n : Nat}
+    (A : _root_.Matrix (Fin (n + 1)) (Fin (n + 1)) Int) :
+    (boundedColumnTrace A).inverseAccumulator =
+      (boundedColumnHermiteNormalForm A).U_cert.inverse :=
+  (compute A).inverseAccumulator_eq
 
 end BoundedColumn
 

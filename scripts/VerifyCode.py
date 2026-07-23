@@ -9,6 +9,7 @@ import csv
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 import sys
 import tomllib
 from typing import Any
@@ -25,6 +26,8 @@ EXPECTED_JSON_BASELINES = {
     "research-bit-cost-v0.1.0.json": "normalforms.bit-cost-benchmark/v1",
     "research-kannan-bachem-v0.1.0.json":
         "normalforms.kannan-bachem-benchmark/v1",
+    "research-kannan-bachem-v0.2.0-dev.json":
+        "normalforms.kannan-bachem-benchmark/v2",
     "research-lll-v0.1.0.json": "normalforms.lll-benchmark/v1",
     "research-modular-hnf-v0.1.0.json":
         "normalforms.modular-hnf-benchmark/v1",
@@ -38,6 +41,7 @@ EXPECTED_JSON_BASELINES = {
 EXPECTED_CSV_BASELINES = {
     "research-bit-cost-v0.1.0.csv": 20,
     "research-kannan-bachem-v0.1.0.csv": 42,
+    "research-kannan-bachem-v0.2.0-dev.csv": 42,
     "research-lll-v0.1.0.csv": 56,
     "research-modular-hnf-v0.1.0.csv": 42,
     "v0.2.2-native-polynomial.csv": 7,
@@ -82,6 +86,17 @@ EXPECTED_BASELINE_SHA256 = {
     "v1.1.0-rational-canonical.csv":
         "fd67ed9279f50c748cb5f8f4a60fa7031cced1e62355ced3cf80f5ec7a34abf0",
 }
+
+EXTERNAL_CHECKSUM_BASELINES = {
+    "research-kannan-bachem-v0.2.0-dev.json",
+    "research-kannan-bachem-v0.2.0-dev.csv",
+}
+KANNAN_V2_CHECKSUM = (
+    BASELINES / "research-kannan-bachem-v0.2.0-dev.sha256"
+)
+KANNAN_SOURCE_MANIFEST = (
+    ROOT / "artifact/kannan-bachem/source-manifest.txt"
+)
 
 
 class ValidationError(RuntimeError):
@@ -190,7 +205,7 @@ def validate_bit_cost(path: Path, report: dict[str, Any]) -> None:
     )
 
 
-def validate_kannan_bachem(path: Path, report: dict[str, Any]) -> None:
+def validate_kannan_bachem_v1(path: Path, report: dict[str, Any]) -> None:
     require_equal(
         report.get("profile"),
         "research-kannan-bachem-v0.1.0",
@@ -210,6 +225,111 @@ def validate_kannan_bachem(path: Path, report: dict[str, Any]) -> None:
         path,
         ["prepared_hnf", "smith_repeat", "smith_injection", "end_to_end"],
     )
+
+
+def profile_source_fingerprint(manifest: Path) -> tuple[str, int]:
+    patterns = [
+        line.strip()
+        for line in manifest.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    files: set[Path] = set()
+    for pattern in patterns:
+        matches = [path for path in ROOT.glob(pattern) if path.is_file()]
+        if not matches:
+            fail(f"source-manifest pattern matched no files: {pattern}")
+        files.update(matches)
+    ordered = sorted(files, key=lambda path: path.relative_to(ROOT).as_posix())
+    digest = hashlib.sha256()
+    for file in ordered:
+        relative = file.relative_to(ROOT).as_posix().encode("utf-8")
+        content = file.read_bytes()
+        digest.update(len(relative).to_bytes(8, "big"))
+        digest.update(relative)
+        digest.update(len(content).to_bytes(8, "big"))
+        digest.update(content)
+    return digest.hexdigest(), len(ordered)
+
+
+def validate_kannan_bachem_v2(path: Path, report: dict[str, Any]) -> None:
+    require_equal(
+        report.get("profile"),
+        "research-kannan-bachem-v0.2.0-dev",
+        f"{path} profile",
+    )
+    require_equal(report.get("research_version"), "0.2.0-dev", f"{path} version")
+    validate_policy(report, path)
+    cases = validate_research_cases(
+        report,
+        path,
+        ["hnf-prepared-3x3", "smith-repeat-2x2", "smith-injection-2x2"],
+    )
+    for case in cases:
+        if case.get("bit_cost", 1) > case.get("bit_bound", 0):
+            fail(f"{path}: modeled bit cost exceeds its theorem bound")
+        total = sum(
+            int(case.get(field, -1))
+            for field in (
+                "additions",
+                "multiplications",
+                "xgcd_calls",
+                "normalizations",
+                "standalone_divmod_calls",
+            )
+        )
+        require_equal(
+            case.get("arithmetic_operation_total"),
+            total,
+            f"{path} {case.get('case')} macro-operation total",
+        )
+        if str(case.get("case", "")).startswith("smith-"):
+            if int(case.get("output_encoding_bits", 0)) <= 0:
+                fail(f"{path}: Smith output encoding length is missing")
+    validate_stages(
+        report,
+        path,
+        ["prepared_hnf", "smith_repeat", "smith_injection", "end_to_end"],
+    )
+    source = report.get("source")
+    if not isinstance(source, dict):
+        fail(f"{path}: source must be an object")
+    require_equal(source.get("working_tree_clean"), True, f"{path} source clean")
+    require_equal(
+        source.get("tracked_patch_sha256"),
+        hashlib.sha256(b"\n").hexdigest(),
+        f"{path} tracked patch",
+    )
+    digest, file_count = profile_source_fingerprint(KANNAN_SOURCE_MANIFEST)
+    require_equal(
+        source.get("profile_source_sha256"),
+        digest,
+        f"{path} profile source SHA-256",
+    )
+    require_equal(
+        source.get("profile_source_file_count"),
+        file_count,
+        f"{path} profile source file count",
+    )
+    revision = source.get("git_revision")
+    if not isinstance(revision, str) or len(revision) != 40:
+        fail(f"{path}: source revision is invalid")
+    if (ROOT / ".git").exists():
+        reachable = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", revision, "HEAD"],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        if reachable.returncode != 0:
+            fail(f"{path}: recorded source revision is not an ancestor of HEAD")
+    binary_digest = report.get("binary_sha256")
+    if (
+        not isinstance(binary_digest, str)
+        or len(binary_digest) != 64
+        or any(character not in "0123456789abcdef" for character in binary_digest)
+    ):
+        fail(f"{path}: binary fingerprint is invalid")
 
 
 def validate_modular_hnf(path: Path, report: dict[str, Any]) -> None:
@@ -384,7 +504,7 @@ def validate_baselines() -> None:
     require_equal(observed_json, set(EXPECTED_JSON_BASELINES), "JSON baseline set")
     require_equal(observed_csv, set(EXPECTED_CSV_BASELINES), "CSV baseline set")
     require_equal(
-        set(EXPECTED_BASELINE_SHA256),
+        set(EXPECTED_BASELINE_SHA256) | EXTERNAL_CHECKSUM_BASELINES,
         observed_json | observed_csv,
         "fingerprinted baseline set",
     )
@@ -392,6 +512,21 @@ def validate_baselines() -> None:
         path = BASELINES / filename
         observed_digest = hashlib.sha256(path.read_bytes()).hexdigest()
         require_equal(observed_digest, expected_digest, f"{path} SHA-256")
+    checksum_lines = KANNAN_V2_CHECKSUM.read_text(encoding="utf-8").splitlines()
+    checksums: dict[str, str] = {}
+    for line in checksum_lines:
+        digest, separator, filename = line.partition("  ")
+        if not separator:
+            fail(f"{KANNAN_V2_CHECKSUM}: malformed checksum line")
+        checksums[filename] = digest
+    require_equal(
+        set(checksums), EXTERNAL_CHECKSUM_BASELINES, "Kannan v2 checksum files"
+    )
+    for filename, expected_digest in checksums.items():
+        observed_digest = hashlib.sha256((BASELINES / filename).read_bytes()).hexdigest()
+        require_equal(
+            observed_digest, expected_digest, f"{BASELINES / filename} SHA-256"
+        )
 
     reports: dict[str, dict[str, Any]] = {}
     for filename, schema in EXPECTED_JSON_BASELINES.items():
@@ -404,9 +539,13 @@ def validate_baselines() -> None:
         BASELINES / "research-bit-cost-v0.1.0.json",
         reports["research-bit-cost-v0.1.0.json"],
     )
-    validate_kannan_bachem(
+    validate_kannan_bachem_v1(
         BASELINES / "research-kannan-bachem-v0.1.0.json",
         reports["research-kannan-bachem-v0.1.0.json"],
+    )
+    validate_kannan_bachem_v2(
+        BASELINES / "research-kannan-bachem-v0.2.0-dev.json",
+        reports["research-kannan-bachem-v0.2.0-dev.json"],
     )
     validate_lll(
         BASELINES / "research-lll-v0.1.0.json",
@@ -449,6 +588,16 @@ def validate_baselines() -> None:
     require_stage_counts(
         BASELINES / "research-kannan-bachem-v0.1.0.csv",
         csv_rows["research-kannan-bachem-v0.1.0.csv"],
+        {
+            "prepared_hnf": 7,
+            "smith_repeat": 7,
+            "smith_injection": 7,
+            "end_to_end": 21,
+        },
+    )
+    require_stage_counts(
+        BASELINES / "research-kannan-bachem-v0.2.0-dev.csv",
+        csv_rows["research-kannan-bachem-v0.2.0-dev.csv"],
         {
             "prepared_hnf": 7,
             "smith_repeat": 7,
@@ -538,7 +687,7 @@ def validate_repository() -> None:
     require_contains("docs/RATIONAL_CANONICAL_API.md", "Version: 1.1.0")
     require_contains("docs/HOMOLOGY_API.md", "Version: 1.2.2")
     require_contains("docs/BIT_COST_API.md", "research API 0.1.0")
-    require_contains("docs/KANNAN_BACHEM_API.md", "Research version: 0.1.0")
+    require_contains("docs/KANNAN_BACHEM_API.md", "Research version: 0.2.0-dev")
     require_contains("docs/MODULAR_HNF_API.md", "Research version: 0.1.0")
     require_contains("docs/LLL_API.md", "Research version: 0.1.0")
     mathlib_revision = package_by_name.get("mathlib", {}).get("rev")
@@ -577,7 +726,7 @@ def validate_repository() -> None:
             f"{filename} certificate schema",
         )
 
-    for profile in ("bit-cost", "kannan-bachem", "modular-hnf", "lll"):
+    for profile in ("bit-cost", "modular-hnf", "lll"):
         require_equal(
             (ROOT / "artifact" / profile / "VERSION")
             .read_text(encoding="utf-8")
@@ -585,6 +734,13 @@ def validate_repository() -> None:
             "0.1.0",
             f"{profile} artifact version",
         )
+    require_equal(
+        (ROOT / "artifact/kannan-bachem/VERSION")
+        .read_text(encoding="utf-8")
+        .strip(),
+        "0.2.0-dev",
+        "kannan-bachem artifact version",
+    )
     if not (ROOT / "patches/mathlib/finite-matrix-presentation.patch").is_file():
         fail("standalone mathlib patch is missing")
 
@@ -677,7 +833,7 @@ AUDIT_SPECS: dict[
     "kannan-bachem": [
         (
             "normalforms.kannan-bachem-axiom-audit/v1",
-            263,
+            291,
             SEMANTIC_ALLOWLIST,
             SEMANTIC_OBSERVED,
         )
@@ -708,7 +864,7 @@ PUBLIC_API_COUNTS = {
         ("NormalForms/Tests/Research/BitCost/PublicApi.lean", 87),
     ],
     "kannan-bachem": [
-        ("NormalForms/Tests/Research/KannanBachem/PublicApi.lean", 572)
+        ("NormalForms/Tests/Research/KannanBachem/PublicApi.lean", 658)
     ],
     "modular-hnf": [
         ("NormalForms/Tests/Research/ModularHNF/PublicApi.lean", 157)
@@ -824,7 +980,7 @@ def validate_native(profile: str, path: Path | None) -> None:
     if profile in {"bit-cost", "kannan-bachem", "modular-hnf", "lll"}:
         baseline_name = {
             "bit-cost": "research-bit-cost-v0.1.0.json",
-            "kannan-bachem": "research-kannan-bachem-v0.1.0.json",
+            "kannan-bachem": "research-kannan-bachem-v0.2.0-dev.json",
             "modular-hnf": "research-modular-hnf-v0.1.0.json",
             "lll": "research-lll-v0.1.0.json",
         }[profile]

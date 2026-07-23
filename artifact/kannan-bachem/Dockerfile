@@ -11,6 +11,7 @@ RUN apt-get update \
         curl \
         git \
         python3 \
+        ripgrep \
         time \
         zstd \
     && rm -rf /var/lib/apt/lists/*
