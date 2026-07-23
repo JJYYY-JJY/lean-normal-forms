@@ -864,7 +864,7 @@ PUBLIC_API_COUNTS = {
         ("NormalForms/Tests/Research/BitCost/PublicApi.lean", 87),
     ],
     "kannan-bachem": [
-        ("NormalForms/Tests/Research/KannanBachem/PublicApi.lean", 658)
+        ("NormalForms/Tests/Research/KannanBachem/PublicApi.lean", 666)
     ],
     "modular-hnf": [
         ("NormalForms/Tests/Research/ModularHNF/PublicApi.lean", 157)
