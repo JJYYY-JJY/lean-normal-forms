@@ -86,7 +86,7 @@
       "xgcd_calls": 4
     }
   ],
-  "created_utc": "2026-07-23T21:20:08.506321+00:00",
+  "created_utc": "2026-07-23T21:56:41.199211+00:00",
   "hardware": {
     "cpu_model": "AMD Ryzen 7 9700X 8-Core Processor",
     "lean": "Lean (version 4.32.0, x86_64-unknown-linux-gnu, commit 8c9756b28d64dab099da31a4c09229a9e6a2ef35, Release)",
@@ -112,9 +112,9 @@
   "research_version": "0.2.0-dev",
   "schema": "normalforms.kannan-bachem-benchmark/v2",
   "source": {
-    "git_revision": "42eb9a776e0bfe111366d987f6e44fae1bb81d8f",
+    "git_revision": "393d62a1f13e4dc7c7a379b2c916543279b31339",
     "profile_source_file_count": 90,
-    "profile_source_sha256": "80eed868acece5687d33d936b51926386eff5224a8b06d07fcc20c980c7cf0a5",
+    "profile_source_sha256": "727149d3b917a7915ef7eed970f10c950d66f98632d3f7b8a8c2116dda973d2f",
     "tracked_patch_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
     "working_tree_clean": true
   },
@@ -128,62 +128,62 @@
       "observations": [
         {
           "iteration": 1,
-          "maximum_rss_kib": 72608,
+          "maximum_rss_kib": 72700,
           "system_seconds": 0.0,
-          "user_seconds": 7.1,
-          "wall_seconds": 7.1
-        },
-        {
-          "iteration": 2,
-          "maximum_rss_kib": 72564,
-          "system_seconds": 0.0,
-          "user_seconds": 7.02,
-          "wall_seconds": 7.03
-        },
-        {
-          "iteration": 3,
-          "maximum_rss_kib": 72884,
-          "system_seconds": 0.0,
-          "user_seconds": 7.06,
-          "wall_seconds": 7.06
-        },
-        {
-          "iteration": 4,
-          "maximum_rss_kib": 72616,
-          "system_seconds": 0.0,
-          "user_seconds": 7.06,
+          "user_seconds": 7.07,
           "wall_seconds": 7.07
         },
         {
-          "iteration": 5,
-          "maximum_rss_kib": 72804,
+          "iteration": 2,
+          "maximum_rss_kib": 72736,
           "system_seconds": 0.0,
-          "user_seconds": 7.02,
-          "wall_seconds": 7.02
+          "user_seconds": 7.13,
+          "wall_seconds": 7.13
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 72384,
+          "system_seconds": 0.0,
+          "user_seconds": 7.12,
+          "wall_seconds": 7.12
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72416,
+          "system_seconds": 0.0,
+          "user_seconds": 7.18,
+          "wall_seconds": 7.18
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72788,
+          "system_seconds": 0.0,
+          "user_seconds": 7.05,
+          "wall_seconds": 7.05
         },
         {
           "iteration": 6,
-          "maximum_rss_kib": 72852,
+          "maximum_rss_kib": 72920,
           "system_seconds": 0.0,
-          "user_seconds": 7.01,
-          "wall_seconds": 7.02
+          "user_seconds": 7.16,
+          "wall_seconds": 7.16
         },
         {
           "iteration": 7,
-          "maximum_rss_kib": 72916,
+          "maximum_rss_kib": 72876,
           "system_seconds": 0.0,
-          "user_seconds": 7.04,
-          "wall_seconds": 7.04
+          "user_seconds": 7.11,
+          "wall_seconds": 7.11
         }
       ],
       "summary": {
         "maximum_rss_kib": {
-          "iqr": 256.0,
-          "maximum": 72916.0,
-          "median": 72804.0,
-          "minimum": 72564.0,
-          "q1": 72612.0,
-          "q3": 72868.0
+          "iqr": 274.0,
+          "maximum": 72920.0,
+          "median": 72736.0,
+          "minimum": 72384.0,
+          "q1": 72558.0,
+          "q3": 72832.0
         },
         "system_seconds": {
           "iqr": 0.0,
@@ -194,20 +194,20 @@
           "q3": 0.0
         },
         "user_seconds": {
-          "iqr": 0.040000000000000036,
-          "maximum": 7.1,
-          "median": 7.04,
-          "minimum": 7.01,
-          "q1": 7.02,
-          "q3": 7.06
+          "iqr": 0.054999999999999716,
+          "maximum": 7.18,
+          "median": 7.12,
+          "minimum": 7.05,
+          "q1": 7.09,
+          "q3": 7.145
         },
         "wall_seconds": {
-          "iqr": 0.03999999999999915,
-          "maximum": 7.1,
-          "median": 7.04,
-          "minimum": 7.02,
-          "q1": 7.025,
-          "q3": 7.0649999999999995
+          "iqr": 0.054999999999999716,
+          "maximum": 7.18,
+          "median": 7.12,
+          "minimum": 7.05,
+          "q1": 7.09,
+          "q3": 7.145
         }
       }
     },
@@ -220,49 +220,49 @@
       "observations": [
         {
           "iteration": 1,
-          "maximum_rss_kib": 70672,
+          "maximum_rss_kib": 72784,
           "system_seconds": 0.0,
           "user_seconds": 0.03,
-          "wall_seconds": 0.03
+          "wall_seconds": 0.04
         },
         {
           "iteration": 2,
-          "maximum_rss_kib": 73356,
+          "maximum_rss_kib": 73428,
           "system_seconds": 0.0,
-          "user_seconds": 0.04,
+          "user_seconds": 0.03,
           "wall_seconds": 0.04
         },
         {
           "iteration": 3,
-          "maximum_rss_kib": 72384,
+          "maximum_rss_kib": 73064,
           "system_seconds": 0.0,
-          "user_seconds": 0.04,
+          "user_seconds": 0.03,
           "wall_seconds": 0.04
         },
         {
           "iteration": 4,
-          "maximum_rss_kib": 73080,
+          "maximum_rss_kib": 73072,
           "system_seconds": 0.0,
           "user_seconds": 0.03,
           "wall_seconds": 0.04
         },
         {
           "iteration": 5,
-          "maximum_rss_kib": 73152,
+          "maximum_rss_kib": 73468,
           "system_seconds": 0.0,
-          "user_seconds": 0.04,
+          "user_seconds": 0.03,
           "wall_seconds": 0.04
         },
         {
           "iteration": 6,
-          "maximum_rss_kib": 73192,
+          "maximum_rss_kib": 73092,
           "system_seconds": 0.0,
           "user_seconds": 0.03,
           "wall_seconds": 0.04
         },
         {
           "iteration": 7,
-          "maximum_rss_kib": 72840,
+          "maximum_rss_kib": 73268,
           "system_seconds": 0.0,
           "user_seconds": 0.03,
           "wall_seconds": 0.04
@@ -270,12 +270,12 @@
       ],
       "summary": {
         "maximum_rss_kib": {
-          "iqr": 560.0,
-          "maximum": 73356.0,
-          "median": 73080.0,
-          "minimum": 70672.0,
-          "q1": 72612.0,
-          "q3": 73172.0
+          "iqr": 280.0,
+          "maximum": 73468.0,
+          "median": 73092.0,
+          "minimum": 72784.0,
+          "q1": 73068.0,
+          "q3": 73348.0
         },
         "system_seconds": {
           "iqr": 0.0,
@@ -286,18 +286,18 @@
           "q3": 0.0
         },
         "user_seconds": {
-          "iqr": 0.010000000000000002,
-          "maximum": 0.04,
+          "iqr": 0.0,
+          "maximum": 0.03,
           "median": 0.03,
           "minimum": 0.03,
           "q1": 0.03,
-          "q3": 0.04
+          "q3": 0.03
         },
         "wall_seconds": {
           "iqr": 0.0,
           "maximum": 0.04,
           "median": 0.04,
-          "minimum": 0.03,
+          "minimum": 0.04,
           "q1": 0.04,
           "q3": 0.04
         }
@@ -312,86 +312,86 @@
       "observations": [
         {
           "iteration": 1,
-          "maximum_rss_kib": 73260,
+          "maximum_rss_kib": 72652,
           "system_seconds": 0.0,
-          "user_seconds": 20.97,
-          "wall_seconds": 20.98
+          "user_seconds": 20.82,
+          "wall_seconds": 20.83
         },
         {
           "iteration": 2,
-          "maximum_rss_kib": 72836,
-          "system_seconds": 0.01,
-          "user_seconds": 21.33,
-          "wall_seconds": 21.35
+          "maximum_rss_kib": 72664,
+          "system_seconds": 0.35,
+          "user_seconds": 20.73,
+          "wall_seconds": 21.08
         },
         {
           "iteration": 3,
-          "maximum_rss_kib": 72892,
+          "maximum_rss_kib": 73084,
           "system_seconds": 0.0,
-          "user_seconds": 21.19,
-          "wall_seconds": 21.2
+          "user_seconds": 21.01,
+          "wall_seconds": 21.01
         },
         {
           "iteration": 4,
-          "maximum_rss_kib": 73064,
-          "system_seconds": 0.01,
-          "user_seconds": 21.2,
-          "wall_seconds": 21.22
+          "maximum_rss_kib": 73320,
+          "system_seconds": 0.49,
+          "user_seconds": 20.59,
+          "wall_seconds": 21.08
         },
         {
           "iteration": 5,
-          "maximum_rss_kib": 72892,
+          "maximum_rss_kib": 73004,
           "system_seconds": 0.0,
-          "user_seconds": 21.29,
-          "wall_seconds": 21.3
+          "user_seconds": 21.28,
+          "wall_seconds": 21.29
         },
         {
           "iteration": 6,
-          "maximum_rss_kib": 72696,
+          "maximum_rss_kib": 72536,
           "system_seconds": 0.0,
-          "user_seconds": 21.31,
-          "wall_seconds": 21.32
+          "user_seconds": 21.28,
+          "wall_seconds": 21.28
         },
         {
           "iteration": 7,
-          "maximum_rss_kib": 72896,
+          "maximum_rss_kib": 72908,
           "system_seconds": 0.0,
-          "user_seconds": 21.19,
-          "wall_seconds": 21.2
+          "user_seconds": 21.12,
+          "wall_seconds": 21.13
         }
       ],
       "summary": {
         "maximum_rss_kib": {
-          "iqr": 116.0,
-          "maximum": 73260.0,
-          "median": 72892.0,
-          "minimum": 72696.0,
-          "q1": 72864.0,
-          "q3": 72980.0
+          "iqr": 386.0,
+          "maximum": 73320.0,
+          "median": 72908.0,
+          "minimum": 72536.0,
+          "q1": 72658.0,
+          "q3": 73044.0
         },
         "system_seconds": {
-          "iqr": 0.005,
-          "maximum": 0.01,
+          "iqr": 0.175,
+          "maximum": 0.49,
           "median": 0.0,
           "minimum": 0.0,
           "q1": 0.0,
-          "q3": 0.005
+          "q3": 0.175
         },
         "user_seconds": {
-          "iqr": 0.10999999999999588,
-          "maximum": 21.33,
-          "median": 21.2,
-          "minimum": 20.97,
-          "q1": 21.19,
-          "q3": 21.299999999999997
+          "iqr": 0.42500000000000426,
+          "maximum": 21.28,
+          "median": 21.01,
+          "minimum": 20.59,
+          "q1": 20.775,
+          "q3": 21.200000000000003
         },
         "wall_seconds": {
-          "iqr": 0.11000000000000298,
-          "maximum": 21.35,
-          "median": 21.22,
-          "minimum": 20.98,
-          "q1": 21.2,
-          "q3": 21.310000000000002
+          "iqr": 0.1599999999999966,
+          "maximum": 21.29,
+          "median": 21.08,
+          "minimum": 20.83,
+          "q1": 21.045,
+          "q3": 21.205
         }
       }
     },
@@ -406,86 +406,86 @@
       "observations": [
         {
           "iteration": 1,
-          "maximum_rss_kib": 72644,
-          "system_seconds": 0.01,
-          "user_seconds": 28.56,
-          "wall_seconds": 28.58
+          "maximum_rss_kib": 72584,
+          "system_seconds": 0.0,
+          "user_seconds": 28.38,
+          "wall_seconds": 28.4
         },
         {
           "iteration": 2,
-          "maximum_rss_kib": 73236,
+          "maximum_rss_kib": 72752,
           "system_seconds": 0.0,
-          "user_seconds": 28.5,
-          "wall_seconds": 28.51
+          "user_seconds": 28.96,
+          "wall_seconds": 28.98
         },
         {
           "iteration": 3,
-          "maximum_rss_kib": 72852,
-          "system_seconds": 0.0,
-          "user_seconds": 28.69,
-          "wall_seconds": 28.71
+          "maximum_rss_kib": 73204,
+          "system_seconds": 0.52,
+          "user_seconds": 28.02,
+          "wall_seconds": 28.56
         },
         {
           "iteration": 4,
-          "maximum_rss_kib": 72568,
+          "maximum_rss_kib": 73336,
           "system_seconds": 0.0,
-          "user_seconds": 28.86,
-          "wall_seconds": 28.87
+          "user_seconds": 28.58,
+          "wall_seconds": 28.59
         },
         {
           "iteration": 5,
-          "maximum_rss_kib": 73168,
+          "maximum_rss_kib": 72988,
           "system_seconds": 0.0,
-          "user_seconds": 28.86,
-          "wall_seconds": 28.89
+          "user_seconds": 28.51,
+          "wall_seconds": 28.52
         },
         {
           "iteration": 6,
-          "maximum_rss_kib": 72732,
+          "maximum_rss_kib": 72956,
           "system_seconds": 0.0,
-          "user_seconds": 28.61,
-          "wall_seconds": 28.63
+          "user_seconds": 28.9,
+          "wall_seconds": 28.91
         },
         {
           "iteration": 7,
-          "maximum_rss_kib": 72960,
+          "maximum_rss_kib": 72628,
           "system_seconds": 0.0,
-          "user_seconds": 28.7,
-          "wall_seconds": 28.72
+          "user_seconds": 28.53,
+          "wall_seconds": 28.54
         }
       ],
       "summary": {
         "maximum_rss_kib": {
-          "iqr": 376.0,
-          "maximum": 73236.0,
-          "median": 72852.0,
-          "minimum": 72568.0,
-          "q1": 72688.0,
-          "q3": 73064.0
+          "iqr": 406.0,
+          "maximum": 73336.0,
+          "median": 72956.0,
+          "minimum": 72584.0,
+          "q1": 72690.0,
+          "q3": 73096.0
         },
         "system_seconds": {
           "iqr": 0.0,
-          "maximum": 0.01,
+          "maximum": 0.52,
           "median": 0.0,
           "minimum": 0.0,
           "q1": 0.0,
           "q3": 0.0
         },
         "user_seconds": {
-          "iqr": 0.19500000000000028,
-          "maximum": 28.86,
-          "median": 28.69,
-          "minimum": 28.5,
-          "q1": 28.585,
-          "q3": 28.78
+          "iqr": 0.29499999999999815,
+          "maximum": 28.96,
+          "median": 28.53,
+          "minimum": 28.02,
+          "q1": 28.445,
+          "q3": 28.74
         },
         "wall_seconds": {
-          "iqr": 0.19000000000000483,
-          "maximum": 28.89,
-          "median": 28.71,
-          "minimum": 28.51,
-          "q1": 28.604999999999997,
-          "q3": 28.795
+          "iqr": 0.21999999999999886,
+          "maximum": 28.98,
+          "median": 28.56,
+          "minimum": 28.4,
+          "q1": 28.53,
+          "q3": 28.75
         }
       }
     }
