@@ -1,0 +1,494 @@
+{
+  "binary_sha256": "495754bdc47cd95ea48b448424ae46abd6581986aa47667c6f9296f57c5f9810",
+  "cases": [
+    {
+      "additions": 872,
+      "arithmetic_operation_total": 1764,
+      "bit_bound": 5440312225370868173,
+      "bit_cost": 3030,
+      "case": "hnf-prepared-3x3",
+      "determinant_bits": 3,
+      "diagonal": [
+        2,
+        1,
+        2
+      ],
+      "dimension": 3,
+      "injections": 0,
+      "input_bits": 5,
+      "input_encoding_bits": 202,
+      "left_bits": 4,
+      "left_inverse_bits": 4,
+      "multiplications": 876,
+      "normalizations": 3,
+      "passes": 0,
+      "result_bits": 2,
+      "right_bits": 0,
+      "right_inverse_bits": 0,
+      "standalone_divmod_calls": 10,
+      "valid": true,
+      "xgcd_calls": 3
+    },
+    {
+      "additions": 285,
+      "arithmetic_operation_total": 586,
+      "bit_bound": 611745245311045126392,
+      "bit_cost": 840,
+      "case": "smith-repeat-2x2",
+      "determinant_bits": 3,
+      "diagonal": [
+        1,
+        4
+      ],
+      "dimension": 2,
+      "injections": 0,
+      "input_bits": 2,
+      "input_encoding_bits": 66,
+      "left_bits": 2,
+      "left_inverse_bits": 2,
+      "multiplications": 286,
+      "normalizations": 5,
+      "output_encoding_bits": 622,
+      "passes": 2,
+      "result_bits": 3,
+      "right_bits": 2,
+      "right_inverse_bits": 2,
+      "standalone_divmod_calls": 8,
+      "valid": true,
+      "xgcd_calls": 2
+    },
+    {
+      "additions": 589,
+      "arithmetic_operation_total": 1209,
+      "bit_bound": 611745245311045126392,
+      "bit_cost": 1791,
+      "case": "smith-injection-2x2",
+      "determinant_bits": 3,
+      "diagonal": [
+        1,
+        6
+      ],
+      "dimension": 2,
+      "injections": 1,
+      "input_bits": 2,
+      "input_encoding_bits": 62,
+      "left_bits": 2,
+      "left_inverse_bits": 2,
+      "multiplications": 592,
+      "normalizations": 8,
+      "output_encoding_bits": 718,
+      "passes": 3,
+      "result_bits": 3,
+      "right_bits": 3,
+      "right_inverse_bits": 3,
+      "standalone_divmod_calls": 16,
+      "valid": true,
+      "xgcd_calls": 4
+    }
+  ],
+  "created_utc": "2026-07-23T15:10:01.090750+00:00",
+  "hardware": {
+    "cpu_model": "AMD Ryzen 7 9700X 8-Core Processor",
+    "lean": "Lean (version 4.32.0, x86_64-unknown-linux-gnu, commit 8c9756b28d64dab099da31a4c09229a9e6a2ef35, Release)",
+    "libc": [
+      "glibc",
+      "2.43"
+    ],
+    "logical_cpus": 16,
+    "machine": "x86_64",
+    "memory_total_kib": 93834484,
+    "python": "3.14.6",
+    "release": "7.0.0-28-generic",
+    "system": "Linux"
+  },
+  "policy": {
+    "comparison_requires_identical_hardware_fingerprint": true,
+    "hosted_ci_absolute_time_gate": false,
+    "measurements": 7,
+    "summary_method": "median and inclusive quartiles",
+    "warmups": 1
+  },
+  "profile": "research-kannan-bachem-v0.2.0-dev",
+  "research_version": "0.2.0-dev",
+  "schema": "normalforms.kannan-bachem-benchmark/v2",
+  "source": {
+    "git_revision": "34d99fed8310af694326466a2f380496849ad349",
+    "profile_source_file_count": 88,
+    "profile_source_sha256": "a8d4f9d36ed63bb58764f12f62096878a247e50ba8f15b267503163bec637398",
+    "tracked_patch_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "working_tree_clean": true
+  },
+  "stages": [
+    {
+      "case_names": [
+        "hnf-prepared-3x3"
+      ],
+      "description": "prepared principal-minor HNF on a 3-by-3 input",
+      "id": "prepared_hnf",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 73596,
+          "system_seconds": 0.0,
+          "user_seconds": 12.31,
+          "wall_seconds": 12.31
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 71164,
+          "system_seconds": 0.0,
+          "user_seconds": 12.36,
+          "wall_seconds": 12.36
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 72416,
+          "system_seconds": 0.0,
+          "user_seconds": 12.65,
+          "wall_seconds": 12.66
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72604,
+          "system_seconds": 0.0,
+          "user_seconds": 12.42,
+          "wall_seconds": 12.42
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72504,
+          "system_seconds": 0.0,
+          "user_seconds": 12.43,
+          "wall_seconds": 12.43
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72652,
+          "system_seconds": 0.0,
+          "user_seconds": 12.8,
+          "wall_seconds": 12.8
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72540,
+          "system_seconds": 0.0,
+          "user_seconds": 12.41,
+          "wall_seconds": 12.41
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 168.0,
+          "maximum": 73596.0,
+          "median": 72540.0,
+          "minimum": 71164.0,
+          "q1": 72460.0,
+          "q3": 72628.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.15499999999999936,
+          "maximum": 12.8,
+          "median": 12.42,
+          "minimum": 12.31,
+          "q1": 12.385,
+          "q3": 12.54
+        },
+        "wall_seconds": {
+          "iqr": 0.16000000000000014,
+          "maximum": 12.8,
+          "median": 12.42,
+          "minimum": 12.31,
+          "q1": 12.385,
+          "q3": 12.545
+        }
+      }
+    },
+    {
+      "case_names": [
+        "smith-repeat-2x2"
+      ],
+      "description": "Smith stabilization with a repeated pass",
+      "id": "smith_repeat",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 73756,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.05
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 74112,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.05
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 73396,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.05
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72908,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.05
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 72048,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.05
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 74100,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.05
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 73780,
+          "system_seconds": 0.0,
+          "user_seconds": 0.05,
+          "wall_seconds": 0.05
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 788.0,
+          "maximum": 74112.0,
+          "median": 73756.0,
+          "minimum": 72048.0,
+          "q1": 73152.0,
+          "q3": 73940.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.05,
+          "median": 0.05,
+          "minimum": 0.05,
+          "q1": 0.05,
+          "q3": 0.05
+        },
+        "wall_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.05,
+          "median": 0.05,
+          "minimum": 0.05,
+          "q1": 0.05,
+          "q3": 0.05
+        }
+      }
+    },
+    {
+      "case_names": [
+        "smith-injection-2x2"
+      ],
+      "description": "Smith stabilization through Step 7 injection",
+      "id": "smith_injection",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 72448,
+          "system_seconds": 0.0,
+          "user_seconds": 39.88,
+          "wall_seconds": 39.89
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 73888,
+          "system_seconds": 0.0,
+          "user_seconds": 38.2,
+          "wall_seconds": 38.21
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 73792,
+          "system_seconds": 0.0,
+          "user_seconds": 37.97,
+          "wall_seconds": 37.97
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72824,
+          "system_seconds": 0.0,
+          "user_seconds": 38.21,
+          "wall_seconds": 38.22
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 73764,
+          "system_seconds": 0.0,
+          "user_seconds": 37.58,
+          "wall_seconds": 37.59
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72272,
+          "system_seconds": 0.0,
+          "user_seconds": 37.54,
+          "wall_seconds": 37.54
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 73856,
+          "system_seconds": 0.0,
+          "user_seconds": 38.33,
+          "wall_seconds": 38.33
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 1188.0,
+          "maximum": 73888.0,
+          "median": 73764.0,
+          "minimum": 72272.0,
+          "q1": 72636.0,
+          "q3": 73824.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.49499999999999744,
+          "maximum": 39.88,
+          "median": 38.2,
+          "minimum": 37.54,
+          "q1": 37.775,
+          "q3": 38.269999999999996
+        },
+        "wall_seconds": {
+          "iqr": 0.49499999999999744,
+          "maximum": 39.89,
+          "median": 38.21,
+          "minimum": 37.54,
+          "q1": 37.78,
+          "q3": 38.275
+        }
+      }
+    },
+    {
+      "case_names": [
+        "hnf-prepared-3x3",
+        "smith-repeat-2x2",
+        "smith-injection-2x2"
+      ],
+      "description": "all three deterministic research cases",
+      "id": "end_to_end",
+      "observations": [
+        {
+          "iteration": 1,
+          "maximum_rss_kib": 73480,
+          "system_seconds": 0.0,
+          "user_seconds": 50.72,
+          "wall_seconds": 50.73
+        },
+        {
+          "iteration": 2,
+          "maximum_rss_kib": 73400,
+          "system_seconds": 0.0,
+          "user_seconds": 50.78,
+          "wall_seconds": 50.78
+        },
+        {
+          "iteration": 3,
+          "maximum_rss_kib": 73836,
+          "system_seconds": 0.0,
+          "user_seconds": 50.43,
+          "wall_seconds": 50.44
+        },
+        {
+          "iteration": 4,
+          "maximum_rss_kib": 72960,
+          "system_seconds": 0.0,
+          "user_seconds": 50.74,
+          "wall_seconds": 50.74
+        },
+        {
+          "iteration": 5,
+          "maximum_rss_kib": 73420,
+          "system_seconds": 0.0,
+          "user_seconds": 51.03,
+          "wall_seconds": 51.03
+        },
+        {
+          "iteration": 6,
+          "maximum_rss_kib": 72292,
+          "system_seconds": 0.0,
+          "user_seconds": 51.62,
+          "wall_seconds": 51.62
+        },
+        {
+          "iteration": 7,
+          "maximum_rss_kib": 72796,
+          "system_seconds": 0.0,
+          "user_seconds": 50.55,
+          "wall_seconds": 50.56
+        }
+      ],
+      "summary": {
+        "maximum_rss_kib": {
+          "iqr": 572.0,
+          "maximum": 73836.0,
+          "median": 73400.0,
+          "minimum": 72292.0,
+          "q1": 72878.0,
+          "q3": 73450.0
+        },
+        "system_seconds": {
+          "iqr": 0.0,
+          "maximum": 0.0,
+          "median": 0.0,
+          "minimum": 0.0,
+          "q1": 0.0,
+          "q3": 0.0
+        },
+        "user_seconds": {
+          "iqr": 0.2700000000000031,
+          "maximum": 51.62,
+          "median": 50.74,
+          "minimum": 50.43,
+          "q1": 50.635,
+          "q3": 50.905
+        },
+        "wall_seconds": {
+          "iqr": 0.2600000000000051,
+          "maximum": 51.62,
+          "median": 50.74,
+          "minimum": 50.44,
+          "q1": 50.644999999999996,
+          "q3": 50.905
+        }
+      }
+    }
+  ],
+  "trust_boundary": "Native time and RSS are observational regression evidence. Kernel-checked theorems establish normal-form correctness, concrete encoding-length bounds, and the leaf-trace binary arithmetic cost. Decoding, serialization, storage, traversal, allocation, and native runtime costs are excluded."
+}
