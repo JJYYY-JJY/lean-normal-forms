@@ -20,7 +20,7 @@ contains `S`, `U`, `U⁻¹`, `V`, and `V⁻¹`; the public closure theorems incl
 smithExecution_value
 smithExecution_replay
 smithExecution_trace_wellFormed
-smithExecution_chargeOwnership
+smithExecution_chargeComplete
 smithWithCost_cost_eq_traceBitCost
 smithOperationCount_eq_traceOperationCount
 ```
@@ -33,8 +33,10 @@ their child charge lists.
 `KannanBachemArithmeticCharge` is constructed through smart constructors.
 Every leaf stores its operands and primitive run together with a proposition
 that the stored run is the named primitive. Bounded XGCD is one opaque macro
-leaf; its internal Euclidean arithmetic is included in its bit cost and is
-not duplicated by descendant charges.
+leaf for the entire `boundedBezoutBlockWithCost` run: one bounded XGCD, one
+gcd zero-test, and, in the nonzero branch, two exact divisions. Its internal
+arithmetic is included in its bit cost and is not duplicated by descendant
+charges.
 
 `ArithmeticOperationCount` is derived from the same flat list:
 
@@ -76,8 +78,11 @@ The stable complexity claim is fixed-polynomial binary arithmetic cost in the
 length of the concrete self-delimiting input encoding:
 
 ```lean
+smithWithCost
+smithExecution_cost_le_work
+smithExecution_cost_le_polynomial
+smithWithCost_cost_le_workBound
 smithCost_polynomial_in_encodingLength
-smithOutputEncodingLength_polynomial
 verifiedSmithPolynomialBitCost
 ```
 
@@ -85,6 +90,10 @@ verifiedSmithPolynomialBitCost
 transform equations, both inverse identities for each side, the Smith
 predicate, canonical reference equality, the exact leaf-cost fold, and fixed
 polynomial bounds for arithmetic cost and the five-matrix data encoding.
+
+The older `smithBitOperationCost` structural recurrence and its work bounds
+remain exported for source compatibility. They are not 0.2 execution-cost
+endpoints.
 
 The model excludes decoding, serialization, matrix storage, index traversal,
 copying, allocation, garbage collection, Lean compiler/runtime behavior, and

@@ -16,6 +16,10 @@ The source identity is the SHA-256 of the sorted files selected by
 eight-byte big-endian byte length before hashing. Generated baselines,
 reports, build output, and `.git` are excluded.
 
+The baseline's `source.git_revision` records the clean source commit used to
+generate it. The baseline-only commit therefore naturally has a later
+revision.
+
 ```sh
 docker build --no-cache \
   --file artifact/kannan-bachem/Dockerfile \

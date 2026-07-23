@@ -1135,7 +1135,10 @@ theorem stabilizeBitOperationCost_le_polynomial {n : Nat}
   · exact le_max_left _ _
   · exact (determinant_bitLength_le A).trans (le_max_right _ _)
 
-/-- Exact arithmetic charge following the structural recursion of `smith`. -/
+/--
+Legacy structural arithmetic recurrence following `smith`; retained for
+compatibility and not the 0.2 execution-cost endpoint.
+-/
 @[expose] def smithBitOperationCost : {n : Nat} →
     (A : Matrix (Fin n) (Fin n) Int) → A.det ≠ 0 → Nat
   | 0, _A, _hdet => 0
@@ -1154,7 +1157,7 @@ theorem stabilizeBitOperationCost_le_polynomial {n : Nat}
         smithBitOperationCost (lowerRight transformed) lowerDet +
         certificateCompositionBitOperationCost stabilized.certificate lifted
 
-/-- Closed recursive budget shared by all Smith levels. -/
+/-- Legacy work bound for `smithBitOperationCost`; retained for compatibility. -/
 @[expose] def smithBitOperationWorkBound : Nat → Nat → Nat
   | 0, _workBits => 0
   | dimension + 1, workBits =>
@@ -1220,7 +1223,7 @@ theorem smithBitOperationCost_le_work {n workBits : Nat}
       exact Nat.add_le_add
         (Nat.add_le_add stabilizationCost recursiveCost) compositionCost
 
-/-- Full SNF bit-operation budget in the original dimension and input width. -/
+/-- Legacy input-size bound for `smithBitOperationCost`; retained for compatibility. -/
 @[expose] def smithPolynomialBitOperationBound
     (dimension inputBits : Nat) : Nat :=
   smithBitOperationWorkBound dimension
