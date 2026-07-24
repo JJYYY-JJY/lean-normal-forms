@@ -793,7 +793,7 @@ AUDIT_SPECS: dict[
     "core": [
         (
             "normalforms.axiom-audit/v1",
-            535,
+            553,
             SEMANTIC_ALLOWLIST,
             SEMANTIC_OBSERVED,
         ),
@@ -861,7 +861,7 @@ PUBLIC_API_COUNTS = {
     "homology": [("NormalForms/Tests/Homology/PublicApi.lean", 53)],
     "bit-cost": [
         ("NormalForms/Tests/Research/BitCost/PublicApiV010.lean", 49),
-        ("NormalForms/Tests/Research/BitCost/PublicApi.lean", 87),
+        ("NormalForms/Tests/Research/BitCost/PublicApi.lean", 94),
     ],
     "kannan-bachem": [
         ("NormalForms/Tests/Research/KannanBachem/PublicApi.lean", 666)
