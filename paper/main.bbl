@@ -1,0 +1,64 @@
+\begin{thebibliography}{10}
+
+\bibitem{bird2011}
+Richard~S. Bird.
+\newblock A simple division-free algorithm for computing determinants.
+\newblock {\em Information Processing Letters}, 111(21--22):1072--1074, 2011.
+
+\bibitem{bottesch2018}
+Ralph Bottesch, Max~W. Haslbeck, and Ren{\'e} Thiemann.
+\newblock A verified efficient implementation of the {LLL} basis reduction
+  algorithm.
+\newblock In {\em LPAR-22. 22nd International Conference on Logic for
+  Programming, Artificial Intelligence and Reasoning}, volume~57 of {\em EPiC
+  Series in Computing}, pages 164--180. EasyChair, 2018.
+
+\bibitem{cano2016}
+Guillaume Cano, Cyril Cohen, Maxime D{\'e}n{\`e}s, Anders M{\"o}rtberg, and
+  Vincent Siles.
+\newblock Formalized linear algebra over elementary divisor rings in {Coq}.
+\newblock {\em Logical Methods in Computer Science}, 12(2):7:1--7:28, 2016.
+
+\bibitem{demoura2021}
+Leonardo de~Moura and Sebastian Ullrich.
+\newblock The {Lean 4} theorem prover and programming language.
+\newblock In {\em Automated Deduction -- CADE 28}, volume 12699 of {\em Lecture
+  Notes in Computer Science}, pages 625--635. Springer, 2021.
+
+\bibitem{divason2022}
+Jose Divas{\'o}n and Ren{\'e} Thiemann.
+\newblock A formalization of the smith normal form in higher-order logic.
+\newblock {\em Journal of Automated Reasoning}, 66:1065--1095, 2022.
+
+\bibitem{gueneau2018}
+Arma{\"e}l Gu{\'e}neau, Arthur Chargu{\'e}raud, and Fran{\c{c}}ois Pottier.
+\newblock A fistful of dollars: Formalizing asymptotic complexity claims via
+  deductive program verification.
+\newblock In {\em Programming Languages and Systems -- ESOP 2018}, volume 10801
+  of {\em Lecture Notes in Computer Science}, pages 533--560. Springer, 2018.
+
+\bibitem{kannan1979}
+Ravindran Kannan and Achim Bachem.
+\newblock Polynomial algorithms for computing the smith and hermite normal
+  forms of an integer matrix.
+\newblock {\em SIAM Journal on Computing}, 8(4):499--507, 1979.
+
+\bibitem{ma2026}
+Wanli Ma, Zichen Wang, and Zaiwen Wen.
+\newblock A unified framework for formalizing matrix decomposition proofs.
+\newblock arXiv:2607.05874 [math.NA], 2026.
+
+\bibitem{mathlib2020}
+{The mathlib Community}.
+\newblock The {Lean} mathematical library.
+\newblock In {\em Proceedings of the 9th ACM SIGPLAN International Conference
+  on Certified Programs and Proofs}, pages 367--381. ACM, 2020.
+
+\bibitem{zhan2018}
+Bohua Zhan and Maximilian P.~L. Haslbeck.
+\newblock Verifying asymptotic time complexity of imperative programs in
+  {Isabelle}.
+\newblock In {\em Automated Reasoning -- IJCAR 2018}, volume 10900 of {\em
+  Lecture Notes in Computer Science}, pages 532--548. Springer, 2018.
+
+\end{thebibliography}
