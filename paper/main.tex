@@ -183,7 +183,8 @@ The output codec is assembled from a typed matrix codec.  For a packed square ma
 \begin{align*}
   \mcode{matrixPayload}(M)
    &= \mcode{frame}(\mcode{encodeNat}(n))
-      \concat \mathop{\concat}_{(i,j)\text{ row-major}} \enc_{\Z}(M_{ij}),\\
+      \concat \mathop{\concat}_{i=1}^{n}
+      \mathop{\concat}_{j=1}^{n} \enc_{\Z}(M_{ij}),\\
   \enc_{\mathrm{mat}}(M)
    &= \mcode{frame}(\mcode{matrixPayload}(M)).
 \end{align*}
